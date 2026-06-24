@@ -1,0 +1,6 @@
+# path: config.toml
+# The single source of Codex behavior for this repo. You set the values in Task 1.
+# Set three keys. Choose the reasoning effort; pick restrictive sandbox + approval.
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
