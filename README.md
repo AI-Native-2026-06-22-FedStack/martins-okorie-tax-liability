@@ -1,4 +1,4 @@
-# TaxPulse Tax Liability
+# Govern the AI Before You Code: Bootstrap the TaxPulse Repo
 
 TaxPulse is a multi-tenant SaaS for wealth-advisor firms that computes a client's real-time tax-liability calculation while an advisor models scenarios.
 
