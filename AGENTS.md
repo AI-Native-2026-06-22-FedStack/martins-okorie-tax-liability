@@ -26,7 +26,7 @@ When assisting with project work, maintain a prompt journal entry for significan
 
 For each entry, follow the concise structure used in `prompt-journal/0001-bootstrap.md`.
 
-Number entries sequentially in chronological order as `Entry 1`, `Entry 2`, `Entry 3`, and so on. Add each new entry after the previous one so the journal remains easy to scan.
+Start a new prompt journal file at the next sequential `prompt-journal/000#-*.md` path for each new work stream. Within each prompt journal file, number entries sequentially in chronological order as `Entry 1`, `Entry 2`, `Entry 3`, and so on. Add each new entry after the previous one so the journal remains easy to scan.
 
 ## Asked
 
