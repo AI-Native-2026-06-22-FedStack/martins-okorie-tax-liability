@@ -56,6 +56,8 @@ For each entry, follow the concise structure used in `prompt-journal/0001-bootst
 
 Continue adding entries to the current prompt journal file unless the engineer explicitly says to start a new journal file. When a new journal file is requested, start it at the next sequential `prompt-journal/000#-*.md` path. Within each prompt journal file, number entries sequentially in chronological order as `Entry 1`, `Entry 2`, `Entry 3`, and so on. Add each new entry after the previous one so the journal remains easy to scan.
 
+Every prompt journal entry must include these four fields:
+
 ## Asked
 
 A concise summary of the prompt submitted to Codex.
@@ -66,8 +68,10 @@ A concise summary of Codex's response or generated output.
 
 ## Accepted or rejected
 
-Accepted or rejected.
+Use `Accepted`, `Rejected`, or `Pending engineer review`.
+
+If the engineer explicitly accepts the work, write `Accepted` and include a concise `Why` based on the verified outcome. If the engineer explicitly rejects the work, write `Rejected` and use the engineer's stated reason. If the engineer has not accepted or rejected the work yet, write `Pending engineer review`.
 
 ## Why
 
-The engineer's reasoning for the decision. Do not invent reasoning; ask for it if not provided. which i will type it
+For accepted work, write a genuine one-sentence reason grounded in what changed or what verification passed. For rejected work, use the engineer's stated reason. For pending work, write `Awaiting engineer acceptance reason.` Do not use placeholder text such as `Pending engineer reason`.

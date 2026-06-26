@@ -1,0 +1,43 @@
+[project]
+name = "taxpulse-python"
+version = "0.1.0"
+description = "Strict Python scaffold for TaxPulse real-time tax-liability calculation."
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic==2.13.4",
+]
+
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy==1.18.2",
+    "pytest==8.4.2",
+    "pytest-asyncio==1.2.0",
+    "ruff==0.14.9",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src/python/taxpulse_python", "tests"]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "RUF"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+mypy_path = "src/python"
+files = ["src/python/taxpulse_python", "tests"]
+plugins = ["pydantic.mypy"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/python/taxpulse_python"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src/python"]
+testpaths = ["tests"]

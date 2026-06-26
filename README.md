@@ -68,6 +68,41 @@ From a clean workstation, initialize a governed Codex session with these steps:
 
 7. For significant AI-assisted work, append a sequential entry to `prompt-journal/0001-bootstrap.md`. Leave the `Why` field blank when the engineer has not yet provided acceptance reasoning.
 
-## Current Toolchain
+## Python Package Setup
 
-This repository currently contains governance documents and scaffold evidence only. When application code is added, use the stack allowed by [AGENTS.md](AGENTS.md): TypeScript with Express or Python with FastAPI.
+The Python starter package lives in `src/python/taxpulse_python/`, and the TypeScript scaffold lives in `src/typescript/`. The Python package is managed from the repository root with `uv`.
+
+From a clean clone, recreate the Python 3.13 environment from the committed lock file:
+
+```sh
+uv sync --locked
+```
+
+## Toolchain Conventions
+
+Use the documented check commands for each stack before opening a PR.
+
+Node/TypeScript:
+
+```sh
+npm run check
+npm run typecheck
+npm test
+```
+
+Python/FastAPI:
+
+```sh
+uv sync --locked
+make check
+```
+
+The Python `make check` target runs these gates in order and stops at the first failure:
+
+```sh
+uv run ruff check src/python/taxpulse_python tests
+uv run mypy src/python/taxpulse_python tests
+uv run pytest
+```
+
+The allowed application stacks remain TypeScript with Express and Python with FastAPI, as defined in [AGENTS.md](AGENTS.md).
