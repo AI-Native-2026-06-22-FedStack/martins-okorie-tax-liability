@@ -16,7 +16,7 @@
     "noUncheckedIndexedAccess": true,
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
+    "rootDir": "src/typescript",
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
@@ -24,6 +24,6 @@
     "types": ["node", "vitest/globals"],
     "useDefineForClassFields": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/typescript/**/*.ts", "tests/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }
