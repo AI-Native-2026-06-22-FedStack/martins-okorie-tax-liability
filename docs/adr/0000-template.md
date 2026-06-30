@@ -1,8 +1,6 @@
-# ADR-0000: Title
+# <number>. <title>
 
-## Status
-
-Proposed
+- Status: <Proposed | Accepted>
 
 ## Context
 
@@ -14,6 +12,4 @@ State the chosen approach plainly.
 
 ## Consequences
 
-- Positive: Describe the main benefit.
-- Negative: Describe the cost or tradeoff the team accepts.
-- Neutral: Describe follow-on work, compatibility notes, or operational implications.
+## Alternatives considered
