@@ -73,12 +73,4 @@ and data-handling evidence.
 - [X] PR is self-assigned in Assignees.
 - [X] `Isiah Muli` is requested under Reviewers.
 
-* The sample-PR AI-review output and your "what it missed" note as code/quote blocks
-* **AI-tool reflection — one paragraph.** Name one suggestion Codex made that you *accepted* (and why) and one you *rejected* (and why).
-* A deliverables checklist at the bottom of the PR description with each item above ticked off
-* PR self-assigned (Assignees field); your ES requested under Reviewers
-* The sample-PR AI-review output and your "what it missed" note as code/quote blocks
-* **AI-tool reflection — one paragraph.** Name one suggestion Codex made that you *accepted* (and why) and one you *rejected* (and why).
-* A deliverables checklist at the bottom of the PR description with each item above ticked off
-* PR self-assigned (Assignees field); your ES requested under Reviewersd
 
