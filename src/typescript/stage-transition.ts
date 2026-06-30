@@ -13,4 +13,6 @@ const legalNextStageByCurrentStage: Record<TaxPlanCycleStage, TaxPlanCycleStage 
 export const validateStageTransition = (
   fromStage: TaxPlanCycleStage,
   toStage: TaxPlanCycleStage
-): boolean => legalNextStageByCurrentStage[fromStage] === toStage;
+): boolean =>
+  legalNextStageByCurrentStage[fromStage] === toStage ||
+  (fromStage === "Review" && toStage === "Modeling");
