@@ -46,4 +46,38 @@ describe("validateStageTransition", () => {
       expect(isAllowed).toBe(false);
     }
   });
+
+  it("allows Review to Modeling send-back and rejects other backward Tax Plan Cycle stage transitions", () => {
+    // Arrange
+    const reviewSendBack = {
+      fromStage: "Review",
+      toStage: "Modeling"
+    } satisfies {
+      readonly fromStage: TaxPlanCycleStage;
+      readonly toStage: TaxPlanCycleStage;
+    };
+    const rejectedBackwardTransitions: Array<{
+      readonly fromStage: TaxPlanCycleStage;
+      readonly toStage: TaxPlanCycleStage;
+    }> = [
+      { fromStage: "Data Aggregation", toStage: "Intake" },
+      { fromStage: "Modeling", toStage: "Data Aggregation" },
+      { fromStage: "Client Approval", toStage: "Review" },
+      { fromStage: "Executed", toStage: "Client Approval" },
+      { fromStage: "Archived", toStage: "Executed" }
+    ];
+
+    // Act
+    const isReviewSendBackAllowed = validateStageTransition(
+      reviewSendBack.fromStage,
+      reviewSendBack.toStage
+    );
+    const rejectedBackwardResults = rejectedBackwardTransitions.map(({ fromStage, toStage }) =>
+      validateStageTransition(fromStage, toStage)
+    );
+
+    // Assert
+    expect(isReviewSendBackAllowed).toBe(true);
+    expect(rejectedBackwardResults).toEqual(rejectedBackwardTransitions.map(() => false));
+  });
 });
