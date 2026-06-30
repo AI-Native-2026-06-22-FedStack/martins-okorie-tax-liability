@@ -29,3 +29,13 @@ Produced — Accepted the minimal adjacent-stage map because it directly satisfi
 Accepted or rejected — Pending engineer review.
 
 Why — Awaiting engineer acceptance reason.
+
+# Entry 4
+
+Asked — Add the Review to Modeling send-back edge-case test, make it pass, and refactor the pure stage-transition validator while preserving red-green-refactor commit order.
+
+Produced — Added the red edge-case test for the allowed Review to Modeling send-back and rejected representative backward moves; made the test pass with a minimal condition; then refactored the validator into one typed allowed-target stage map without adding I/O, role gates, audit logging, hold handling, errors, or workflow services.
+
+Accepted or rejected — Pending engineer review.
+
+Why — Awaiting engineer acceptance reason.
