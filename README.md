@@ -100,9 +100,9 @@ make check
 The Python `make check` target runs these gates in order and stops at the first failure:
 
 ```sh
-uv run ruff check src/python/taxpulse_python tests
-uv run mypy src/python/taxpulse_python tests
-uv run pytest
+uv run --locked ruff check src/python/taxpulse_python tests
+uv run --locked mypy src/python/taxpulse_python tests
+uv run --locked pytest
 ```
 
 The allowed application stacks remain TypeScript with Express and Python with FastAPI, as defined in [AGENTS.md](AGENTS.md).

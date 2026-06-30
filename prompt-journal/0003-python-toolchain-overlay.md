@@ -67,3 +67,13 @@ Produced — Moved TypeScript source into `src/typescript/`, moved the Python pa
 Accepted or rejected — Accepted.
 
 Why — The source tree is easier to navigate with Python and TypeScript separated, while both toolchains still pass.
+
+# Entry 8
+
+Asked — Implement the Week 2 carry-forward cleanup by locking `uv run` checks, making tax-liability result objects strict immutable models, removing redundant async pytest markers, and journaling the interaction.
+
+Produced — Updated the Python check commands to use `uv run --locked`, converted result objects to frozen strict Pydantic models while preserving attribute access and `as_dict()`, removed redundant `@pytest.mark.asyncio` decorators, and aligned README check examples.
+
+Accepted or rejected — Accepted
+
+Why — Improves reproducibility, enforces immutable validated models, and removes redundant test code without changing behavior.
