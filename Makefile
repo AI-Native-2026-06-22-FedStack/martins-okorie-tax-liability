@@ -1,6 +1,6 @@
 .PHONY: check
 
 check:
-	uv run ruff check src/python/taxpulse_python tests && \
-	uv run mypy src/python/taxpulse_python tests && \
-	uv run pytest
+	uv run --locked ruff check src/python/taxpulse_python tests && \
+	uv run --locked mypy src/python/taxpulse_python tests && \
+	uv run --locked pytest

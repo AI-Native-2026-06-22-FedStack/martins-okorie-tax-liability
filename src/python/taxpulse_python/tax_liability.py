@@ -1,9 +1,10 @@
 from collections.abc import Awaitable
 from typing import Protocol
 
-from pydantic import ValidationError
+from pydantic import ConfigDict, ValidationError
 
 from taxpulse_python.tax_liability_model import (
+    StrictTaxPulseModel,
     TaxCalcFilingStatus,
     TaxCalcRequest,
     TaxPlanCycleAggregationPayload,
@@ -20,36 +21,23 @@ class TaxLiabilityValidationError(Exception):
         self.error = error
 
 
-class TaxCalcResult:
-    def __init__(
-        self,
-        *,
-        filing_status: TaxCalcFilingStatus,
-        state: str,
-        taxable_income: float,
-        estimated_tax_liability: float,
-        is_placeholder: bool,
-    ) -> None:
-        self.filing_status = filing_status
-        self.state = state
-        self.taxable_income = taxable_income
-        self.estimated_tax_liability = estimated_tax_liability
-        self.is_placeholder = is_placeholder
+class StrictFrozenTaxPulseResult(StrictTaxPulseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
 
-class TaxLiabilityScenarioResult:
-    def __init__(
-        self,
-        *,
-        scenario_id: str,
-        label: str,
-        projected_tax_liability: float,
-        projected_net_income_after_deductions: float,
-    ) -> None:
-        self.scenario_id = scenario_id
-        self.label = label
-        self.projected_tax_liability = projected_tax_liability
-        self.projected_net_income_after_deductions = projected_net_income_after_deductions
+class TaxCalcResult(StrictFrozenTaxPulseResult):
+    filing_status: TaxCalcFilingStatus
+    state: str
+    taxable_income: float
+    estimated_tax_liability: float
+    is_placeholder: bool
+
+
+class TaxLiabilityScenarioResult(StrictFrozenTaxPulseResult):
+    scenario_id: str
+    label: str
+    projected_tax_liability: float
+    projected_net_income_after_deductions: float
 
     def as_dict(self) -> dict[str, str | float]:
         return {
@@ -60,17 +48,10 @@ class TaxLiabilityScenarioResult:
         }
 
 
-class TaxLiabilityModelingResult:
-    def __init__(
-        self,
-        *,
-        payload: TaxPlanCycleAggregationPayload,
-        total_holding_market_value: float,
-        scenario_results: list[TaxLiabilityScenarioResult],
-    ) -> None:
-        self.payload = payload
-        self.total_holding_market_value = total_holding_market_value
-        self.scenario_results = scenario_results
+class TaxLiabilityModelingResult(StrictFrozenTaxPulseResult):
+    payload: TaxPlanCycleAggregationPayload
+    total_holding_market_value: float
+    scenario_results: tuple[TaxLiabilityScenarioResult, ...]
 
 
 class TaxPlanCycleDataSource(Protocol):
@@ -91,7 +72,7 @@ async def calculate_tax_result(request: TaxCalcRequest) -> TaxCalcResult:
 
 def _calculate_scenario_results(
     payload: TaxPlanCycleAggregationPayload,
-) -> list[TaxLiabilityScenarioResult]:
+) -> tuple[TaxLiabilityScenarioResult, ...]:
     base_income = sum(item.amount for item in payload.income_events)
     base_deductions = sum(item.amount for item in payload.deductions)
 
@@ -110,7 +91,7 @@ def _calculate_scenario_results(
             )
         )
 
-    return results
+    return tuple(results)
 
 
 async def model_tax_liability(source: TaxPlanCycleDataSource) -> TaxLiabilityModelingResult:

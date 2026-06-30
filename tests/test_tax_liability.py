@@ -96,7 +96,6 @@ def test_tax_calc_request_model_validate_rejects_invalid_filing_status() -> None
         )
 
 
-@pytest.mark.asyncio
 async def test_calculate_tax_result_returns_placeholder_result() -> None:
     request = TaxCalcRequest.model_validate(
         {
@@ -116,7 +115,6 @@ async def test_calculate_tax_result_returns_placeholder_result() -> None:
     assert result.is_placeholder is True
 
 
-@pytest.mark.asyncio
 async def test_calculate_tax_result_floors_taxable_income_at_zero() -> None:
     request = TaxCalcRequest.model_validate(
         {
@@ -177,7 +175,6 @@ def test_model_validate_rejects_invalid_tax_plan_cycle_payload() -> None:
         TaxPlanCycleAggregationPayload.model_validate(invalid_payload)
 
 
-@pytest.mark.asyncio
 async def test_model_tax_liability_returns_expected_synthetic_result() -> None:
     result = await model_tax_liability(FakeTaxPlanCycleDataSource())
 
@@ -198,13 +195,11 @@ async def test_model_tax_liability_returns_expected_synthetic_result() -> None:
     ]
 
 
-@pytest.mark.asyncio
 async def test_model_tax_liability_surfaces_typed_source_error() -> None:
     with pytest.raises(TaxLiabilitySourceError):
         await model_tax_liability(FakeTaxPlanCycleDataSource(should_fail=True))
 
 
-@pytest.mark.asyncio
 async def test_model_tax_liability_surfaces_typed_validation_error() -> None:
     invalid_payload = {**VALID_PAYLOAD, "income_events": [{"amount": "not-a-number"}]}
 
