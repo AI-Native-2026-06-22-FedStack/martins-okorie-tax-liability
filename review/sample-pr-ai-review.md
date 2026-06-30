@@ -1,76 +1,107 @@
-# Sample PR — AI review
+# Sample PR — Stage Transition Validator
 
 ## Summary
 
-This documentation-only branch tightens the TaxPulse contribution and review workflow.
-It updates the contributing guide, replaces ADR-0001 with the Tax Plan Cycle stage-only
-condition decision, adds an ADR index, updates the default PR template, records local
-sample AI-review evidence, and maintains the active prompt journal.
+Adds a pure Tax Plan Cycle stage-transition validator and tests the boundary behavior with
+red-green-refactor evidence. The validator allows adjacent forward workflow movement,
+allows the `Review` to `Modeling` send-back, rejects skipped transitions, and rejects
+representative non-allowed backward moves.
 
 ## Related ADR
 
-ADR: [0001: Keep a Tax Plan Cycle&#39;s condition in its stage](../docs/adr/0001-tax-plan-cycle-stage-only-condition.md)
+ADR: [0001: Keep a Tax Plan Cycle's condition in its stage](../docs/adr/0001-tax-plan-cycle-stage-only-condition.md)
 
 ## Testing
 
-- `rg "CONTRIBUTING.md|AGENTS.md|data-classification|300|500|type\\(optional-scope\\)" README.md CONTRIBUTING.md`
-- `rg "Tax Plan Cycle|separate status|Alternatives considered|docs/adr/README.md" docs/adr README.md`
-- `rg "AI code-review checklist|stage logic|typed boundaries|secrets|controlled data|ADR linked" .github/pull_request_template.md`
-- `rg "Sample PR|AI output|What it missed|Acknowledgement gate|tenant|checklist|ADR" review/sample-pr-ai-review.md`
-- `git diff --check`
+- `npm test`
+- `npm run typecheck`
+- `npx vitest run --coverage`
+
+Coverage output:
+
+```text
+RUN  v2.0.5 /Users/martinsokorie/Desktop/martins-okorie-tax-liability
+     Coverage enabled with v8
+
+✓ src/typescript/stage-transition.test.ts  (3 tests) 2ms
+✓ src/typescript/tax-liability.test.ts  (4 tests) 9ms
+
+Test Files  2 passed (2)
+     Tests  7 passed (7)
+  Start at  05:49:34
+  Duration  326ms (transform 44ms, setup 0ms, collect 58ms, tests 11ms, environment 0ms, prepare 95ms)
+
+% Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |     100 |      100 |     100 |     100 |
+ ...-transition.ts |     100 |      100 |     100 |     100 |
+-------------------|---------|----------|---------|---------|-------------------
+```
+
+Red-green-refactor commit log:
+
+```text
+852fecf refactor(tax-plan-cycle): consolidate stage transition rules
+9ebb8f3 feat(tax-plan-cycle): allow review send-back transition
+da818e4 test(tax-plan-cycle): pin review send-back transition
+29accbc feat(tax-plan-cycle): implement stage transition validator
+a0f290e test(tax-plan-cycle): pin stage transition validator
+cd0dee2 reviewing the pr-ai-review.md file for the m1d4-implementation branch.
+```
 
 ## AI review evidence
 
 AI review output:
 
-> Codex review of the local `m1d4-implementation` documentation diff:
->
-> - No blocking issues found in the documentation-only changes.
-> - The ADR changes align with the TaxPulse workflow contract by documenting that a Tax Plan Cycle's condition lives in its workflow stage and that no separate status field should be added.
-> - The ADR index makes future decisions discoverable from `docs/adr/README.md`, and the README now links to that index.
-> - The pull request template now prompts reviewers to verify stage logic, typed boundaries, data-handling posture, test or verification evidence, AI-claim review, and ADR linking.
-> - The contributing guide now gives enforceable branch naming, Conventional Commit, PR size, and review expectations.
-> - The sample PR does not appear to introduce application behavior, secrets, credentials, real client data, tenant data, or controlled data.
+```text
+Codex review of the local stage-transition diff:
+- No blocking issues found in the validator implementation or tests.
+- The first boundary test was committed before implementation and failed for the right reason: the validator module did not exist yet.
+- The green implementation stayed minimal by adding only the behavior needed for the red test.
+- The send-back edge case is covered: Review -> Modeling is allowed, while representative non-allowed backward moves are rejected.
+- Coverage is enforced for src/typescript/stage-transition.ts with 80% lines/functions/branches thresholds and currently reports 100% for statements, branches, functions, and lines.
+```
 
 What it missed:
 
-> The AI output gave a false reassurance by saying the sample PR does not introduce tenant or controlled-data risk. That is true for this documentation-only diff, but it does not prove future implementation PRs preserve tenant isolation. A future code PR could still pass a superficial documentation review while leaking cross-tenant Tax Plan Cycle data or accepting untyped payloads.
->
-> The checklist and a human reviewer catch this by requiring concrete yes/no verification: the diff must contain no secrets, real client data, tenant data, or controlled data; typed boundaries must remain in place; and any workflow change must prove that stage logic is role-gated and current-stage-gated. A reviewer should block merge when those claims are unsupported by the diff, tests, or documented verification.
+```text
+Codex initially suggested broad workflow concerns such as role gating, audit events,
+hold-state behavior, schemas, errors, and workflow services. Those are real TaxPulse
+requirements later, but they are not covered by this validator's current tests. The human
+review decision was to reject that extra scope so the green step stayed minimal and did
+not ship untested behavior under a passing suite.
+```
 
 ## AI-tool reflection
 
-I accepted Codex's suggestion to make ADR and checklist expectations explicit because it
-makes review evidence easier to verify before merge. I rejected Codex's false reassurance
-that a documentation-only review proves tenant isolation, because tenant isolation must be
-checked in the actual implementation diff with typed boundaries, authorization behavior,
-and data-handling evidence.
+I accepted Codex's minimal typed transition-map suggestion because it keeps the validator
+pure and makes the forward, skipped, and `Review` send-back rules easy to audit in one
+place. I rejected broader workflow-service behavior such as role gates, audit logging,
+hold handling, schemas, and custom errors because none of the current tests pin those
+contracts down, and adding them here would blur the red-green-refactor evidence.
 
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli`.
+- Reviewers: request `Isiah Muli` as the ES reviewer.
 
 ## AI code-review checklist
 
 - [X] stage logic uses the Tax Plan Cycle workflow stage as the case condition and does not add a separate status field.
-- [X] Workflow changes keep stage transitions gated by role and current stage. No workflow code changed; this branch documents the rule in ADR-0001 and the PR checklist.
-- [X] typed boundaries are preserved with the existing TypeScript schema or Python Pydantic validation patterns. This branch does not change application boundaries.
+- [X] Workflow changes keep stage transitions gated by current stage in the pure validator; role gating is intentionally not added in this tested helper.
+- [X] typed boundaries are preserved with the existing TypeScript schema patterns.
 - [X] The diff contains no secrets, credentials, real client data, tenant data, or controlled data.
-- [X] Tests or documented verification cover the changed behavior, including relevant negative paths. Verification is documentation-focused and listed above.
+- [X] Tests or documented verification cover the changed behavior, including skipped transitions and rejected backward moves.
 - [X] AI-generated claims were checked against the diff and significant AI-assisted work was recorded in the prompt journal.
 - [X] ADR linked if this PR changes or implements an architectural decision; otherwise `N/A` is stated above.
 
 ## Deliverables checklist
 
-- [X] Summary explains what changed.
-- [X] Related ADR is linked, or `N/A` is stated for no architectural decision change.
-- [X] Testing lists only checks or verification actually performed.
-- [X] AI code-review checklist is completed.
-- [X] AI review output is pasted above as a quote or code block.
-- [X] "What it missed" note is pasted above as a quote or code block.
+- [X] Coverage summary is pasted above as a code block.
+- [X] Red-green-refactor git log is pasted above as a code block.
 - [X] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
+- [X] Deliverables checklist is included and completed.
 - [X] PR is self-assigned in Assignees.
-- [X] `Isiah Muli` is requested under Reviewers.
-
-
+- [X] `Isiah Muli` is requested under Reviewers as the ES reviewer.

@@ -68,10 +68,10 @@ A concise summary of Codex's response or generated output.
 
 ## Accepted or rejected
 
-Use `Accepted`, `Rejected`, or `Pending engineer review`.
+Use `Accepted` or `Rejected`.
 
-If the engineer explicitly accepts the work, write `Accepted` and include a concise `Why` based on the verified outcome. If the engineer explicitly rejects the work, write `Rejected` and use the engineer's stated reason. If the engineer has not accepted or rejected the work yet, write `Pending engineer review`.
+Set this field from the engineer's prompt language. If the engineer says yes, approved, accepted, looks good, love it, ship it, or asks to implement an already proposed plan, write `Accepted` and include a concise `Why` based on the verified outcome. If the engineer says no, rejected, not accepted, wrong, redo, or says not to build a proposed plan or feature, write `Rejected` and use the engineer's stated reason. In `/plan` work, a yes to the plan means `Accepted`; a no to the plan or feature means `Rejected`.
 
 ## Why
 
-For accepted work, write a genuine one-sentence reason grounded in what changed or what verification passed. For rejected work, use the engineer's stated reason. For pending work, write `Awaiting engineer acceptance reason.` Do not use placeholder text such as `Pending engineer reason`.
+For accepted work, write a genuine one-sentence reason grounded in what changed or what verification passed. For rejected work, use the engineer's stated reason. Do not use placeholder text such as `Pending engineer reason`.
