@@ -108,3 +108,13 @@ uv run --locked pytest
 ```
 
 The allowed application stacks remain TypeScript with Express and Python with FastAPI, as defined in [AGENTS.md](AGENTS.md).
+
+## API Drizzle Migrations
+
+The API package uses Drizzle for TypeScript-first PostgreSQL schema work. Generated
+migrations live in `apps/api/drizzle/`; the historical hand-written SQL migrations remain
+in `apps/api/db/migrations/` as the Deliverable 1-2 record.
+
+Drizzle does not create automatic down migrations. Rollback is a roll-forward repair:
+generate a new, higher-numbered migration that corrects the database state. Do not edit an
+applied migration, and do not add reverse migration files.

@@ -1,5 +1,5 @@
 import {
-  createCycleInRepository,
+  createCycleWithInitialTransitionForTenant,
   findCycleByIdForTenant,
   getCyclePingFromRepository,
   type CyclePing
@@ -7,10 +7,13 @@ import {
 import { NotFoundError } from "../errors/problem-json.js";
 import type {
   CreateCycleRequest,
+  CreateCycleResponse,
   CycleIdParams,
   CycleResponse,
   TenantContext
-} from "../schemas/cycle.schema.js";
+} from "../db/dto.js";
+
+const INITIAL_STAGE_TRANSITION_ACTOR = "TaxPulse System";
 
 export async function getCyclePing(): Promise<CyclePing> {
   return getCyclePingFromRepository();
@@ -23,8 +26,14 @@ export async function throwCycleError(): Promise<never> {
 export async function createCycle(
   tenantContext: TenantContext,
   input: CreateCycleRequest
-): Promise<CycleResponse> {
-  return createCycleInRepository(tenantContext, input);
+): Promise<CreateCycleResponse> {
+  const id = await createCycleWithInitialTransitionForTenant(tenantContext, input, {
+    actor: INITIAL_STAGE_TRANSITION_ACTOR,
+    from_stage: null,
+    to_stage: "Intake"
+  });
+
+  return { id };
 }
 
 export async function getCycleById(

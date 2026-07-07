@@ -7,12 +7,18 @@ import { z } from "zod";
 
 extendZodWithOpenApi(z);
 
-const { CreateCycleRequestSchema, CycleIdParamsSchema, CycleResponseSchema, TenantContextSchema } =
-  await import("../schemas/cycle.schema.js");
+const {
+  CreateCycleRequestSchema,
+  CreateCycleResponseSchema,
+  CycleIdParamsSchema,
+  CycleResponseSchema,
+  TenantContextSchema
+} = await import("../db/dto.js");
 
 const registry = new OpenAPIRegistry();
 
 const createCycleRequest = registry.register("CreateCycleRequest", CreateCycleRequestSchema);
+const createCycleResponse = registry.register("CreateCycleResponse", CreateCycleResponseSchema);
 const cycleResponse = registry.register("CycleResponse", CycleResponseSchema);
 const cycleIdParams = z.object({
   id: CycleIdParamsSchema.shape.id.openapi({
@@ -51,7 +57,7 @@ registry.registerPath({
     201: {
       content: {
         "application/json": {
-          schema: cycleResponse
+          schema: createCycleResponse
         }
       },
       description: "Tax Plan Cycle opened"
