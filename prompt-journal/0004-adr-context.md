@@ -4,11 +4,11 @@ dr
 
 Asked — Save the attached ADR-related context as a Markdown file and start a new prompt journal file for future entries.
 
-Produced — Saved the attached context to `helper/week-2-adr-context.md` and created this new prompt journal file.
+Produced — Saved the attached context to `helper/week-1-day-4-adr-context.md` and created this new prompt journal file.
 
 Accepted or rejected — Accepted.
 
-Why — The Week 2 ADR context is available in `helper/` and was used to guide the later ADR and PR-template work.
+Why — The Week 1 Day 4 ADR context is available in `helper/` and was used to guide the later ADR and PR-template work.
 
 # Entry 2
 
@@ -22,7 +22,7 @@ Why — The scaffold files were created in the expected locations and the conven
 
 # Entry 3
 
-Asked — Tighten `CONTRIBUTING.md` to document trunk-based branch naming, Conventional Commits, PR size and review expectations, guardrail links, and a README link, using the Week 2 ADR helper context.
+Asked — Tighten `CONTRIBUTING.md` to document trunk-based branch naming, Conventional Commits, PR size and review expectations, guardrail links, and a README link, using the Week 1 Day 4 ADR helper context.
 
 Produced — Updated the contributing guide with enforceable branch, commit, and pull request rules; linked `AGENTS.md` and `docs/data-classification.md`; and added the README contribution link.
 
@@ -42,7 +42,7 @@ Why — ADR-0001 now records the stage-only condition decision and the ADR index
 
 # Entry 5
 
-Asked — Update the repository-default pull request template with a TaxPulse-specific AI code-review checklist and ADR-link requirement, using the Week 2 ADR helper context.
+Asked — Update the repository-default pull request template with a TaxPulse-specific AI code-review checklist and ADR-link requirement, using the Week 1 Day 4 ADR helper context.
 
 Produced — Revised `.github/pull_request_template.md` with Summary, Related ADR, Testing, and AI code-review checklist sections, including checks for stage logic, typed boundaries, data handling, verification, AI-claim review, and ADR linking.
 
@@ -52,7 +52,7 @@ Why — The repository-default PR template now contains the required TaxPulse AI
 
 # Entry 6
 
-Asked — Create a local sample PR AI-review artifact from the current `m1d4-implementation` documentation diff, document what the AI review missed, and describe the future checklist acknowledgement gate, using the Week 2 ADR helper context.
+Asked — Create a local sample PR AI-review artifact from the current `m1d4-implementation` documentation diff, document what the AI review missed, and describe the future checklist acknowledgement gate, using the Week 1 Day 4 ADR helper context.
 
 Produced — Replaced `review/sample-pr-ai-review.md` with a structured local sample PR review, documented a false-reassurance issue about tenant isolation and controlled-data risk, explained how the checklist and a human reviewer catch it, and recorded that local artifact generation was selected because `gh` is unavailable.
 

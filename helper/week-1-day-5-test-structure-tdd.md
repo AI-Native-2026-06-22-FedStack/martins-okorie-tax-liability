@@ -1,4 +1,4 @@
-# Week 2 Test Structure And TDD Helper
+# Week 1 Day 5 Test Structure And TDD Helper
 
 Read this helper before doing TaxPulse test or TDD work. It preserves the available lesson notes on Arrange-Act-Assert, Given-When-Then, Red-Green-Refactor, human-led AI TDD, the test pyramid, coverage, negative paths, and interaction versus state assertions.
 

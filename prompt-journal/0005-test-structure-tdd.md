@@ -4,7 +4,7 @@
 
 Asked — Create the attached test/TDD note in `helper/` and create new prompt journal entry/file `0005`.
 
-Produced — Created `helper/week-2-test-structure-tdd.md` from the available attached lesson content and started `prompt-journal/0005-test-structure-tdd.md`.
+Produced — Created `helper/week-1-day-5-test-structure-tdd.md` from the available attached lesson content and started `prompt-journal/0005-test-structure-tdd.md`.
 
 Accepted or rejected — Accepted.
 
