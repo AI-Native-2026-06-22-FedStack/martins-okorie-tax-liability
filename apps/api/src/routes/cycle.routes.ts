@@ -7,12 +7,13 @@ import {
   throwCycleErrorController
 } from "../controllers/cycle.controller.js";
 import { requireAuth } from "../auth/verifier.js";
+import { tenantRateLimiter, tenantSlowDown } from "../middleware/rate-limit.js";
 
 export const cycleRouter = Router();
 
 cycleRouter.get("/ping", getCyclePingController);
 cycleRouter.get("/error", throwCycleErrorController);
-cycleRouter.post("/", requireAuth, createCycleController);
+cycleRouter.post("/", requireAuth, tenantSlowDown, tenantRateLimiter, createCycleController);
 cycleRouter.get("/:id", getCycleByIdController);
 
 interface ComputeRequestBody {
@@ -20,7 +21,7 @@ interface ComputeRequestBody {
   deductions?: unknown;
 }
 
-cycleRouter.post("/:id/compute", requireAuth, async (req, res) => {
+cycleRouter.post("/:id/compute", requireAuth, tenantSlowDown, tenantRateLimiter, async (req, res) => {
   const correlationId = req.correlationId;
   const token = req.headers.authorization;
   const body = req.body as ComputeRequestBody;
