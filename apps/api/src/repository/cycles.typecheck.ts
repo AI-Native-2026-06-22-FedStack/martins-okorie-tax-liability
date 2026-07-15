@@ -1,14 +1,11 @@
-import { listTaxPlanCyclesForTenant, type SqlClient } from "./cycles.js";
+import type { TaxPulseDb } from "../db/client.js";
+import { listTaxPlanCyclesForTenant } from "./cycles.js";
 
-const db: SqlClient = {
-  query() {
-    return Promise.resolve({ rows: [] });
-  }
-};
+const db = {} as TaxPulseDb;
 
-await listTaxPlanCyclesForTenant(db, {
+await listTaxPlanCyclesForTenant({
   tenant_id: "11111111-1111-4111-8111-111111111111"
-});
+}, db);
 
 // @ts-expect-error tenant_id is required for every Tax Plan Cycle read.
-await listTaxPlanCyclesForTenant(db, {});
+await listTaxPlanCyclesForTenant({}, db);

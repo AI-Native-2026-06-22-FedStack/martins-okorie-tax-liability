@@ -89,3 +89,13 @@ Produced — Replaced `describeWithDatabase` with plain `describe` in the Proble
 Accepted or rejected — Accepted.
 
 Why — Both fixes address valid PR feedback: the test now runs unconditionally without a false DB dependency, and the OpenAPI module avoids an unnecessary top-level await.
+
+# Entry 10
+
+Asked — M2D4 PR received approval with suggestion to add a `GET /cycles` route and consolidate the three list readers. Reviewer said to merge when ready.
+
+Produced — Merged latest `main` into `m2d4-implementation` (resolved conflicts in `openapi.ts` and `make-cycle.ts`), pushed the branch. PR is ready to merge on GitHub.
+
+Accepted or rejected — Accepted.
+
+Why — PR was approved by reviewer; merge conflicts from main were resolved preserving both the m2d4 Drizzle schema sources and the earlier PR fixes (static imports, no afterEach in factory).

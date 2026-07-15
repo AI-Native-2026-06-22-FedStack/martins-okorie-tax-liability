@@ -1,6 +1,7 @@
-import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { createDrizzleDb, type TaxPulseDb } from "../src/db/client.js";
+import { taxPlanCycle } from "../src/db/schema.js";
 import { listPlanCycleQueueForTenant } from "../src/repository/plan-cycle-queue.js";
 import {
   makeTaxPlanCycle,
@@ -8,14 +9,13 @@ import {
   type TaxPlanCycleStage
 } from "./factories/make-cycle.js";
 
-const { Client } = pg;
-
 const TENANT_A_ID = "11111111-1111-4111-8111-111111111111";
 const TENANT_B_ID = "22222222-2222-4222-8222-222222222222";
 
 const describeWithDatabase = process.env.TAXPULSE_TEST_DATABASE_URL ? describe : describe.skip;
 
-let db: pg.Client;
+let db: TaxPulseDb;
+let pool: ReturnType<typeof createDrizzleDb>["pool"];
 
 function dateFromToday(dayOffset: number): string {
   const date = new Date();
@@ -25,55 +25,7 @@ function dateFromToday(dayOffset: number): string {
 }
 
 async function insertTaxPlanCycle(row: TaxPlanCycleFactoryRow): Promise<void> {
-  await db.query(
-    `
-      INSERT INTO tax_plan_cycle (
-        id,
-        tenant_id,
-        client_id,
-        planning_period,
-        stage,
-        owner,
-        priority,
-        due_date,
-        on_hold,
-        hold_reason,
-        metadata,
-        created_at,
-        updated_at
-      )
-      VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8,
-        $9,
-        $10,
-        $11,
-        $12,
-        $13
-      )
-    `,
-    [
-      row.id,
-      row.tenant_id,
-      row.client_id,
-      row.planning_period,
-      row.stage,
-      row.owner,
-      row.priority,
-      row.due_date,
-      row.on_hold,
-      row.hold_reason,
-      row.metadata,
-      row.created_at,
-      row.updated_at
-    ]
-  );
+  await db.insert(taxPlanCycle).values(row);
 }
 
 describeWithDatabase("plan cycle queue read", () => {
@@ -84,12 +36,13 @@ describeWithDatabase("plan cycle queue read", () => {
       throw new Error("TAXPULSE_TEST_DATABASE_URL is required for plan cycle queue tests.");
     }
 
-    db = new Client({ connectionString });
-    await db.connect();
+    const connection = createDrizzleDb(connectionString);
+    db = connection.db;
+    pool = connection.pool;
   });
 
   afterAll(async () => {
-    await db.end();
+    await pool.end();
   });
 
   it("returns tenant cycles ordered by due date with a derived overdue flag and no cross-tenant leakage", async () => {
@@ -119,7 +72,7 @@ describeWithDatabase("plan cycle queue read", () => {
     await insertTaxPlanCycle(tenantAPastLater);
     await insertTaxPlanCycle(tenantAPastEarlier);
 
-    const rows = await listPlanCycleQueueForTenant(db, { tenant_id: TENANT_A_ID });
+    const rows = await listPlanCycleQueueForTenant({ tenant_id: TENANT_A_ID }, db);
 
     expect(rows.map((row) => row.id)).toEqual([
       tenantAPastEarlier.id,
@@ -146,7 +99,9 @@ describeWithDatabase("plan cycle queue read", () => {
     });
 
     await expect(insertTaxPlanCycle(invalidCycle)).rejects.toMatchObject({
-      constraint: "tax_plan_cycle_stage_check"
+      cause: {
+        constraint: "tax_plan_cycle_stage_check"
+      }
     });
   });
 });

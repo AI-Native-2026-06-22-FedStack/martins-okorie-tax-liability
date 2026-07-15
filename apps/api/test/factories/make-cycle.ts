@@ -1,5 +1,7 @@
 import { faker } from "@faker-js/faker";
 
+import type { NewTaxPlanCycle, TaxPlanCycleStage } from "../../src/db/schema.js";
+
 export const DEFAULT_TEST_TENANT_ID = "11111111-1111-4111-8111-111111111111";
 
 export const TAX_PLAN_CYCLE_STAGES = [
@@ -12,23 +14,13 @@ export const TAX_PLAN_CYCLE_STAGES = [
   "Archived"
 ] as const;
 
-export type TaxPlanCycleStage = (typeof TAX_PLAN_CYCLE_STAGES)[number];
+export type { TaxPlanCycleStage };
 
-export interface TaxPlanCycleFactoryRow {
+export type TaxPlanCycleFactoryRow = NewTaxPlanCycle & {
   id: string;
-  tenant_id: string;
-  client_id: string;
-  planning_period: string;
-  stage: TaxPlanCycleStage;
-  owner: string;
-  priority: string;
-  due_date: string;
-  on_hold: boolean;
-  hold_reason: string | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-}
+  created_at: Date;
+  updated_at: Date;
+};
 
 function dateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -53,8 +45,8 @@ export function makeTaxPlanCycle(
     on_hold: false,
     hold_reason: null,
     metadata: {},
-    created_at: now.toISOString(),
-    updated_at: now.toISOString(),
+    created_at: now,
+    updated_at: now,
     ...overrides
   };
 }

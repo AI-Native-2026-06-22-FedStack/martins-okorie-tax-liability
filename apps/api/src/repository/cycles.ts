@@ -1,53 +1,21 @@
-export interface SqlQueryResult<Row> {
-  rows: Row[];
-}
+import { asc, eq } from "drizzle-orm";
 
-export interface SqlClient {
-  query<Row>(sql: string, params: readonly unknown[]): Promise<SqlQueryResult<Row>>;
-}
+import { getDb, type TaxPulseDb } from "../db/client.js";
+import { taxPlanCycle, type TaxPlanCycle } from "../db/schema.js";
 
 export interface TenantScopedCycleQuery {
   tenant_id: string;
   limit?: number;
 }
 
-export interface TaxPlanCycleQueueRow {
-  id: string;
-  tenant_id: string;
-  client_id: string;
-  planning_period: string;
-  stage: string;
-  owner: string;
-  priority: string;
-  due_date: string;
-  on_hold: boolean;
-  hold_reason: string | null;
-}
-
 export async function listTaxPlanCyclesForTenant(
-  db: SqlClient,
-  { tenant_id, limit = 50 }: TenantScopedCycleQuery
-): Promise<TaxPlanCycleQueueRow[]> {
-  const result = await db.query<TaxPlanCycleQueueRow>(
-    `
-      SELECT
-        id,
-        tenant_id,
-        client_id,
-        planning_period,
-        stage,
-        owner,
-        priority,
-        due_date,
-        on_hold,
-        hold_reason
-      FROM tax_plan_cycle
-      WHERE tenant_id = $1
-      ORDER BY due_date ASC, id ASC
-      LIMIT $2
-    `,
-    [tenant_id, limit]
-  );
-
-  return result.rows;
+  { tenant_id, limit = 50 }: TenantScopedCycleQuery,
+  db: TaxPulseDb = getDb()
+): Promise<TaxPlanCycle[]> {
+  return db
+    .select()
+    .from(taxPlanCycle)
+    .where(eq(taxPlanCycle.tenant_id, tenant_id))
+    .orderBy(asc(taxPlanCycle.due_date), asc(taxPlanCycle.id))
+    .limit(limit);
 }

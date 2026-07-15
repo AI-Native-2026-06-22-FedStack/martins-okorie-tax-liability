@@ -27,6 +27,7 @@ const responseFields = [
   "due_date",
   "hold_reason",
   "id",
+  "metadata",
   "on_hold",
   "owner",
   "planning_period",
@@ -35,6 +36,8 @@ const responseFields = [
   "tenant_id",
   "updated_at"
 ];
+
+const createResponseFields = ["id"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -89,6 +92,10 @@ describe("OpenAPI document", () => {
       "CreateCycleRequest"
     );
     const responseSchema = requireSchemaWithProperties(schemas.CycleResponse, "CycleResponse");
+    const createResponseSchema = requireSchemaWithProperties(
+      schemas.CreateCycleResponse,
+      "CreateCycleResponse"
+    );
 
     expect(createSchema).toMatchObject({
       type: "object"
@@ -98,6 +105,7 @@ describe("OpenAPI document", () => {
     });
 
     expect(Object.keys(createSchema.properties ?? {}).sort()).toEqual(createFields);
+    expect(Object.keys(createResponseSchema.properties ?? {}).sort()).toEqual(createResponseFields);
     expect(Object.keys(responseSchema.properties ?? {}).sort()).toEqual(responseFields);
 
     const createRequestBody = paths["/cycles"]?.post?.requestBody;
@@ -108,6 +116,15 @@ describe("OpenAPI document", () => {
 
     expect(createRequestBody.content?.["application/json"]?.schema).toEqual({
       $ref: "#/components/schemas/CreateCycleRequest"
+    });
+
+    const createResponse = requireResponseWithContent(
+      paths["/cycles"]?.post?.responses?.["201"],
+      "POST /cycles"
+    );
+
+    expect(createResponse.content?.["application/json"]?.schema).toEqual({
+      $ref: "#/components/schemas/CreateCycleResponse"
     });
 
     const readOperation = paths["/cycles/{id}"]?.get;

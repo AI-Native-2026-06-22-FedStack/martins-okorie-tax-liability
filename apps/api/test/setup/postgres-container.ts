@@ -1,35 +1,30 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 
-const { Client } = pg;
+const { Pool } = pg;
 
 const currentDir = fileURLToPath(new URL(".", import.meta.url));
 const apiRoot = fileURLToPath(new URL("../../", import.meta.url));
-const migrationsDir = join(apiRoot, "db", "migrations");
+const migrationsFolder = join(apiRoot, "drizzle");
 const seedPath = join(apiRoot, "db", "seed.sql");
 
 async function applyMigrations(connectionString: string): Promise<void> {
-  const client = new Client({ connectionString });
-  await client.connect();
+  const pool = new Pool({ connectionString });
+  const db = drizzle(pool);
 
   try {
-    const migrationFiles = (await readdir(migrationsDir))
-      .filter((fileName) => fileName.endsWith(".sql"))
-      .sort();
-
-    for (const migrationFile of migrationFiles) {
-      const migrationSql = await readFile(join(migrationsDir, migrationFile), "utf8");
-      await client.query(migrationSql);
-    }
+    await migrate(db, { migrationsFolder });
 
     const seedSql = await readFile(seedPath, "utf8");
-    await client.query(seedSql);
+    await pool.query(seedSql);
   } finally {
-    await client.end();
+    await pool.end();
   }
 }
 

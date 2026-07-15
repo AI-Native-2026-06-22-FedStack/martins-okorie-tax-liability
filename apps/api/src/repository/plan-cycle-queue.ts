@@ -1,4 +1,7 @@
-import type { SqlClient } from "./cycles.js";
+import { asc, eq, lt } from "drizzle-orm";
+
+import { getDb, type TaxPulseDb } from "../db/client.js";
+import { taxPlanCycle } from "../db/schema.js";
 
 export interface PlanCycleQueueQuery {
   tenant_id: string;
@@ -19,45 +22,32 @@ export interface PlanCycleQueueRow {
   overdue: boolean;
 }
 
-export async function listPlanCycleQueueForTenant(
-  db: SqlClient,
-  { tenant_id, limit = 50 }: PlanCycleQueueQuery
-): Promise<PlanCycleQueueRow[]> {
-  const result = await db.query<PlanCycleQueueRow>(
-    `
-      WITH tenant_cycles AS (
-        SELECT
-          id,
-          tenant_id,
-          client_id,
-          planning_period,
-          stage,
-          owner,
-          priority,
-          due_date,
-          on_hold,
-          hold_reason
-        FROM tax_plan_cycle
-        WHERE tenant_id = $1
-      )
-      SELECT
-        id,
-        tenant_id,
-        client_id,
-        planning_period,
-        stage,
-        owner,
-        priority,
-        due_date::text AS due_date,
-        on_hold,
-        hold_reason,
-        due_date < now()::date AS overdue
-      FROM tenant_cycles
-      ORDER BY tenant_cycles.due_date ASC, id ASC
-      LIMIT $2
-    `,
-    [tenant_id, limit]
-  );
+function dateOnly(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
 
-  return result.rows;
+export async function listPlanCycleQueueForTenant(
+  { tenant_id, limit = 50 }: PlanCycleQueueQuery,
+  db: TaxPulseDb = getDb()
+): Promise<PlanCycleQueueRow[]> {
+  const today = dateOnly(new Date());
+
+  return db
+    .select({
+      client_id: taxPlanCycle.client_id,
+      due_date: taxPlanCycle.due_date,
+      hold_reason: taxPlanCycle.hold_reason,
+      id: taxPlanCycle.id,
+      on_hold: taxPlanCycle.on_hold,
+      overdue: lt(taxPlanCycle.due_date, today).mapWith(Boolean),
+      owner: taxPlanCycle.owner,
+      planning_period: taxPlanCycle.planning_period,
+      priority: taxPlanCycle.priority,
+      stage: taxPlanCycle.stage,
+      tenant_id: taxPlanCycle.tenant_id
+    })
+    .from(taxPlanCycle)
+    .where(eq(taxPlanCycle.tenant_id, tenant_id))
+    .orderBy(asc(taxPlanCycle.due_date), asc(taxPlanCycle.id))
+    .limit(limit);
 }

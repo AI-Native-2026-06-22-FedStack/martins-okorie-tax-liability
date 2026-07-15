@@ -7,11 +7,12 @@ import {
   throwCycleError
 } from "../services/cycle.service.js";
 import {
+  CreateCycleResponseSchema,
   CreateCycleRequestSchema,
   CycleIdParamsSchema,
   CycleResponseSchema,
   TenantContextSchema
-} from "../schemas/cycle.schema.js";
+} from "../db/dto.js";
 
 type EmptyParams = Record<string, never>;
 
@@ -31,9 +32,9 @@ export async function createCycleController(
     tenant_id: req.get("x-tenant-id")
   });
   const input = CreateCycleRequestSchema.parse(req.body);
-  const cycle = await createCycle(tenantContext, input);
+  const result = await createCycle(tenantContext, input);
 
-  res.status(201).json(CycleResponseSchema.parse(cycle));
+  res.status(201).json(CreateCycleResponseSchema.parse(result));
 }
 
 export async function getCycleByIdController(

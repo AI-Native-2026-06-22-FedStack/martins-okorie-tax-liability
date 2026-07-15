@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:check": "drizzle-kit check",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "test": "vitest run"
@@ -11,12 +14,18 @@
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8",
     "@scalar/express-api-reference": "latest",
+    "drizzle-orm": "^0.45.2",
     "express": "^5",
+    "pg": "^8.22.0",
     "pino-http": "^10",
     "zod": "^4"
   },
   "devDependencies": {
     "@types/express": "^5",
+    "@types/supertest": "^7.2.0",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-zod": "^0.8.3",
+    "supertest": "^7.2.2",
     "tsx": "^4"
   }
 }
