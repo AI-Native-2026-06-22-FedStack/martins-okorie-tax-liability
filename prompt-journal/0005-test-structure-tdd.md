@@ -4,7 +4,7 @@
 
 Asked — Create the attached test/TDD note in `helper/` and create new prompt journal entry/file `0005`.
 
-Produced — Created `helper/week-2-test-structure-tdd.md` from the available attached lesson content and started `prompt-journal/0005-test-structure-tdd.md`.
+Produced — Created `helper/week-1-day-5-test-structure-tdd.md` from the available attached lesson content and started `prompt-journal/0005-test-structure-tdd.md`.
 
 Accepted or rejected — Accepted.
 
@@ -69,3 +69,13 @@ Produced — Prepared the coverage gate, PR evidence artifact, prompt-journal ac
 Accepted or rejected — Accepted.
 
 Why — The requested commit groups the verified coverage configuration, PR evidence, and journal instruction updates into a single reviewable change.
+
+# Entry 8
+
+Asked — Implement the accepted plan to create an ignored M1D5 deliverables checklist that maps deliverables to relevant code, docs, tests, and prompt-journal evidence.
+
+Produced — Added `local-deliverables/` to `.gitignore`, created `local-deliverables/m1d5-deliverables-checklist.md` as a local-only checklist, and seeded it with TypeScript, Python, ADR/docs, review/evidence, helper, and prompt-journal tie-ins.
+
+Accepted or rejected — Accepted.
+
+Why — The engineer explicitly requested implementation of the accepted plan, and verification confirmed the checklist path is ignored while the tracked governance updates remain visible.

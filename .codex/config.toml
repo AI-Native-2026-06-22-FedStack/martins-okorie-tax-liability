@@ -4,3 +4,12 @@
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 approval_policy = "on-request"
+
+[mcp_servers.postgres]
+command = "npx"
+args = [
+  "-y",
+  "@modelcontextprotocol/server-postgres",
+  "postgresql://martinsokorie@localhost:5433/taxpulse_mcp_explain_20260707"
+]
+startup_timeout_sec = 30
