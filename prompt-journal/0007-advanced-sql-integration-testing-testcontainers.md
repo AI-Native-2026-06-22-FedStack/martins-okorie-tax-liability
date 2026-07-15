@@ -69,3 +69,23 @@ Produced — Started Docker Desktop, verified `docker ps`, ran API/root typechec
 Accepted or rejected — Accepted.
 
 Why — The PR description now includes actual Docker-backed Testcontainers evidence, a demonstrated ordering-regression failure, PR routing, and the completed M2D2 deliverables checklist.
+
+# Entry 8
+
+Asked — Address PR review comment: move `afterEach` database cleanup hook from `test/factories/make-cycle.ts` into a dedicated setup file so the test lifecycle is visible.
+
+Produced — Created `test/setup/db-cleanup.ts` with the `afterEach` truncation hook, removed the hook and its `pg`/`vitest` imports from `make-cycle.ts`, and registered the new file via `setupFiles` in `vitest.config.ts`.
+
+Accepted or rejected — Accepted.
+
+Why — The factory file now contains only data-building logic, and the cleanup lifecycle is visible in the setup layer where readers expect it.
+
+# Entry 9
+
+Asked — Address two m2d3 PR review comments: (1) remove the unnecessary `describeWithDatabase` skip guard from `problem-json.test.ts` since the test doesn't use the DB, and (2) replace the unnecessary `await import(...)` with a static import in `openapi.ts`.
+
+Produced — Replaced `describeWithDatabase` with plain `describe` in the Problem+JSON test (repository is in-memory stubs, no DB needed). Replaced the top-level `await import(...)` dynamic import in `openapi.ts` with a static `import` while keeping the required `extendZodWithOpenApi(z)` call.
+
+Accepted or rejected — Accepted.
+
+Why — Both fixes address valid PR feedback: the test now runs unconditionally without a false DB dependency, and the OpenAPI module avoids an unnecessary top-level await.
