@@ -20,3 +20,14 @@ Accepted or rejected — Accepted.
 
 Why — Correlation ID propagation and structured JSON logging are fully implemented, verified, and test suites are green across both Node and Python runtimes.
 
+## Entry 3
+
+Asked — Implement boundary logging redaction driven by a shared config in both Express (Node) and FastAPI (Python), and verify with tests on success and error paths.
+
+Produced — Created a shared `shared/redaction-config.json` defining sensitive paths. Created `apps/api/src/logging/redaction-config.ts` exporting paths for pino's redact option. Implemented recursive `redact_processor` inside `services/compute/app/logging_config.py` using repository-root parent directory parsing to dynamically load config keys. Wrote redaction tests in `apps/api/test/logging/redaction.test.ts` and `services/compute/tests/test_redaction.py`. Verified that removing a key from the list causes tests to fail in both runtimes and restoring it passes.
+
+Accepted or rejected — Accepted.
+
+Why — Centralized boundary redaction works flawlessly across both runtimes, and the regression tests prove that sensitive data is censored correctly.
+
+

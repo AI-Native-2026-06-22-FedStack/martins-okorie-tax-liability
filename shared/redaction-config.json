@@ -1,0 +1,38 @@
+{
+  "camelCase": [
+    "income",
+    "deductions",
+    "deduction",
+    "password",
+    "token",
+    "authorization",
+    "mfaSecret",
+    "secret",
+    "*.income",
+    "*.deductions",
+    "*.deduction",
+    "*.password",
+    "*.token",
+    "*.authorization",
+    "*.mfaSecret",
+    "*.secret"
+  ],
+  "snake_case": [
+    "income",
+    "deductions",
+    "deduction",
+    "password",
+    "token",
+    "authorization",
+    "mfa_secret",
+    "secret",
+    "*.income",
+    "*.deductions",
+    "*.deduction",
+    "*.password",
+    "*.token",
+    "*.authorization",
+    "*.mfa_secret",
+    "*.secret"
+  ]
+}

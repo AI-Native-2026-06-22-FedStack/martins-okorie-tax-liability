@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { pinoHttp } from "pino-http";
 import type { pino } from "pino";
 
+import { REDACT_PATHS } from "./redaction-config.js";
+
 declare global {
   namespace Express {
     interface Request {
@@ -17,6 +19,10 @@ const correlationHttp = pinoHttp({
     level: (label) => {
       return { level: label };
     }
+  },
+  redact: {
+    paths: REDACT_PATHS,
+    censor: "[REDACTED]"
   },
   genReqId: (req) => {
     // Reuse the correlation ID determined by the outer middleware
