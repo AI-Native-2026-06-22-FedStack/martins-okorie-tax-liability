@@ -1,0 +1,22 @@
+{
+  "name": "@taxpulse/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8",
+    "@scalar/express-api-reference": "latest",
+    "express": "^5",
+    "pino-http": "^10",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@types/express": "^5",
+    "tsx": "^4"
+  }
+}
