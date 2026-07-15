@@ -3,7 +3,7 @@
   "compilerOptions": {
     "noEmit": true,
     "outDir": "../../dist/apps/api",
-    "rootDir": "./src"
+    "rootDir": "."
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"]
 }
