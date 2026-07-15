@@ -3,6 +3,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { app } from "../src/app.js";
+import { signAccessToken } from "../src/auth/tokens.js";
 import { closeDefaultDb, createDrizzleDb, type TaxPulseDb } from "../src/db/client.js";
 import { stageTransition } from "../src/db/schema.js";
 import "./factories/make-cycle.js";
@@ -34,6 +35,9 @@ describeWithDatabase("cycle create-and-read slice", () => {
   });
 
   it("creates a cycle, reads it back tenant-scoped, and writes the initial transition", async () => {
+    const tokenA = signAccessToken({ sub: "user-123", tenant_id: TENANT_A_ID, role: "Advisor" });
+    const tokenB = signAccessToken({ sub: "user-456", tenant_id: TENANT_B_ID, role: "Advisor" });
+
     const createBody = {
       client_id: "client-fictional-slice-001",
       due_date: "2026-09-30",
@@ -46,7 +50,7 @@ describeWithDatabase("cycle create-and-read slice", () => {
 
     const createResponse = await request(app)
       .post("/cycles")
-      .set("x-tenant-id", TENANT_A_ID)
+      .set("Authorization", `Bearer ${tokenA}`)
       .send(createBody)
       .expect(201);
 
@@ -60,6 +64,7 @@ describeWithDatabase("cycle create-and-read slice", () => {
 
     const readResponse = await request(app)
       .get(`/cycles/${caseId}`)
+      .set("Authorization", `Bearer ${tokenA}`)
       .set("x-tenant-id", TENANT_A_ID)
       .expect(200);
 
@@ -70,7 +75,11 @@ describeWithDatabase("cycle create-and-read slice", () => {
       tenant_id: TENANT_A_ID
     });
 
-    await request(app).get(`/cycles/${caseId}`).set("x-tenant-id", TENANT_B_ID).expect(404);
+    await request(app)
+      .get(`/cycles/${caseId}`)
+      .set("Authorization", `Bearer ${tokenB}`)
+      .set("x-tenant-id", TENANT_B_ID)
+      .expect(404);
 
     const transitions = await db
       .select()

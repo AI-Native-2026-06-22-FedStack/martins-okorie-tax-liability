@@ -15,10 +15,17 @@ cycleRouter.get("/error", throwCycleErrorController);
 cycleRouter.post("/", requireAuth, createCycleController);
 cycleRouter.get("/:id", getCycleByIdController);
 
+interface ComputeRequestBody {
+  income?: unknown;
+  deductions?: unknown;
+}
+
 cycleRouter.post("/:id/compute", requireAuth, async (req, res) => {
   const correlationId = req.correlationId;
   const token = req.headers.authorization;
-  const { income, deductions } = req.body;
+  const body = req.body as ComputeRequestBody;
+  const incomeVal = typeof body.income === "number" ? body.income : 0;
+  const deductionsVal = typeof body.deductions === "number" ? body.deductions : 0;
 
   try {
     const response = await fetch("http://127.0.0.1:8000/compute/tax-liability", {
@@ -29,8 +36,8 @@ cycleRouter.post("/:id/compute", requireAuth, async (req, res) => {
         "x-correlation-id": correlationId
       },
       body: JSON.stringify({
-        income: income ?? 0,
-        deductions: deductions ?? 0
+        income: incomeVal,
+        deductions: deductionsVal
       })
     });
 
@@ -42,8 +49,9 @@ cycleRouter.post("/:id/compute", requireAuth, async (req, res) => {
     const data = await response.json();
     req.log.info({ data }, "Compute service call successful");
     return res.json(data);
-  } catch (err: any) {
-    req.log.error({ err }, "Failed to connect to compute service");
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    req.log.error({ err: errMsg }, "Failed to connect to compute service");
     return res.status(502).json({ detail: "Bad Gateway" });
   }
 });

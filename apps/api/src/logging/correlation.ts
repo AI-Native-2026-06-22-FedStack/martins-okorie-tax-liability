@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { randomUUID } from "node:crypto";
+import type { IncomingMessage } from "node:http";
+import type { NextFunction, Request, Response } from "express";
 import { pinoHttp } from "pino-http";
 import type { pino } from "pino";
 
@@ -7,7 +10,7 @@ import { REDACT_PATHS } from "./redaction-config.js";
 declare global {
   namespace Express {
     interface Request {
-      correlationId: string;
+      correlationId?: string;
       log: pino.Logger;
     }
   }
@@ -24,12 +27,14 @@ const correlationHttp = pinoHttp({
     paths: REDACT_PATHS,
     censor: "[REDACTED]"
   },
-  genReqId: (req) => {
+  genReqId: (req: IncomingMessage) => {
     // Reuse the correlation ID determined by the outer middleware
-    return (req as any).correlationId || randomUUID();
+    const expressReq = req as unknown as Request;
+    return expressReq.correlationId || randomUUID();
   },
-  customProps: (req) => {
-    return { correlationId: req.id };
+  customProps: (req: IncomingMessage) => {
+    const expressReq = req as unknown as Request;
+    return { correlationId: expressReq.id };
   }
 });
 
@@ -37,7 +42,7 @@ const correlationHttp = pinoHttp({
  * Express middleware that reuses or generates a correlation ID.
  * Sets the header on the response early, then delegates to pino-http for logger wrapping.
  */
-export function correlationMiddleware(req: any, res: any, next: any): void {
+export function correlationMiddleware(req: Request, res: Response, next: NextFunction): void {
   const incomingId = req.header("x-correlation-id") || req.header("x-request-id");
   const correlationId = incomingId ? String(incomingId) : randomUUID();
 

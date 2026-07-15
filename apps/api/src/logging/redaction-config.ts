@@ -1,9 +1,5 @@
 import fs from "node:fs";
-import path from "node:url";
 
-// Load path relative to this ES module
-const __filename = path.fileURLToPath(import.meta.url);
-const __dirname = path.fileURLToPath(new URL(".", import.meta.url));
 const configPath = new URL("../../../../shared/redaction-config.json", import.meta.url);
 
 interface RedactionConfig {
@@ -11,9 +7,9 @@ interface RedactionConfig {
   snake_case: string[];
 }
 
-// Read the shared JSON configuration file synchronously
+// Read the shared JSON configuration file synchronously and cast as unknown first to avoid unsafe any assignment
 const configContent = fs.readFileSync(configPath, "utf8");
-const config: RedactionConfig = JSON.parse(configContent);
+const config = JSON.parse(configContent) as unknown as RedactionConfig;
 
 /**
  * Declared sensitive fields list for Express boundary logging redaction.

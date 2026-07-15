@@ -29,6 +29,10 @@ async function applyMigrations(connectionString: string): Promise<void> {
 }
 
 export default async function setupPostgresContainer(): Promise<() => Promise<void>> {
+  if (process.env.TAXPULSE_TEST_DATABASE_URL) {
+    return async () => {};
+  }
+
   let container: StartedPostgreSqlContainer | undefined;
 
   container = await new PostgreSqlContainer("postgres:17-alpine").start();

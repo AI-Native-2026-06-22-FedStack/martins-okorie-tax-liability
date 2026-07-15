@@ -30,4 +30,26 @@ Accepted or rejected — Accepted.
 
 Why — Centralized boundary redaction works flawlessly across both runtimes, and the regression tests prove that sensitive data is censored correctly.
 
+## Entry 4
+
+Asked — Expose transition validator via a role-gated PATCH /cycles/:id/transition endpoint, logging every success/denied attempt as a complete, validated, append-only audit entry.
+
+Produced — Created Zod schema `AuditEntrySchema` in `apps/api/src/audit/audit-entry.schema.ts`. Documented decisions in `docs/adr/0004-audit-schema.md`. Added Drizzle migration `0002_remarkable_professor_monster.sql` introducing `audit_entry` table and Postgres triggers to block update/delete actions. Implemented regex-based numeric amount scrubbing inside `apps/api/src/audit/audit-render.ts`. Built transaction-aware `writeAuditEntry` database writer inside `apps/api/src/audit/audit-writer.ts`. Wrote `apps/api/src/routes/cycle-transition.routes.ts` protecting stage mutations with permission checks. Wired route in `apps/api/src/app.ts` and wrote verification tests in `apps/api/test/logging/transition-audit.test.ts`.
+
+Accepted or rejected — Accepted.
+
+Why — Transition routing, permission matrix, and append-only immutability triggers are fully implemented and verified via TypeScript compilation and Vitest checks.
+
+## Entry 5
+
+Asked — Support running database-dependent tests against a local PostgreSQL database by configuring connections, applying migrations/seeds, and fixing test suites (replay blocks, tenant contexts, testcontainer bypasses).
+
+Produced — Seeded local database with default tenants from `apps/api/db/seed.sql`. Configured testcontainer bypass inside `apps/api/test/setup/postgres-container.ts` if `TAXPULSE_TEST_DATABASE_URL` is set. Standardized tenant presence via a `beforeEach` hook inside `apps/api/test/setup/db-cleanup.ts`. Updated E2E tests in `apps/api/test/cycle-slice.e2e.test.ts` to supply valid Bearer tokens and headers. Updated `apps/api/test/auth/auth.attacks.test.ts` to utilize dynamic, unique Base32 secrets per test via a `beforeEach` update query.
+
+Accepted or rejected — Accepted.
+
+Why — The complete test suite now executes and passes 100% cleanly on the local database (39 Vitest tests, 14 pytest tests) with zero errors.
+
+
+
 
