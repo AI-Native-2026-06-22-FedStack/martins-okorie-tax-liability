@@ -1,5 +1,5 @@
+import "./extend-zod.js";
 import {
-  extendZodWithOpenApi,
   OpenAPIRegistry,
   OpenApiGeneratorV31
 } from "@asteasolutions/zod-to-openapi";
@@ -12,8 +12,6 @@ import {
   CycleResponseSchema,
   TenantContextSchema
 } from "../db/dto.js";
-
-extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
 

@@ -6,10 +6,11 @@ import {
   getCyclePingController,
   throwCycleErrorController
 } from "../controllers/cycle.controller.js";
+import { requireAuth } from "../auth/verifier.js";
 
 export const cycleRouter = Router();
 
 cycleRouter.get("/ping", getCyclePingController);
 cycleRouter.get("/error", throwCycleErrorController);
-cycleRouter.post("/", createCycleController);
+cycleRouter.post("/", requireAuth, createCycleController);
 cycleRouter.get("/:id", getCycleByIdController);
