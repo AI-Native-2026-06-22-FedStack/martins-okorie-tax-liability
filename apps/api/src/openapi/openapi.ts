@@ -52,7 +52,7 @@ const response429 = {
     "Retry-After": {
       description: "Seconds until the rate-limit window resets",
       schema: { type: "integer", example: 60 }
-    },
+    } as const,
     RateLimit: {
       description:
         "IETF draft-8 combined header: quota name, remaining (r=), and reset (t=)",
@@ -60,14 +60,14 @@ const response429 = {
         type: "string",
         example: '"100-in-1min"; r=0; t=42'
       }
-    },
+    } as const,
     "RateLimit-Policy": {
       description: "Policy: quota (q=), window seconds (w=), partition key (pk=)",
       schema: {
         type: "string",
         example: '"100-in-1min"; q=100; w=60; pk=:dGVuYW50X2lk:'
       }
-    }
+    } as const
   },
   content: {
     "application/problem+json": {
@@ -79,6 +79,48 @@ const response429 = {
       })
     }
   }
+};
+
+const rateLimitHeaders = {
+  RateLimit: {
+    description:
+      "IETF draft-8 combined header for the current request: quota name, remaining (r=), and reset (t=)",
+    schema: {
+      type: "string",
+      example: '"3-in-1min"; r=2; t=42'
+    }
+  } as const,
+  "RateLimit-Policy": {
+    description: "IETF draft-8 quota policy: quota (q=), window seconds (w=), and partition key (pk=)",
+    schema: {
+      type: "string",
+      example: '"3-in-1min"; q=3; w=60; pk=:dGVuYW50X2lk:'
+    }
+  } as const
+};
+
+const costAccountingHeaders = {
+  "X-Request-Cost": {
+    description:
+      "TaxPulse advisory cost units accounted for this request. Value is per-request, per-tenant, and reflects the operation performed.",
+    schema: {
+      type: "integer",
+      example: 2
+    }
+  } as const,
+  "X-Quota-Remaining": {
+    description:
+      "TaxPulse advisory remaining tenant quota for the current rate-limit window, derived from the RateLimit r= value.",
+    schema: {
+      type: "integer",
+      example: 2
+    }
+  } as const
+};
+
+const allowedQuotaHeaders = {
+  ...rateLimitHeaders,
+  ...costAccountingHeaders
 };
 
 // ─── Schema registration ──────────────────────────────────────────────────────
@@ -127,6 +169,7 @@ registry.registerPath({
           schema: createCycleResponse
         }
       },
+      headers: allowedQuotaHeaders,
       description: "Tax Plan Cycle opened"
     },
     401: response401,
@@ -149,6 +192,7 @@ registry.registerPath({
           schema: cycleResponse
         }
       },
+      headers: costAccountingHeaders,
       description: "Tax Plan Cycle found"
     },
     404: {
@@ -156,6 +200,35 @@ registry.registerPath({
     }
   },
   summary: "Get a tenant-scoped Tax Plan Cycle"
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/cycles/{id}/compute",
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: cycleIdParams,
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            income: z.number().optional().openapi({ example: 250000 }),
+            deductions: z.number().optional().openapi({ example: 40000 })
+          })
+        }
+      },
+      required: true
+    }
+  },
+  responses: {
+    200: {
+      description: "Real-time tax-liability calculation returned",
+      headers: allowedQuotaHeaders
+    },
+    401: response401,
+    429: response429
+  },
+  summary: "Compute real-time tax liability for a Tax Plan Cycle"
 });
 
 registry.registerPath({
@@ -177,7 +250,10 @@ registry.registerPath({
     }
   },
   responses: {
-    200: { description: "Stage transition recorded and audit entry written" },
+    200: {
+      description: "Stage transition recorded and audit entry written",
+      headers: allowedQuotaHeaders
+    },
     401: response401,
     403: { description: "Forbidden — role not authorized for this transition" },
     429: response429
@@ -201,4 +277,3 @@ export const openApiDocument = generator.generateDocument({
     }
   ]
 });
-

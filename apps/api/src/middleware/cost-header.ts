@@ -3,39 +3,42 @@ import type { NextFunction, Request, Response } from "express";
 /**
  * cost-header.ts — Quota and cost-accounting response middleware.
  *
- * Emits two non-standard advisory headers on every response so consumers can
- * track per-request cost and cumulative quota consumption without needing a
- * separate quota API call:
+ * Emits two advisory headers on every response so consumers can track
+ * per-request cost and remaining quota without a separate quota API call.
+ * Enforcement is the job of the rate limiter — these headers are informational.
  *
- *   X-Request-Cost:       integer — the relative cost unit charged for this
- *                         operation (write=2, read=1, transition=3).
- *   X-Quota-Used:         integer — running tally of cost units consumed by
- *                         this tenant in the current rate-limit window.
- *                         Derived from the limiter's `ratelimit` header that
- *                         express-rate-limit already sets on the response.
+ *   X-Request-Cost      — cost units charged for this specific operation.
+ *                         Reflects the operation type (write > read, transition highest).
+ *                         Configurable via COST_WRITE / COST_TRANSITION /
+ *                         COST_COMPUTE / COST_READ env vars.
  *
- * These are advisory only: enforcement is the job of the rate limiter.
- * A platform engineer can adjust COST_WRITE / COST_TRANSITION / COST_READ via
- * env vars without a code change.
+ *   X-Quota-Remaining   — requests remaining in the tenant's current window,
+ *                         read from the IETF draft-8 `RateLimit` header's r= field
+ *                         (set by express-rate-limit before this middleware writes headers).
+ *
+ * Header spec citation: IETF draft-ietf-httpapi-ratelimit-headers (not RFC 9239,
+ * which defines JavaScript media types and has nothing to do with rate limiting).
  */
 
 const COST_WRITE = Number(process.env.COST_WRITE ?? 2);
 const COST_TRANSITION = Number(process.env.COST_TRANSITION ?? 3);
+const COST_COMPUTE = Number(process.env.COST_COMPUTE ?? 4);
 const COST_READ = Number(process.env.COST_READ ?? 1);
 
 function routeCost(method: string, path: string): number {
   if (path.includes("/transition")) return COST_TRANSITION;
+  if (path.includes("/compute")) return COST_COMPUTE;
   if (method === "POST" || method === "PATCH" || method === "PUT" || method === "DELETE")
     return COST_WRITE;
   return COST_READ;
 }
 
 /**
- * Parses the IETF draft-8 `RateLimit` response header emitted by
- * express-rate-limit and extracts the remaining quota value.
+ * Parses the IETF draft-8 `RateLimit` response header emitted by express-rate-limit
+ * and extracts the remaining quota (r=) field.
  *
  * Header example:  "100-in-1min"; r=97; t=42
- * Returns the `r` (remaining) field as a number, or null if absent/unparseable.
+ * Returns the r value as a number, or null if absent/unparseable.
  */
 function parseRateLimitRemaining(header: string | undefined): number | null {
   if (!header) return null;
@@ -44,26 +47,25 @@ function parseRateLimitRemaining(header: string | undefined): number | null {
 }
 
 /**
- * Mount on every route (or selected routes) as a response-phase middleware.
- * Sets X-Request-Cost eagerly (before the handler runs) and defers
- * X-Quota-Used to just before the first response write so it can read the
- * RateLimit header that express-rate-limit has already set.
+ * Mount globally via app.use() after correlationMiddleware.
+ * Sets X-Request-Cost eagerly (value is known before the handler runs) and
+ * injects X-Quota-Remaining via a writeHead intercept so it can read the
+ * RateLimit header that express-rate-limit sets before the response flushes.
  */
 export function costHeaderMiddleware(req: Request, res: Response, next: NextFunction): void {
   const cost = routeCost(req.method, req.path);
 
-  // Set cost header immediately — it is known before the handler runs
+  // X-Request-Cost is set immediately — value is route-determined, not runtime-dependent
   res.setHeader("X-Request-Cost", String(cost));
 
-  // Intercept writeHead to inject X-Quota-Used while headers are still mutable
+  // Intercept writeHead to inject X-Quota-Remaining while headers are still mutable.
+  // writeHead is the last moment before bytes leave the socket.
   const originalWriteHead = res.writeHead.bind(res);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (res as any).writeHead = function (...args: Parameters<typeof res.writeHead>) {
     const remaining = parseRateLimitRemaining(res.getHeader("RateLimit") as string | undefined);
-    const limit = Number(process.env.RATE_LIMIT_MAX ?? 100);
     if (remaining !== null) {
-      const used = (limit - remaining) * cost;
-      res.setHeader("X-Quota-Used", String(used));
+      res.setHeader("X-Quota-Remaining", String(remaining));
     }
     return originalWriteHead(...args);
   };

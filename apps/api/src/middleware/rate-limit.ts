@@ -1,8 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import slowDown from "express-slow-down";
-import Redis from "ioredis";
-import { RedisStore } from "rate-limit-redis";
+import { Redis } from "ioredis";
+import { RedisStore, type RedisReply } from "rate-limit-redis";
+
+import { sendProblem } from "../errors/problem-json.js";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
@@ -13,7 +15,7 @@ export const redisClient = new Redis(redisUrl, {
   retryStrategy: () => null // do not auto-reconnect; the app reconnects on next startup
 });
 
-redisClient.on("error", (err) => {
+redisClient.on("error", (err: Error) => {
   // Silent fail-open log warning on socket error
   console.warn("Redis connection error, rate limiting will fail-open:", err.message);
 });
@@ -37,7 +39,11 @@ const limiterStore = new RedisStore({
     if (redisClient.status !== "ready") {
       throw new Error("Redis client is not ready");
     }
-    return redisClient.call(args[0], ...args.slice(1));
+    const [command, ...commandArgs] = args;
+    if (!command) {
+      throw new Error("Redis command is required");
+    }
+    return redisClient.call(command, ...commandArgs) as Promise<RedisReply>;
   }
 });
 
@@ -51,15 +57,17 @@ const rawLimiter = rateLimit({
   store: limiterStore,
   keyGenerator: (req: Request) => {
     // Key by tenant_id claim derived from verified JWT verifier (req.user.tenant_id)
-    return req.user?.tenant_id ?? req.get("x-tenant-id") ?? ipKeyGenerator(req);
+    return req.user?.tenant_id ?? req.get("x-tenant-id") ?? ipKeyGenerator(req.ip ?? "");
   },
   handler: (req: Request, res: Response) => {
-    const retryAfter = res.getHeader("Retry-After");
-    res.status(429).json({
+    // Retry-After is already set by express-rate-limit before this handler is called.
+    const retryAfter = res.getHeader("Retry-After") ?? 60;
+    sendProblem(res, {
       type: "about:blank",
       title: "Too Many Requests",
       status: 429,
-      detail: `Rate limit exceeded. Retry after ${retryAfter || 60} seconds.`
+      detail: `Per-tenant rate limit exceeded. Retry after ${retryAfter} seconds.`,
+      instance: req.originalUrl
     });
   }
 });
@@ -71,7 +79,11 @@ const slowDownStore = new RedisStore({
     if (redisClient.status !== "ready") {
       throw new Error("Redis client is not ready");
     }
-    return redisClient.call(args[0], ...args.slice(1));
+    const [command, ...commandArgs] = args;
+    if (!command) {
+      throw new Error("Redis command is required");
+    }
+    return redisClient.call(command, ...commandArgs) as Promise<RedisReply>;
   }
 });
 
@@ -86,7 +98,7 @@ const rawSlowDown = slowDown({
   },
   store: slowDownStore,
   keyGenerator: (req: Request) => {
-    return req.user?.tenant_id ?? req.get("x-tenant-id") ?? ipKeyGenerator(req);
+    return req.user?.tenant_id ?? req.get("x-tenant-id") ?? ipKeyGenerator(req.ip ?? "");
   }
 });
 
