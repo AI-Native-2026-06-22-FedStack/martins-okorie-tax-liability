@@ -69,3 +69,13 @@ Produced — Started Docker Desktop, verified `docker ps`, ran API/root typechec
 Accepted or rejected — Accepted.
 
 Why — The PR description now includes actual Docker-backed Testcontainers evidence, a demonstrated ordering-regression failure, PR routing, and the completed M2D2 deliverables checklist.
+
+# Entry 8
+
+Asked — Address PR review comment: move `afterEach` database cleanup hook from `test/factories/make-cycle.ts` into a dedicated setup file so the test lifecycle is visible.
+
+Produced — Created `test/setup/db-cleanup.ts` with the `afterEach` truncation hook, removed the hook and its `pg`/`vitest` imports from `make-cycle.ts`, and registered the new file via `setupFiles` in `vitest.config.ts`.
+
+Accepted or rejected — Accepted.
+
+Why — The factory file now contains only data-building logic, and the cleanup lifecycle is visible in the setup layer where readers expect it.
