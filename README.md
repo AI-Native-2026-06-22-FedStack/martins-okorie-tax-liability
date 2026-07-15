@@ -9,6 +9,7 @@ Before contributing, read:
 - [CONTRIBUTING.md](CONTRIBUTING.md) for the trunk-based workflow, branch naming, Conventional Commits, and PR review expectations.
 - [AGENTS.md](AGENTS.md) for the repo-level Codex instructions, allowed stack, data-handling rules, and prompt-journal expectations.
 - [docs/data-classification.md](docs/data-classification.md) for the PUBLIC, CUI, and SBU data rules that govern what may enter prompts, code, tests, logs, and docs.
+- [docs/boundaries.md](docs/boundaries.md) for the Core Case Service and Tax Engine bounded-context map and anti-shared-DB rule.
 - [docs/adr/README.md](docs/adr/README.md) for the Architecture Decision Record index.
 
 The bright line is simple: synthetic or PUBLIC data may enter a prompt; real CUI/SBU data and secrets never do.

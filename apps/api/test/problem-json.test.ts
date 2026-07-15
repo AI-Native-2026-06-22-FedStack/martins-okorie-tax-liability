@@ -41,7 +41,7 @@ describe("Problem+JSON error responses", () => {
 
   it("returns exactly the RFC 9457 members for a malformed cycle create request", async () => {
     const token = signAccessToken({ sub: "user-123", tenant_id: TENANT_ID, role: "Firm Admin" });
-    const response = await fetch(`${baseUrl}/cycles`, {
+    const response = await fetch(`${baseUrl}/v1/cycles`, {
       body: JSON.stringify({
         due_date: "2026-12-31",
         owner: "Fictional Advisor",
@@ -61,7 +61,7 @@ describe("Problem+JSON error responses", () => {
     expect(response.headers.get("content-type")).toContain("application/problem+json");
     expect(Object.keys(body).sort()).toEqual(["detail", "instance", "status", "title", "type"]);
     expect(body).toMatchObject({
-      instance: "/cycles",
+      instance: "/v1/cycles",
       status: 400,
       title: "Invalid Request",
       type: "about:blank"

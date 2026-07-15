@@ -49,7 +49,7 @@ describeWithDatabase("cycle create-and-read slice", () => {
     };
 
     const createResponse = await request(app)
-      .post("/cycles")
+      .post("/v1/cycles")
       .set("Authorization", `Bearer ${tokenA}`)
       .send(createBody)
       .expect(201);
@@ -63,7 +63,7 @@ describeWithDatabase("cycle create-and-read slice", () => {
     const caseId = createResponse.body.id as string;
 
     const readResponse = await request(app)
-      .get(`/cycles/${caseId}`)
+      .get(`/v1/cycles/${caseId}`)
       .set("Authorization", `Bearer ${tokenA}`)
       .set("x-tenant-id", TENANT_A_ID)
       .expect(200);
@@ -76,7 +76,7 @@ describeWithDatabase("cycle create-and-read slice", () => {
     });
 
     await request(app)
-      .get(`/cycles/${caseId}`)
+      .get(`/v1/cycles/${caseId}`)
       .set("Authorization", `Bearer ${tokenB}`)
       .set("x-tenant-id", TENANT_B_ID)
       .expect(404);

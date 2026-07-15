@@ -8,3 +8,7 @@ __pycache__/
 .venv/
 *.log
 local-deliverables/
+.env
+.env.*
+!.env.example
+!apps/api/.env.example

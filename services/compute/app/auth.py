@@ -1,5 +1,5 @@
-import os
 from typing import Dict
+import os
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -33,24 +33,6 @@ def get_public_key(kid: str) -> str:
     if env_key:
         PUBLIC_KEYS[kid] = env_key
         return env_key
-
-    # Local development & test suite file loading paths
-    fallback_paths = [
-        "/Users/martinsokorie/Desktop/martins-okorie-tax-liability/services/compute/tests/fixtures/jwt_keys/public.pem",
-        "services/compute/tests/fixtures/jwt_keys/public.pem",
-        "tests/fixtures/jwt_keys/public.pem",
-        "../tests/fixtures/jwt_keys/public.pem",
-        "../../tests/fixtures/jwt_keys/public.pem"
-    ]
-    for path in fallback_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    pem = f.read()
-                    PUBLIC_KEYS[kid] = pem
-                    return pem
-            except IOError:
-                pass
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

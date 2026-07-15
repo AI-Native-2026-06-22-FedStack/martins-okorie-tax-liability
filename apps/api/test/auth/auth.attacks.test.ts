@@ -40,7 +40,7 @@ describe("Authentication Attacks - Independent Regressions", () => {
     const forgedToken = `${Buffer.from(JSON.stringify(header)).toString("base64url")}.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.`;
 
     const res = await request(app)
-      .post("/cycles")
+      .post("/v1/cycles")
       .set("Authorization", `Bearer ${forgedToken}`)
       .send({
         client_id: "client-001",
@@ -75,7 +75,7 @@ describe("Authentication Attacks - Independent Regressions", () => {
     });
 
     const res = await request(app)
-      .post("/cycles")
+      .post("/v1/cycles")
       .set("Authorization", `Bearer ${wrongSignedToken}`)
       .send({
         client_id: "client-001",
@@ -289,7 +289,7 @@ describeWithDatabase("Authentication & MFA Challenge Flow - Database Dependent",
 
     // 3. Access guarded route
     const cycleRes = await request(app)
-      .post("/cycles")
+      .post("/v1/cycles")
       .set("Authorization", `Bearer ${mfaRes.body.accessToken}`)
       .send({
         client_id: "client-att-001",

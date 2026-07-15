@@ -81,7 +81,7 @@ describeWithDatabase("PATCH /cycles/:id/transition - Audit Trail & Authorization
     expect(initialAuditCount.length).toBe(0);
 
     const res = await request(app)
-      .patch(`/cycles/${cycleRow.id}/transition`)
+      .patch(`/v1/cycles/${cycleRow.id}/transition`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         toStage: "Data Aggregation",
@@ -116,7 +116,7 @@ describeWithDatabase("PATCH /cycles/:id/transition - Audit Trail & Authorization
     const token = signAccessToken(ADVISOR_PAYLOAD);
 
     const res = await request(app)
-      .patch(`/cycles/${cycleRow.id}/transition`)
+      .patch(`/v1/cycles/${cycleRow.id}/transition`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         toStage: "Client Approval", // Firm Admin permission required to sign off Review
@@ -152,7 +152,7 @@ describeWithDatabase("PATCH /cycles/:id/transition - Audit Trail & Authorization
     const token = signAccessToken(ADVISOR_PAYLOAD);
 
     const res = await request(app)
-      .patch(`/cycles/${cycleRow.id}/transition`)
+      .patch(`/v1/cycles/${cycleRow.id}/transition`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         toStage: "Review", // Illegal transition from Intake -> Review directly
@@ -187,7 +187,7 @@ describeWithDatabase("PATCH /cycles/:id/transition - Audit Trail & Authorization
     const token = signAccessToken(ADMIN_PAYLOAD);
 
     const res = await request(app)
-      .patch(`/cycles/${cycleRow.id}/transition`)
+      .patch(`/v1/cycles/${cycleRow.id}/transition`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         toStage: "Client Approval", // Firm Admin allowed

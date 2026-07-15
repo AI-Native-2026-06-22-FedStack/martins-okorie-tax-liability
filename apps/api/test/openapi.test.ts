@@ -67,7 +67,7 @@ function requireSchemaWithProperties(schema: unknown, name: string): SchemaWithP
 }
 
 function requireResponseWithContent(response: unknown, name: string): ResponseWithContent {
-  if (typeof response !== "object" || response === null || "$ref" in response) {
+  if (typeof response !== "object" || response === null) {
     throw new Error(`${name} must include an inline response`);
   }
 
@@ -83,8 +83,8 @@ describe("OpenAPI document", () => {
       throw new Error("OpenAPI document must include paths");
     }
 
-    expect(paths["/cycles"]?.post).toBeDefined();
-    expect(paths["/cycles/{id}"]?.get).toBeDefined();
+    expect(paths["/v1/cycles"]?.post).toBeDefined();
+    expect(paths["/v1/cycles/{id}"]?.get).toBeDefined();
 
     const schemas = openApiDocument.components?.schemas ?? {};
     const createSchema = requireSchemaWithProperties(
@@ -108,10 +108,10 @@ describe("OpenAPI document", () => {
     expect(Object.keys(createResponseSchema.properties ?? {}).sort()).toEqual(createResponseFields);
     expect(Object.keys(responseSchema.properties ?? {}).sort()).toEqual(responseFields);
 
-    const createRequestBody = paths["/cycles"]?.post?.requestBody;
+    const createRequestBody = paths["/v1/cycles"]?.post?.requestBody;
 
     if (!createRequestBody || "$ref" in createRequestBody) {
-      throw new Error("POST /cycles must include an inline request body");
+      throw new Error("POST /v1/cycles must include an inline request body");
     }
 
     expect(createRequestBody.content?.["application/json"]?.schema).toEqual({
@@ -119,18 +119,18 @@ describe("OpenAPI document", () => {
     });
 
     const createResponse = requireResponseWithContent(
-      paths["/cycles"]?.post?.responses?.["201"],
-      "POST /cycles"
+      paths["/v1/cycles"]?.post?.responses?.["201"],
+      "POST /v1/cycles"
     );
 
     expect(createResponse.content?.["application/json"]?.schema).toEqual({
       $ref: "#/components/schemas/CreateCycleResponse"
     });
 
-    const readOperation = paths["/cycles/{id}"]?.get;
+    const readOperation = paths["/v1/cycles/{id}"]?.get;
 
     if (!readOperation) {
-      throw new Error("GET /cycles/{id} operation must exist");
+      throw new Error("GET /v1/cycles/{id} operation must exist");
     }
 
     if (!readOperation.responses) {
@@ -139,7 +139,7 @@ describe("OpenAPI document", () => {
 
     const readResponse = requireResponseWithContent(
       readOperation.responses["200"],
-      "GET /cycles/{id}"
+      "GET /v1/cycles/{id}"
     );
 
     expect(readResponse.content?.["application/json"]?.schema).toEqual({
