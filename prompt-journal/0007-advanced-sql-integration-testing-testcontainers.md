@@ -79,3 +79,13 @@ Produced — Created `test/setup/db-cleanup.ts` with the `afterEach` truncation 
 Accepted or rejected — Accepted.
 
 Why — The factory file now contains only data-building logic, and the cleanup lifecycle is visible in the setup layer where readers expect it.
+
+# Entry 9
+
+Asked — Address two m2d3 PR review comments: (1) remove the unnecessary `describeWithDatabase` skip guard from `problem-json.test.ts` since the test doesn't use the DB, and (2) replace the unnecessary `await import(...)` with a static import in `openapi.ts`.
+
+Produced — Replaced `describeWithDatabase` with plain `describe` in the Problem+JSON test (repository is in-memory stubs, no DB needed). Replaced the top-level `await import(...)` dynamic import in `openapi.ts` with a static `import` while keeping the required `extendZodWithOpenApi(z)` call.
+
+Accepted or rejected — Accepted.
+
+Why — Both fixes address valid PR feedback: the test now runs unconditionally without a false DB dependency, and the OpenAPI module avoids an unnecessary top-level await.

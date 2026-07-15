@@ -9,13 +9,12 @@ const TENANT_ID = "11111111-1111-4111-8111-111111111111";
 
 let server: Server;
 let baseUrl: string;
-const describeWithDatabase = process.env.TAXPULSE_TEST_DATABASE_URL ? describe : describe.skip;
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
   return (await response.json()) as Record<string, unknown>;
 }
 
-describeWithDatabase("Problem+JSON error responses", () => {
+describe("Problem+JSON error responses", () => {
   beforeAll(async () => {
     await new Promise<void>((resolve) => {
       server = app.listen(0, () => {

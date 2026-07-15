@@ -5,10 +5,14 @@ import {
 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
-extendZodWithOpenApi(z);
+import {
+  CreateCycleRequestSchema,
+  CycleIdParamsSchema,
+  CycleResponseSchema,
+  TenantContextSchema
+} from "../schemas/cycle.schema.js";
 
-const { CreateCycleRequestSchema, CycleIdParamsSchema, CycleResponseSchema, TenantContextSchema } =
-  await import("../schemas/cycle.schema.js");
+extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
 
