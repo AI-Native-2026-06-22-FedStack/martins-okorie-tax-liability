@@ -87,3 +87,34 @@ def test_pwdlib_hashing_failure():
     with pytest.raises(HTTPException) as exc_info:
         verify_password("wrong-password", hashed)
     assert exc_info.value.status_code == 401
+
+def test_route_correlation_id_propagation(valid_token):
+    # Test that incoming correlation ID header is returned in the response
+    custom_id = "test-python-correlation-999"
+    headers = {
+        "Authorization": f"Bearer {valid_token}",
+        "x-correlation-id": custom_id
+    }
+    response = client.post(
+        "/compute/tax-liability",
+        json={"income": 100000.0, "deductions": 20000.0},
+        headers=headers
+    )
+    assert response.status_code == 200
+    assert response.headers.get("x-correlation-id") == custom_id
+
+def test_route_correlation_id_fallback(valid_token):
+    # Test that request ID propagates as correlation ID in response when correlation ID is absent
+    custom_req_id = "test-python-request-id-111"
+    headers = {
+        "Authorization": f"Bearer {valid_token}",
+        "x-request-id": custom_req_id
+    }
+    response = client.post(
+        "/compute/tax-liability",
+        json={"income": 100000.0, "deductions": 20000.0},
+        headers=headers
+    )
+    assert response.status_code == 200
+    assert response.headers.get("x-correlation-id") == custom_req_id
+

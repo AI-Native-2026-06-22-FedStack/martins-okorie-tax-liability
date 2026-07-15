@@ -10,6 +10,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pwdlib[argon2]>=0.3.0",
     "pyjwt>=2.8",
+    "structlog>=26.1.0",
 ]
 
 [dependency-groups]

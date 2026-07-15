@@ -1,13 +1,23 @@
+import structlog
 from fastapi import Depends, FastAPI, status
 from pydantic import BaseModel
 
 from app.auth import UserIdentity, get_current_user
+from app.correlation import CorrelationIdMiddleware
+from app.logging_config import configure_logging
+
+# Configure structured JSON logging
+configure_logging()
+logger = structlog.get_logger()
 
 app = FastAPI(
     title="TaxPulse Compute Service",
     description="Microservice for complex tax liability modeling scenarios and computations.",
     version="1.0.0"
 )
+
+# Register correlation middleware
+app.add_middleware(CorrelationIdMiddleware)
 
 class TaxCalculationRequest(BaseModel):
     income: float
@@ -33,6 +43,13 @@ async def calculate_tax_liability(
     Computes tax liability for modeled scenario.
     Reads tenant_id and role strictly from the verified token context, never from the request body.
     """
+    logger.info(
+        "Calculating tax liability in compute service",
+        income=request.income,
+        deductions=request.deductions,
+        tenant_id=user.tenant_id,
+        role=user.role
+    )
     # Simple real-time tax calculation algorithm (15% flat rate for demonstration)
     taxable_income = max(0.0, request.income - request.deductions)
     tax_liability = taxable_income * 0.15
