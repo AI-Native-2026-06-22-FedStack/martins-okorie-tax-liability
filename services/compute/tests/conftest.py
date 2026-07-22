@@ -8,15 +8,18 @@ KEYS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "jwt_keys")
 PRIVATE_KEY_PATH = os.path.join(KEYS_DIR, "private.pem")
 PUBLIC_KEY_PATH = os.path.join(KEYS_DIR, "public.pem")
 
+
 @pytest.fixture(scope="session")
 def private_key() -> str:
     with open(PRIVATE_KEY_PATH, "r") as f:
         return f.read()
 
+
 @pytest.fixture(scope="session")
 def public_key() -> str:
     with open(PUBLIC_KEY_PATH, "r") as f:
         return f.read()
+
 
 @pytest.fixture(scope="session")
 def valid_token(private_key) -> str:
@@ -33,6 +36,7 @@ def valid_token(private_key) -> str:
     }
     return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
 
+
 @pytest.fixture(scope="session")
 def wrong_aud_token(private_key) -> str:
     payload = {
@@ -48,6 +52,23 @@ def wrong_aud_token(private_key) -> str:
     }
     return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
 
+
+@pytest.fixture(scope="session")
+def wrong_issuer_token(private_key) -> str:
+    payload = {
+        "sub": "user-123",
+        "tenant_id": "11111111-1111-4111-8111-111111111111",
+        "role": "Firm Admin",
+        "iss": "wrong-issuer",
+        "aud": "taxpulse-clients",
+        "exp": int(time.time()) + 900
+    }
+    headers = {
+        "kid": "2026-07"
+    }
+    return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
+
+
 @pytest.fixture(scope="session")
 def expired_token(private_key) -> str:
     payload = {
@@ -62,6 +83,7 @@ def expired_token(private_key) -> str:
         "kid": "2026-07"
     }
     return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
+
 
 @pytest.fixture(scope="session")
 def tampered_token(valid_token) -> str:
