@@ -113,3 +113,127 @@ export type NewTaxPlanCycle = typeof taxPlanCycle.$inferInsert;
 
 export type StageTransition = typeof stageTransition.$inferSelect;
 export type NewStageTransition = typeof stageTransition.$inferInsert;
+
+export const role = pgTable(
+  "role",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenant_id: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    name: text("name").notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => [
+    check(
+      "role_name_check",
+      sql`${table.name} IN ('Firm Admin', 'Advisor', 'Client', 'TaxPulse Platform Admin')`
+    ),
+    unique("role_tenant_id_name_unique").on(table.tenant_id, table.name)
+  ]
+);
+
+export const user = pgTable(
+  "user",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenant_id: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    email: text("email").notNull(),
+    status: text("status").notNull().default("active"),
+    role_id: uuid("role_id")
+      .notNull()
+      .references(() => role.id),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => [
+    unique("user_tenant_id_email_unique").on(table.tenant_id, table.email),
+    unique("user_tenant_id_id_unique").on(table.tenant_id, table.id),
+    check("user_status_check", sql`${table.status} IN ('active', 'inactive', 'pending')`)
+  ]
+);
+
+export const credential = pgTable(
+  "credential",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenant_id: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    user_id: uuid("user_id").notNull(),
+    password_hash: text("password_hash").notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => [
+    unique("credential_tenant_id_user_id_unique").on(table.tenant_id, table.user_id),
+    foreignKey({
+      columns: [table.tenant_id, table.user_id],
+      foreignColumns: [user.tenant_id, user.id],
+      name: "credential_user_fk"
+    })
+  ]
+);
+
+export const mfaEnrollment = pgTable(
+  "mfa_enrollment",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenant_id: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    user_id: uuid("user_id").notNull(),
+    totp_secret: text("totp_secret").notNull(),
+    enrolled: boolean("enrolled").notNull().default(false),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => [
+    unique("mfa_enrollment_tenant_id_user_id_unique").on(table.tenant_id, table.user_id),
+    foreignKey({
+      columns: [table.tenant_id, table.user_id],
+      foreignColumns: [user.tenant_id, user.id],
+      name: "mfa_enrollment_user_fk"
+    })
+  ]
+);
+
+export const refreshToken = pgTable(
+  "refresh_token",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenant_id: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    user_id: uuid("user_id").notNull(),
+    token_hash: text("token_hash").notNull(),
+    expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    revoked_at: timestamp("revoked_at", { withTimezone: true })
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.tenant_id, table.user_id],
+      foreignColumns: [user.tenant_id, user.id],
+      name: "refresh_token_user_fk"
+    })
+  ]
+);
+
+export type Role = typeof role.$inferSelect;
+export type NewRole = typeof role.$inferInsert;
+
+export type User = typeof user.$inferSelect;
+export type NewUser = typeof user.$inferInsert;
+
+export type Credential = typeof credential.$inferSelect;
+export type NewCredential = typeof credential.$inferInsert;
+
+export type MfaEnrollment = typeof mfaEnrollment.$inferSelect;
+export type NewMfaEnrollment = typeof mfaEnrollment.$inferInsert;
+
+export type RefreshToken = typeof refreshToken.$inferSelect;
+export type NewRefreshToken = typeof refreshToken.$inferInsert;
+

@@ -6,11 +6,18 @@ import { checkDatabaseReady } from "./db/client.js";
 import { notFoundHandler, problemJsonErrorHandler } from "./errors/problem-json.js";
 import { openApiDocument } from "./openapi/openapi.js";
 import { cycleRouter } from "./routes/cycle.routes.js";
+import { authRouter } from "./routes/auth.routes.js";
+import passport from "passport";
+import { initializePassport } from "./auth/verifier.js";
 
 export const app = express();
+initializePassport();
 
 app.use(express.json());
 app.use(pinoHttp());
+app.use(passport.initialize());
+
+app.use("/auth", authRouter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({

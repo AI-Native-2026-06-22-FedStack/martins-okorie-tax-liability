@@ -4,6 +4,7 @@ import { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { app } from "../src/app.js";
+import { signAccessToken } from "../src/auth/tokens.js";
 
 const TENANT_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -39,6 +40,7 @@ describe("Problem+JSON error responses", () => {
   });
 
   it("returns exactly the RFC 9457 members for a malformed cycle create request", async () => {
+    const token = signAccessToken({ sub: "user-123", tenant_id: TENANT_ID, role: "Firm Admin" });
     const response = await fetch(`${baseUrl}/cycles`, {
       body: JSON.stringify({
         due_date: "2026-12-31",
@@ -48,7 +50,7 @@ describe("Problem+JSON error responses", () => {
       }),
       headers: {
         "content-type": "application/json",
-        "x-tenant-id": TENANT_ID
+        "authorization": `Bearer ${token}`
       },
       method: "POST"
     });

@@ -29,7 +29,7 @@ export async function createCycleController(
   res: Response
 ): Promise<void> {
   const tenantContext = TenantContextSchema.parse({
-    tenant_id: req.get("x-tenant-id")
+    tenant_id: req.user?.tenant_id || req.get("x-tenant-id")
   });
   const input = CreateCycleRequestSchema.parse(req.body);
   const result = await createCycle(tenantContext, input);
