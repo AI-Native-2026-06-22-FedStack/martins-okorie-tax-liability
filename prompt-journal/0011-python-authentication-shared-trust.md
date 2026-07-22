@@ -40,3 +40,12 @@ Accepted or rejected — Accepted.
 
 Why — Cross-service contract test suite runs and passes cleanly on Python 3.13, validating the shared trust domain signature and claim assertions.
 
+# Entry 5
+
+Asked — Review the approved M3D2 PR feedback and handle the non-blocking cleanup items around machine-specific key fallback paths, nominal `kid` handling, and wrong-issuer coverage.
+
+Produced — Removed the hardcoded local filesystem path from the compute service public-key fallback, resolved fixture keys through repo-relative `Path` locations, enforced the configured single-key `kid` via `JWT_PUBLIC_KEY_KID` before loading the fallback key, and added a wrong-issuer token fixture plus regression test.
+
+Accepted or rejected — Accepted.
+
+Why — The compute trust-domain test suite passes with 10 tests, including wrong-audience and wrong-issuer rejection, and key lookup no longer depends on a developer-specific absolute path.
