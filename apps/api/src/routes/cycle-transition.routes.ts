@@ -7,6 +7,7 @@ import { writeAuditEntry } from "../audit/audit-writer.js";
 import { getDb } from "../db/client.js";
 import { taxPlanCycle, type TaxPlanCycleStage } from "../db/schema.js";
 import { findCycleByIdForTenant, insertStageTransitionForTenant } from "../repository/cycle.repository.js";
+import { tenantRateLimiter, tenantSlowDown } from "../middleware/rate-limit.js";
 
 export const cycleTransitionRouter = Router();
 
@@ -15,7 +16,7 @@ interface TransitionRequestBody {
   reason?: unknown;
 }
 
-cycleTransitionRouter.patch("/:id/transition", requireAuth, async (req, res) => {
+cycleTransitionRouter.patch("/:id/transition", requireAuth, tenantSlowDown, tenantRateLimiter, async (req, res) => {
   const id = String(req.params.id);
   const body = req.body as TransitionRequestBody;
   const user = req.user;

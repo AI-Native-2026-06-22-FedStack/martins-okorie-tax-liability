@@ -16,7 +16,7 @@ export class NotFoundError extends Error {
   }
 }
 
-function sendProblem(res: Response, problem: ProblemJson): void {
+export function sendProblem(res: Response, problem: ProblemJson): void {
   res.type("application/problem+json").status(problem.status).json(problem);
 }
 

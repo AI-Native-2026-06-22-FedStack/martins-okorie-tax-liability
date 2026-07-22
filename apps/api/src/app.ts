@@ -10,12 +10,14 @@ import { authRouter } from "./routes/auth.routes.js";
 import passport from "passport";
 import { initializePassport } from "./auth/verifier.js";
 import { correlationMiddleware } from "./logging/correlation.js";
+import { costHeaderMiddleware } from "./middleware/cost-header.js";
 
 export const app = express();
 initializePassport();
 
 app.use(express.json());
 app.use(correlationMiddleware);
+app.use(costHeaderMiddleware);
 app.use(passport.initialize());
 
 app.use("/auth", authRouter);
