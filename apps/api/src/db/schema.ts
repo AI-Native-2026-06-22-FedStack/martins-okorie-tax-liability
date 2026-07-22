@@ -237,3 +237,31 @@ export type NewMfaEnrollment = typeof mfaEnrollment.$inferInsert;
 export type RefreshToken = typeof refreshToken.$inferSelect;
 export type NewRefreshToken = typeof refreshToken.$inferInsert;
 
+export const auditEntry = pgTable(
+  "audit_entry",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenant_id: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    case_id: uuid("case_id"),
+    actor: text("actor").notNull(),
+    action: text("action").notNull(),
+    reason: text("reason").notNull(),
+    result: text("result").notNull(), // CLOSED enum: 'success' | 'failure'
+    occurred_at: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => [
+    check("audit_entry_result_check", sql`${table.result} IN ('success', 'failure')`),
+    foreignKey({
+      columns: [table.tenant_id, table.case_id],
+      foreignColumns: [taxPlanCycle.tenant_id, taxPlanCycle.id],
+      name: "audit_entry_case_fk"
+    }).onDelete("cascade")
+  ]
+);
+
+export type AuditEntry = typeof auditEntry.$inferSelect;
+export type NewAuditEntry = typeof auditEntry.$inferInsert;
+
+

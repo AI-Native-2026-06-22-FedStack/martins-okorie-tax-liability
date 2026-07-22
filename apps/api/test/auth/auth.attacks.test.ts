@@ -1,12 +1,13 @@
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import request from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { app } from "../../src/app.js";
 import { hashPassword } from "../../src/auth/hashing.js";
 import { encryptSecret } from "../../src/auth/mfa.js";
 import { getPublicKey, signAccessToken } from "../../src/auth/tokens.js";
+import { eq } from "drizzle-orm";
 import { getDb } from "../../src/db/client.js";
 import { credential, mfaEnrollment, role, tenant, user } from "../../src/db/schema.js";
 import { generate } from "otplib/functional";
@@ -18,7 +19,10 @@ const TEST_USER_ID = "44444444-4444-4444-8444-444444444444";
 const TEST_ROLE_ID = "55555555-5555-4555-8555-555555555555";
 const TEST_EMAIL = "advisor-attacks@taxpulse.com";
 const TEST_PASSWORD = "correct-password-attacks";
-const TEST_TOTP_SECRET = "US6XJ552V3R4T75W"; // 16 character base32 secret
+const TEST_TOTP_SECRET = "US6XJ552V3R4T75WUS6XJ552V3R4T75W"; // 32 character base32 secret (20 bytes)
+
+let testSecretCounter = 0;
+let currentTotpSecret = TEST_TOTP_SECRET;
 
 describe("Authentication Attacks - Independent Regressions", () => {
   it("rejects an alg=none forged token", async () => {
@@ -129,6 +133,16 @@ describeWithDatabase("Authentication & MFA Challenge Flow - Database Dependent",
     });
   });
 
+  beforeEach(async () => {
+    const db = getDb();
+    currentTotpSecret = "US6XJ552V3R4T75WUS6XJ552V3R4T75" + (testSecretCounter++ % 6 + 2);
+    const updatedEncryptedSecret = encryptSecret(currentTotpSecret);
+    await db
+      .update(mfaEnrollment)
+      .set({ totp_secret: updatedEncryptedSecret })
+      .where(eq(mfaEnrollment.user_id, TEST_USER_ID));
+  });
+
   afterAll(async () => {
     const db = getDb();
     // Clean up seeded records in reverse order
@@ -214,7 +228,7 @@ describeWithDatabase("Authentication & MFA Challenge Flow - Database Dependent",
     const tempToken1 = loginRes.body.tempToken;
 
     // Generate valid TOTP token
-    const code = await generate({ secret: TEST_TOTP_SECRET });
+    const code = await generate({ secret: currentTotpSecret });
 
     // 2. Submit first time (valid)
     const mfaRes1 = await request(app)
@@ -259,7 +273,7 @@ describeWithDatabase("Authentication & MFA Challenge Flow - Database Dependent",
     const tempToken = loginRes.body.tempToken;
 
     // Generate a fresh TOTP code
-    const code = await generate({ secret: TEST_TOTP_SECRET });
+    const code = await generate({ secret: currentTotpSecret });
 
     // 2. Verify MFA
     const mfaRes = await request(app)
