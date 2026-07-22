@@ -23,6 +23,13 @@ def test_verify_token_wrong_audience(wrong_aud_token):
     assert exc_info.value.status_code == 401
     assert "audience" in str(exc_info.value.detail).lower() or "token" in str(exc_info.value.detail).lower()
 
+def test_verify_token_wrong_issuer(wrong_issuer_token):
+    # Test that wrong issuer is rejected with 401
+    with pytest.raises(HTTPException) as exc_info:
+        verify_token(wrong_issuer_token)
+    assert exc_info.value.status_code == 401
+    assert "issuer" in str(exc_info.value.detail).lower() or "token" in str(exc_info.value.detail).lower()
+
 def test_verify_token_expired(expired_token):
     # Test that expired token is rejected with 401
     with pytest.raises(HTTPException) as exc_info:
