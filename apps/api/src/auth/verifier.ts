@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 
-import { getPublicKey } from "./tokens.js";
+import { getJwtConfig, getPublicKey } from "./tokens.js";
 
 declare global {
   namespace Express {
@@ -38,8 +38,7 @@ function getAuthFailureMessage(info: unknown): string {
  * This pins the algorithm to RS256, uses the public key, and verifies the issuer/audience.
  */
 export function initializePassport(): void {
-  const issuer = process.env.JWT_ISSUER || "taxpulse-api";
-  const audience = process.env.JWT_AUDIENCE || "taxpulse-clients";
+  const { audience, issuer } = getJwtConfig();
 
   passport.use(
     new JwtStrategy(

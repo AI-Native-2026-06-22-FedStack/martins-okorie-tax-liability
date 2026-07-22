@@ -2,6 +2,8 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import type { Logger } from "drizzle-orm/logger";
 import pg from "pg";
 
+import { getApiEnv } from "../config/env.js";
+import { getRuntimeSecrets } from "../config/secrets.js";
 import * as schema from "./schema.js";
 
 const { Pool } = pg;
@@ -32,13 +34,27 @@ export type TaxPulseDb = ReturnType<typeof createDrizzleDb>["db"];
 
 let defaultConnection: ReturnType<typeof createDrizzleDb> | undefined;
 
+function buildRuntimeConnectionString(): string {
+  const env = getApiEnv();
+  const { databasePassword } = getRuntimeSecrets();
+  const url = new URL(`postgresql://${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`);
+  url.username = env.DB_USER;
+  url.password = databasePassword;
+
+  if (env.DB_SSL === "require") {
+    url.searchParams.set("sslmode", "require");
+  }
+
+  return url.toString();
+}
+
 function getDefaultConnection(): ReturnType<typeof createDrizzleDb> {
   if (!defaultConnection) {
-    const connectionString = process.env.DATABASE_URI ?? process.env.TAXPULSE_TEST_DATABASE_URL;
+    const connectionString = process.env.TAXPULSE_TEST_DATABASE_URL ?? buildRuntimeConnectionString();
 
     if (!connectionString) {
       throw new Error(
-        "DATABASE_URI or TAXPULSE_TEST_DATABASE_URL is required for database access."
+        "Database configuration is required for database access."
       );
     }
 

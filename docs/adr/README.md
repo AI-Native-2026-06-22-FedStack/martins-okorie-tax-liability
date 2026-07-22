@@ -4,5 +4,8 @@ This directory records accepted and proposed architecture decisions for TaxPulse
 
 - [0000: ADR template](0000-template.md)
 - [0001: Keep a Tax Plan Cycle's condition in its stage](0001-tax-plan-cycle-stage-only-condition.md)
+- [0005: REST Versioning and Deprecation Policy](0005-rest-versioning-policy.md)
+- [0006: Service Boundaries and Anti-Shared-DB Rule](0006-service-boundaries-and-anti-shared-db.md)
+- [0007: Managed Runtime Secrets](0007-managed-runtime-secrets.md)
 
 Add future ADRs to this index when they are proposed or accepted.

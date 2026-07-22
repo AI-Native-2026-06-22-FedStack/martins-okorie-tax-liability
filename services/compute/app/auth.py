@@ -123,6 +123,7 @@ def verify_token(token: str) -> dict:
             detail="Invalid credentials."
         ) from e
 
+
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserIdentity:
     """
     FastAPI dependency that extracts the bearer token, verifies it,

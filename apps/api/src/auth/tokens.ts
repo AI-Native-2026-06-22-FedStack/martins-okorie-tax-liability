@@ -1,30 +1,67 @@
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 
-let privateKey: string;
-let publicKey: string;
+import { getApiEnv } from "../config/env.js";
+import { getRuntimeSecrets, type JwtSigningKeys } from "../config/secrets.js";
 
-// Initialize key material at runtime (never commit a private key)
-if (process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY) {
-  privateKey = process.env.JWT_PRIVATE_KEY;
-  publicKey = process.env.JWT_PUBLIC_KEY;
-} else {
-  // Generate a key pair dynamically in-memory for local dev & testing
+let testSigningKeys: JwtSigningKeys | undefined;
+
+function isVitest(): boolean {
+  return process.env.VITEST === "true" || process.env.NODE_ENV === "test";
+}
+
+function createEphemeralTestKeys(): JwtSigningKeys {
   const keys = crypto.generateKeyPairSync("rsa", {
     modulusLength: 2048,
     publicKeyEncoding: { type: "spki", format: "pem" },
     privateKeyEncoding: { type: "pkcs8", format: "pem" }
   });
-  privateKey = keys.privateKey;
-  publicKey = keys.publicKey;
+
+  return {
+    keyId: "2026-07",
+    privateKey: keys.privateKey,
+    publicKey: keys.publicKey
+  };
+}
+
+function getSigningKeys(): JwtSigningKeys {
+  try {
+    return getRuntimeSecrets().jwtSigningKeys;
+  } catch (error) {
+    if (isVitest()) {
+      testSigningKeys ??= createEphemeralTestKeys();
+      return testSigningKeys;
+    }
+
+    throw error;
+  }
+}
+
+export function getJwtConfig(): { audience: string; issuer: string } {
+  try {
+    const env = getApiEnv();
+    return {
+      audience: env.JWT_AUDIENCE,
+      issuer: env.JWT_ISSUER
+    };
+  } catch (error) {
+    if (isVitest()) {
+      return {
+        audience: "taxpulse-clients",
+        issuer: "taxpulse-api"
+      };
+    }
+
+    throw error;
+  }
 }
 
 export function getPrivateKey(): string {
-  return privateKey;
+  return getSigningKeys().privateKey;
 }
 
 export function getPublicKey(): string {
-  return publicKey;
+  return getSigningKeys().publicKey;
 }
 
 export interface TokenPayload {
@@ -37,18 +74,18 @@ export interface TokenPayload {
  * Sign an access token using RS256 with standard claims and kid in the header.
  */
 export function signAccessToken(payload: TokenPayload): string {
-  const issuer = process.env.JWT_ISSUER || "taxpulse-api";
-  const audience = process.env.JWT_AUDIENCE || "taxpulse-clients";
+  const { audience, issuer } = getJwtConfig();
+  const keys = getSigningKeys();
 
   return jwt.sign(
     {
       tenant_id: payload.tenant_id,
       role: payload.role
     },
-    privateKey,
+    keys.privateKey,
     {
       algorithm: "RS256",
-      keyid: "2026-07", // Rotatable Key ID
+      keyid: keys.keyId,
       issuer,
       audience,
       expiresIn: "15m",
@@ -61,8 +98,8 @@ export function signAccessToken(payload: TokenPayload): string {
  * Sign a temporary token valid during the MFA verification challenge window.
  */
 export function signTempMfaToken(payload: TokenPayload): string {
-  const issuer = process.env.JWT_ISSUER || "taxpulse-api";
-  const audience = process.env.JWT_AUDIENCE || "taxpulse-clients";
+  const { audience, issuer } = getJwtConfig();
+  const keys = getSigningKeys();
 
   return jwt.sign(
     {
@@ -70,10 +107,10 @@ export function signTempMfaToken(payload: TokenPayload): string {
       role: payload.role,
       mfa_pending: true
     },
-    privateKey,
+    keys.privateKey,
     {
       algorithm: "RS256",
-      keyid: "2026-07",
+      keyid: keys.keyId,
       issuer,
       audience,
       expiresIn: "3m",

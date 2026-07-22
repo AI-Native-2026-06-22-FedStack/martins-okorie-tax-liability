@@ -91,7 +91,7 @@ describe("Rate Limit Contract", () => {
 
     for (let i = 0; i < 3; i++) {
       const res = await request(app)
-        .post(`/cycles/decrement-${i}/compute`)
+        .post(`/v1/cycles/decrement-${i}/compute`)
         .set("Authorization", `Bearer ${tokenA}`)
         .send({ income: 1200, deductions: 200 });
 
@@ -124,14 +124,14 @@ describe("Rate Limit Contract", () => {
     // Exhaust the cap (limit=3 set above)
     for (let i = 0; i < 3; i++) {
       await request(app)
-        .post(`/cycles/exhaust-${i}/compute`)
+        .post(`/v1/cycles/exhaust-${i}/compute`)
         .set("Authorization", `Bearer ${tokenA}`)
         .send({ income: 1200, deductions: 200 });
     }
 
     // The 4th request must be rejected
     const res = await request(app)
-      .post("/cycles/over-limit/compute")
+      .post("/v1/cycles/over-limit/compute")
       .set("Authorization", `Bearer ${tokenA}`)
       .send({ income: 1200, deductions: 200 });
 
@@ -160,7 +160,7 @@ describe("Rate Limit Contract", () => {
   // ─── Test 3: Cost-accounting headers present on write endpoint ──────────────
   it("X-Request-Cost and X-Quota-Remaining cost-accounting headers are present on a write endpoint", async () => {
     const res = await request(app)
-      .post("/cycles/cost-header-check/compute")
+      .post("/v1/cycles/cost-header-check/compute")
       .set("Authorization", `Bearer ${tokenA}`)
       .send({ income: 1200, deductions: 200 });
 
@@ -183,21 +183,21 @@ describe("Rate Limit Contract", () => {
     // Exhaust Tenant A's cap
     for (let i = 0; i < 3; i++) {
       await request(app)
-        .post(`/cycles/a-burst-${i}/compute`)
+        .post(`/v1/cycles/a-burst-${i}/compute`)
         .set("Authorization", `Bearer ${tokenA}`)
         .send({ income: 1200, deductions: 200 });
     }
 
     // Tenant A should now be at the limit
     const resA = await request(app)
-      .post("/cycles/a-over-limit/compute")
+      .post("/v1/cycles/a-over-limit/compute")
       .set("Authorization", `Bearer ${tokenA}`)
       .send({ income: 1200, deductions: 200 });
     expect(resA.status).toBe(429);
 
     // Tenant B has an independent key and must still be allowed
     const resB = await request(app)
-      .post("/cycles/b-not-throttled/compute")
+      .post("/v1/cycles/b-not-throttled/compute")
       .set("Authorization", `Bearer ${tokenB}`)
       .send({ income: 1200, deductions: 200 });
     expect(resB.status).toBe(200);
@@ -210,7 +210,7 @@ describe("Rate Limit Contract", () => {
     expect(redisClient.status).not.toBe("ready");
 
     const res = await request(app)
-      .post("/cycles/fail-open-check/compute")
+      .post("/v1/cycles/fail-open-check/compute")
       .set("Authorization", `Bearer ${tokenA}`)
       .send({ income: 1200, deductions: 200 });
 

@@ -4,13 +4,12 @@ import { apiReference } from "@scalar/express-api-reference";
 import { checkDatabaseReady } from "./db/client.js";
 import { notFoundHandler, problemJsonErrorHandler } from "./errors/problem-json.js";
 import { openApiDocument } from "./openapi/openapi.js";
-import { cycleRouter } from "./routes/cycle.routes.js";
-import { cycleTransitionRouter } from "./routes/cycle-transition.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
 import passport from "passport";
 import { initializePassport } from "./auth/verifier.js";
 import { correlationMiddleware } from "./logging/correlation.js";
 import { costHeaderMiddleware } from "./middleware/cost-header.js";
+import { v1Router } from "./routes/v1/index.js";
 
 export const app = express();
 initializePassport();
@@ -46,8 +45,7 @@ app.get("/ready", async (_req: Request, res: Response) => {
   }
 });
 
-app.use("/cycles", cycleTransitionRouter);
-app.use("/cycles", cycleRouter);
+app.use("/v1", v1Router);
 
 app.get("/openapi.json", (_req: Request, res: Response) => {
   res.json(openApiDocument);

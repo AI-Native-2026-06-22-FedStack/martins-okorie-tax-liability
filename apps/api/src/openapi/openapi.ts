@@ -12,6 +12,7 @@ import {
   CycleResponseSchema,
   TenantContextSchema
 } from "../db/dto.js";
+import { DEPRECATION_HEADER, SUNSET_HEADER, SUCCESSOR_LINK } from "../routes/v1/versioning.js";
 
 const registry = new OpenAPIRegistry();
 
@@ -149,7 +150,7 @@ const tenantHeaders = z.object({
 // ─── Paths ────────────────────────────────────────────────────────────────────
 registry.registerPath({
   method: "post",
-  path: "/cycles",
+  path: "/v1/cycles",
   security: [{ bearerAuth: [] }],
   request: {
     body: {
@@ -180,7 +181,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/cycles/{id}",
+  path: "/v1/cycles/{id}",
   request: {
     headers: tenantHeaders,
     params: cycleIdParams
@@ -204,7 +205,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "post",
-  path: "/cycles/{id}/compute",
+  path: "/v1/cycles/{id}/compute",
   security: [{ bearerAuth: [] }],
   request: {
     params: cycleIdParams,
@@ -233,7 +234,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "patch",
-  path: "/cycles/{id}/transition",
+  path: "/v1/cycles/{id}/transition",
   security: [{ bearerAuth: [] }],
   request: {
     params: cycleIdParams,
@@ -259,6 +260,32 @@ registry.registerPath({
     429: response429
   },
   summary: "Transition a Tax Plan Cycle stage"
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/v1/cycles/ping",
+  responses: {
+    200: {
+      description: "Deprecated Tax Plan Cycle ping route",
+      headers: {
+        Deprecation: {
+          description: "RFC 9745 Date value indicating when this route was deprecated",
+          schema: { type: "string", example: DEPRECATION_HEADER }
+        } as const,
+        Sunset: {
+          description: "RFC 8594 date when this route will stop responding",
+          schema: { type: "string", example: SUNSET_HEADER }
+        } as const,
+        Link: {
+          description: "Successor route for consumers migrating away from this route",
+          schema: { type: "string", example: SUCCESSOR_LINK }
+        } as const
+      }
+    }
+  },
+  deprecated: true,
+  summary: "Deprecated Tax Plan Cycle ping"
 });
 
 // ─── Document generation ──────────────────────────────────────────────────────

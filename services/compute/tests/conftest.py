@@ -1,24 +1,44 @@
-import os
 import time
+
 import pytest
 import jwt
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
-# Paths to the test RS256 keys
-KEYS_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "jwt_keys")
-PRIVATE_KEY_PATH = os.path.join(KEYS_DIR, "private.pem")
-PUBLIC_KEY_PATH = os.path.join(KEYS_DIR, "public.pem")
 
 
 @pytest.fixture(scope="session")
-def private_key() -> str:
-    with open(PRIVATE_KEY_PATH, "r") as f:
-        return f.read()
+def key_pair() -> tuple[str, str]:
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode("utf-8")
+    return private_pem, public_pem
+
 
 
 @pytest.fixture(scope="session")
-def public_key() -> str:
-    with open(PUBLIC_KEY_PATH, "r") as f:
-        return f.read()
+def private_key(key_pair) -> str:
+    return key_pair[0]
+
+
+@pytest.fixture(scope="session")
+def public_key(key_pair) -> str:
+    return key_pair[1]
+
+
+@pytest.fixture(autouse=True)
+def configure_public_key(monkeypatch, public_key) -> None:
+    monkeypatch.setenv("JWT_PUBLIC_KEY", public_key)
+    from app.auth import PUBLIC_KEYS
+
+    PUBLIC_KEYS.clear()
 
 
 @pytest.fixture(scope="session")

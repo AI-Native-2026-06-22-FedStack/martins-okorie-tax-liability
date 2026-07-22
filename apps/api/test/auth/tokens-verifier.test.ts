@@ -47,33 +47,38 @@ describe("Token Signing & Public Key Verification", () => {
   });
 });
 
-describeWithDatabase("Protected Write Route (POST /cycles) - Integration", () => {
+describeWithDatabase("Protected Write Route (POST /v1/cycles) - Integration", () => {
   it("allows access with a valid signed token", async () => {
     const payload = { sub: USER_ID, tenant_id: TENANT_ID, role: ROLE };
     const token = signAccessToken(payload);
 
-    const res = await request(app).post("/cycles").set("Authorization", `Bearer ${token}`).send({
-      client_id: "client-001",
-      due_date: "2026-08-31",
-      owner: "Fictional Advisor",
-      planning_period: "2026 Q3",
-      priority: "P2"
-    });
+    const res = await request(app)
+      .post("/v1/cycles")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        client_id: "client-001",
+        due_date: "2026-08-31",
+        owner: "Fictional Advisor",
+        planning_period: "2026 Q3",
+        priority: "P2"
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.id).toBeDefined();
   });
 });
 
-describe("Protected Write Route (POST /cycles) - Authentication Verification", () => {
+describe("Protected Write Route (POST /v1/cycles) - Authentication Verification", () => {
   it("returns 401 for a request without a token", async () => {
-    const res = await request(app).post("/cycles").send({
-      client_id: "client-001",
-      due_date: "2026-08-31",
-      owner: "Fictional Advisor",
-      planning_period: "2026 Q3",
-      priority: "P2"
-    });
+    const res = await request(app)
+      .post("/v1/cycles")
+      .send({
+        client_id: "client-001",
+        due_date: "2026-08-31",
+        owner: "Fictional Advisor",
+        planning_period: "2026 Q3",
+        priority: "P2"
+      });
 
     expect(res.status).toBe(401);
     expect(res.body.detail).toBeDefined();
@@ -81,7 +86,7 @@ describe("Protected Write Route (POST /cycles) - Authentication Verification", (
 
   it("returns 401 for a request with an invalid/tampered token", async () => {
     const res = await request(app)
-      .post("/cycles")
+      .post("/v1/cycles")
       .set("Authorization", `Bearer invalid-token-string`)
       .send({
         client_id: "client-001",
@@ -97,7 +102,7 @@ describe("Protected Write Route (POST /cycles) - Authentication Verification", (
   it("returns 401 when a pre-MFA temporary token is used as a bearer token", async () => {
     const token = signTempMfaToken({ sub: USER_ID, tenant_id: TENANT_ID, role: ROLE });
 
-    const res = await request(app).post("/cycles").set("Authorization", `Bearer ${token}`).send({
+    const res = await request(app).post("/v1/cycles").set("Authorization", `Bearer ${token}`).send({
       client_id: "client-001",
       due_date: "2026-08-31",
       owner: "Fictional Advisor",

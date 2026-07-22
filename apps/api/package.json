@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8",
+    "@aws-sdk/client-secrets-manager": "^3.1087.0",
     "@scalar/express-api-reference": "latest",
     "argon2": "^0.44.0",
+    "dotenv": "^16.6.1",
     "drizzle-orm": "^0.45.2",
     "express": "^5",
     "express-rate-limit": "^8.5.2",

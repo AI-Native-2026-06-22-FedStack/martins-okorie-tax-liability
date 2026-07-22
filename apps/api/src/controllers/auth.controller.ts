@@ -6,6 +6,7 @@ import { verifyPassword } from "../auth/hashing.js";
 import { verifyMfaCode } from "../auth/mfa.js";
 import {
   generateRefreshTokenString,
+  getJwtConfig,
   getPublicKey,
   hashRefreshToken,
   signAccessToken,
@@ -126,8 +127,7 @@ export async function mfaController(req: Request, res: Response): Promise<void> 
   }
 
   try {
-    const issuer = process.env.JWT_ISSUER || "taxpulse-api";
-    const audience = process.env.JWT_AUDIENCE || "taxpulse-clients";
+    const { audience, issuer } = getJwtConfig();
 
     // 1. Decode and verify temporary token
     const decoded = jwt.verify(tempToken, getPublicKey(), {

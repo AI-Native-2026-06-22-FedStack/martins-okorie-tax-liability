@@ -19,9 +19,9 @@ const openApiSource = readFileSync(join(apiRoot, "src/openapi/openapi.ts"), "utf
 const appSource = readFileSync(join(apiRoot, "src/app.ts"), "utf8");
 
 const protectedRoutes = [
-  { method: "post", path: "/cycles" },
-  { method: "post", path: "/cycles/{id}/compute" },
-  { method: "patch", path: "/cycles/{id}/transition" }
+  { method: "post", path: "/v1/cycles" },
+  { method: "post", path: "/v1/cycles/{id}/compute" },
+  { method: "patch", path: "/v1/cycles/{id}/transition" }
 ] as const;
 
 describe("OpenAPI 3.1 Security Contract (Task 3)", () => {
@@ -75,7 +75,7 @@ describe("OpenAPI 3.1 Security Contract (Task 3)", () => {
   });
 
   it("PATCH /cycles/{id}/transition also documents its 403 handler", () => {
-    const path = openApiDocument.paths?.["/cycles/{id}/transition"];
+    const path = openApiDocument.paths?.["/v1/cycles/{id}/transition"];
     const patch = (path as Record<string, unknown>)["patch"] as Record<string, unknown>;
     const responses = patch["responses"] as Record<string, unknown>;
 
@@ -83,7 +83,7 @@ describe("OpenAPI 3.1 Security Contract (Task 3)", () => {
   });
 
   it("GET /cycles/{id} does not require bearerAuth (public read path)", () => {
-    const path = openApiDocument.paths?.["/cycles/{id}"];
+    const path = openApiDocument.paths?.["/v1/cycles/{id}"];
     const get = (path as Record<string, unknown>)["get"] as Record<string, unknown>;
     // No security restriction on the read path
     const security = get?.["security"];
@@ -94,10 +94,10 @@ describe("OpenAPI 3.1 Security Contract (Task 3)", () => {
     // If the document has at least the two explicitly registered paths, the
     // registry is the sole source of truth (no static YAML merged in).
     const paths = Object.keys(openApiDocument.paths ?? {});
-    expect(paths).toContain("/cycles");
-    expect(paths).toContain("/cycles/{id}");
-    expect(paths).toContain("/cycles/{id}/compute");
-    expect(paths).toContain("/cycles/{id}/transition");
+    expect(paths).toContain("/v1/cycles");
+    expect(paths).toContain("/v1/cycles/{id}");
+    expect(paths).toContain("/v1/cycles/{id}/compute");
+    expect(paths).toContain("/v1/cycles/{id}/transition");
   });
 
   it("uses the Module 2 registry/generator and Scalar docs without a sibling hand-written spec file", () => {
