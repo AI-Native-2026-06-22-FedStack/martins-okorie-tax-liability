@@ -13,6 +13,8 @@ import {
   CycleResponseSchema,
   TenantContextSchema
 } from "../db/dto.js";
+import { ListPlanCycleQueueQuerySchema } from "../db/dto.js";
+import { listCachedPlanCycleQueue } from "../store/queueCache.js";
 
 type EmptyParams = Record<string, never>;
 
@@ -48,4 +50,20 @@ export async function getCycleByIdController(
   const cycle = await getCycleById(tenantContext, params);
 
   res.json(CycleResponseSchema.parse(cycle));
+}
+
+export async function listPlanCycleQueueController(
+  req: Request<EmptyParams, unknown, unknown>,
+  res: Response
+): Promise<void> {
+  const tenantContext = TenantContextSchema.parse({
+    tenant_id: req.user?.tenant_id
+  });
+  const query = ListPlanCycleQueueQuerySchema.parse(req.query);
+  const rows = await listCachedPlanCycleQueue({
+    ...query,
+    tenant_id: tenantContext.tenant_id
+  });
+
+  res.json({ data: rows });
 }

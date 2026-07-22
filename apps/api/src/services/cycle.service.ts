@@ -5,6 +5,8 @@ import {
   type CyclePing
 } from "../repository/cycle.repository.js";
 import { NotFoundError } from "../errors/problem-json.js";
+import { getPlanCycleQueueProjector } from "../store/dynamo.js";
+import { invalidatePlanCycleQueueCacheForTenant } from "../store/queueCache.js";
 import type {
   CreateCycleRequest,
   CreateCycleResponse,
@@ -32,6 +34,12 @@ export async function createCycle(
     from_stage: null,
     to_stage: "Intake"
   });
+  const cycle = await findCycleByIdForTenant(tenantContext, id);
+
+  if (cycle) {
+    await getPlanCycleQueueProjector().upsertCycle(cycle);
+    await invalidatePlanCycleQueueCacheForTenant(tenantContext.tenant_id);
+  }
 
   return { id };
 }

@@ -11,14 +11,21 @@ export const ApiEnvSchema = z.object({
   DB_PORT: z.coerce.number().int().positive(),
   DB_NAME: z.string().min(1),
   DB_USER: z.string().min(1),
-  DB_SSL: z
-    .enum(["disable", "require"])
-    .default("disable"),
+  DB_SSL: z.enum(["disable", "require"]).default("disable"),
   DB_SECRET_ID: z.string().min(1),
   JWT_SECRET_ID: z.string().min(1),
   JWT_ISSUER: z.string().min(1).default("taxpulse-api"),
   JWT_AUDIENCE: z.string().min(1).default("taxpulse-clients"),
-  SECRETS_REFRESH_MS: z.coerce.number().int().positive().default(5 * 60_000)
+  SECRETS_REFRESH_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5 * 60_000),
+  DDB_ENDPOINT: z.url().default("http://localhost:8000"),
+  DDB_TABLE_NAME: z.string().min(1).default("taxpulse-plan-cycle-read-model"),
+  QUEUE_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+  IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().positive().default(86_400),
+  IDEMPOTENCY_LOCK_TTL_MS: z.coerce.number().int().positive().default(30_000)
 });
 
 export type ApiEnv = z.infer<typeof ApiEnvSchema>;

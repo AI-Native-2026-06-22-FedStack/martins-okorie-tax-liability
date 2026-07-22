@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8",
+    "@aws-sdk/client-dynamodb": "^3.1092.0",
     "@aws-sdk/client-secrets-manager": "^3.1087.0",
+    "@aws-sdk/lib-dynamodb": "^3.1092.0",
     "@scalar/express-api-reference": "latest",
     "argon2": "^0.44.0",
     "dotenv": "^16.6.1",

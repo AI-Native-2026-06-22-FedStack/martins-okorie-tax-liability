@@ -7,5 +7,6 @@ This directory records accepted and proposed architecture decisions for TaxPulse
 - [0005: REST Versioning and Deprecation Policy](0005-rest-versioning-policy.md)
 - [0006: Service Boundaries and Anti-Shared-DB Rule](0006-service-boundaries-and-anti-shared-db.md)
 - [0007: Managed Runtime Secrets](0007-managed-runtime-secrets.md)
+- [0008: Plan Cycle Queue Read Model, Cache-Aside, and Idempotent Creates](0008-plan-cycle-queue-dynamodb-cache-idempotency.md)
 
 Add future ADRs to this index when they are proposed or accepted.
