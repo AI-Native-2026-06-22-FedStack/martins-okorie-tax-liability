@@ -69,3 +69,13 @@ Produced — Started the Homebrew `postgresql@17` service, confirmed PostgreSQL 
 Accepted or rejected — Accepted.
 
 Why — The new `taxpulse_l` database exists on PostgreSQL 17, migrations created the public schema tables, and the local test database URL is now present for API test runs.
+
+# Entry 8
+
+Asked — Make sure the real API env file and example env file are formatted the same way and placed in the right folder.
+
+Produced — Moved the committed env template from the repository root to `apps/api/.env.example`, normalized the local `apps/api/.env` to the same key order and blank-line grouping, and added `.env` to `.gitignore` so real local env files are not staged.
+
+Accepted or rejected — Accepted.
+
+Why — The API env template now lives beside the API package, the local and example env files have matching structure, and real `.env` files are ignored.
