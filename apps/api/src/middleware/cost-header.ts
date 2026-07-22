@@ -46,29 +46,22 @@ function parseRateLimitRemaining(header: string | undefined): number | null {
   return match ? Number(match[1]) : null;
 }
 
+export function setQuotaRemainingHeader(res: Response): void {
+  const remaining = parseRateLimitRemaining(res.getHeader("RateLimit") as string | undefined);
+  if (remaining !== null) {
+    res.setHeader("X-Quota-Remaining", String(remaining));
+  }
+}
+
 /**
  * Mount globally via app.use() after correlationMiddleware.
- * Sets X-Request-Cost eagerly (value is known before the handler runs) and
- * injects X-Quota-Remaining via a writeHead intercept so it can read the
- * RateLimit header that express-rate-limit sets before the response flushes.
+ * Sets X-Request-Cost eagerly. X-Quota-Remaining is set by tenantRateLimiter
+ * after express-rate-limit has populated the draft-8 RateLimit header.
  */
 export function costHeaderMiddleware(req: Request, res: Response, next: NextFunction): void {
   const cost = routeCost(req.method, req.path);
 
   // X-Request-Cost is set immediately — value is route-determined, not runtime-dependent
   res.setHeader("X-Request-Cost", String(cost));
-
-  // Intercept writeHead to inject X-Quota-Remaining while headers are still mutable.
-  // writeHead is the last moment before bytes leave the socket.
-  const originalWriteHead = res.writeHead.bind(res);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (res as any).writeHead = function (...args: Parameters<typeof res.writeHead>) {
-    const remaining = parseRateLimitRemaining(res.getHeader("RateLimit") as string | undefined);
-    if (remaining !== null) {
-      res.setHeader("X-Quota-Remaining", String(remaining));
-    }
-    return originalWriteHead(...args);
-  };
-
   next();
 }
