@@ -50,4 +50,22 @@ Accepted or rejected — Accepted.
 
 Why — The complete regression suite runs and passes successfully, proving timing-attack and user-enumeration mitigation, replay prevention, and signature checks are correctly enforced.
 
+# Entry 6
 
+Asked — Address PR review feedback requiring stronger RS256 allowlist evidence, migration and guarded-route verification evidence, and a fix for pre-MFA temporary tokens being accepted by `requireAuth` on `POST /cycles`.
+
+Produced — Updated the Passport verifier to reject JWTs carrying `mfa_pending` before assigning `req.user`, added a regression test proving temporary MFA tokens receive `401 Unauthorized` on `POST /cycles`, added a test asserting the Passport JWT strategy keeps `algorithms: ["RS256"]`, and updated the auth attack evidence with the real verification results and local full-suite blocker. Also changed API test global setup to apply migrations against `TAXPULSE_TEST_DATABASE_URL` when provided before falling back to Testcontainers.
+
+Accepted or rejected — Accepted.
+
+Why — Targeted auth regressions pass, typecheck passes, and the guarded route now rejects pre-MFA challenge tokens instead of treating them as access tokens.
+
+# Entry 7
+
+Asked — Connect `TAXPULSE_TEST_DATABASE_URL` to local PostgreSQL 17 and create a new test database named `taxpulse_l`.
+
+Produced — Started the Homebrew `postgresql@17` service, confirmed PostgreSQL 17.10 was accepting connections on port 5433, created the `taxpulse_l` database, appended `TAXPULSE_TEST_DATABASE_URL` to `apps/api/.env`, ran the API test suite with the env loaded, and restored the synthetic seed tenants afterward.
+
+Accepted or rejected — Accepted.
+
+Why — The new `taxpulse_l` database exists on PostgreSQL 17, migrations created the public schema tables, and the local test database URL is now present for API test runs.

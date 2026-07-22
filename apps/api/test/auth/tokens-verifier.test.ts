@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
+import passport from "passport";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { app } from "../../src/app.js";
-import { signAccessToken, getPublicKey } from "../../src/auth/tokens.js";
+import { signAccessToken, getPublicKey, signTempMfaToken } from "../../src/auth/tokens.js";
 
 const TENANT_ID = "11111111-1111-4111-8111-111111111111";
 const USER_ID = "22222222-2222-4222-8222-222222222222";
@@ -12,6 +13,16 @@ const ROLE = "Firm Admin";
 const describeWithDatabase = process.env.TAXPULSE_TEST_DATABASE_URL ? describe : describe.skip;
 
 describe("Token Signing & Public Key Verification", () => {
+  it("pins the Passport verifier to the RS256 algorithm allowlist", () => {
+    const strategy = (
+      passport as unknown as { _strategy(name: string): { _verifOpts: unknown } }
+    )._strategy("jwt");
+
+    expect(strategy._verifOpts).toMatchObject({
+      algorithms: ["RS256"]
+    });
+  });
+
   it("signs a token with user/tenant/role and verifies signature using the public key", () => {
     const payload = { sub: USER_ID, tenant_id: TENANT_ID, role: ROLE };
     const token = signAccessToken(payload);
@@ -41,16 +52,13 @@ describeWithDatabase("Protected Write Route (POST /cycles) - Integration", () =>
     const payload = { sub: USER_ID, tenant_id: TENANT_ID, role: ROLE };
     const token = signAccessToken(payload);
 
-    const res = await request(app)
-      .post("/cycles")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        client_id: "client-001",
-        due_date: "2026-08-31",
-        owner: "Fictional Advisor",
-        planning_period: "2026 Q3",
-        priority: "P2"
-      });
+    const res = await request(app).post("/cycles").set("Authorization", `Bearer ${token}`).send({
+      client_id: "client-001",
+      due_date: "2026-08-31",
+      owner: "Fictional Advisor",
+      planning_period: "2026 Q3",
+      priority: "P2"
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.id).toBeDefined();
@@ -59,15 +67,13 @@ describeWithDatabase("Protected Write Route (POST /cycles) - Integration", () =>
 
 describe("Protected Write Route (POST /cycles) - Authentication Verification", () => {
   it("returns 401 for a request without a token", async () => {
-    const res = await request(app)
-      .post("/cycles")
-      .send({
-        client_id: "client-001",
-        due_date: "2026-08-31",
-        owner: "Fictional Advisor",
-        planning_period: "2026 Q3",
-        priority: "P2"
-      });
+    const res = await request(app).post("/cycles").send({
+      client_id: "client-001",
+      due_date: "2026-08-31",
+      owner: "Fictional Advisor",
+      planning_period: "2026 Q3",
+      priority: "P2"
+    });
 
     expect(res.status).toBe(401);
     expect(res.body.detail).toBeDefined();
@@ -86,5 +92,20 @@ describe("Protected Write Route (POST /cycles) - Authentication Verification", (
       });
 
     expect(res.status).toBe(401);
+  });
+
+  it("returns 401 when a pre-MFA temporary token is used as a bearer token", async () => {
+    const token = signTempMfaToken({ sub: USER_ID, tenant_id: TENANT_ID, role: ROLE });
+
+    const res = await request(app).post("/cycles").set("Authorization", `Bearer ${token}`).send({
+      client_id: "client-001",
+      due_date: "2026-08-31",
+      owner: "Fictional Advisor",
+      planning_period: "2026 Q3",
+      priority: "P2"
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.body.detail).toBe("Complete MFA before accessing this route.");
   });
 });
