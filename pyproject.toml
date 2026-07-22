@@ -41,3 +41,8 @@ packages = ["src/python/taxpulse_python"]
 asyncio_mode = "auto"
 pythonpath = ["src/python"]
 testpaths = ["tests"]
+
+[tool.uv.workspace]
+members = [
+    "services/compute",
+]
