@@ -79,3 +79,13 @@ Produced — Merged `origin/main` into `m3d5-implementation`, kept the M3D5 `/v1
 Accepted or rejected — Accepted.
 
 Why — The M3D5 branch now incorporates the M3D4/main changes while preserving the versioned API, managed secrets, rate-limit config, and auth hardening expected by the later module work.
+
+## Entry 9
+
+Asked — Ensure `.env` is ignored, not present in the root, and not tracked on the remote branch.
+
+Produced — Removed the tracked root `.env` from Git and the working tree while keeping `.gitignore` configured to ignore `.env` files and preserve the committed `apps/api/.env.example` template.
+
+Accepted or rejected — Accepted.
+
+Why — The branch no longer tracks a root `.env`, and the local API env file remains ignored while the example template stays available for setup.
