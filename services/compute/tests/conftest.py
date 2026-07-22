@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 
+
 @pytest.fixture(scope="session")
 def key_pair() -> tuple[str, str]:
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -19,6 +20,7 @@ def key_pair() -> tuple[str, str]:
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     ).decode("utf-8")
     return private_pem, public_pem
+
 
 
 @pytest.fixture(scope="session")
@@ -38,6 +40,7 @@ def configure_public_key(monkeypatch, public_key) -> None:
 
     PUBLIC_KEYS.clear()
 
+
 @pytest.fixture(scope="session")
 def valid_token(private_key) -> str:
     payload = {
@@ -52,6 +55,7 @@ def valid_token(private_key) -> str:
         "kid": "2026-07"
     }
     return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
+
 
 @pytest.fixture(scope="session")
 def wrong_aud_token(private_key) -> str:
@@ -68,6 +72,23 @@ def wrong_aud_token(private_key) -> str:
     }
     return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
 
+
+@pytest.fixture(scope="session")
+def wrong_issuer_token(private_key) -> str:
+    payload = {
+        "sub": "user-123",
+        "tenant_id": "11111111-1111-4111-8111-111111111111",
+        "role": "Firm Admin",
+        "iss": "wrong-issuer",
+        "aud": "taxpulse-clients",
+        "exp": int(time.time()) + 900
+    }
+    headers = {
+        "kid": "2026-07"
+    }
+    return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
+
+
 @pytest.fixture(scope="session")
 def expired_token(private_key) -> str:
     payload = {
@@ -82,6 +103,7 @@ def expired_token(private_key) -> str:
         "kid": "2026-07"
     }
     return jwt.encode(payload, private_key, algorithm="RS256", headers=headers)
+
 
 @pytest.fixture(scope="session")
 def tampered_token(valid_token) -> str:

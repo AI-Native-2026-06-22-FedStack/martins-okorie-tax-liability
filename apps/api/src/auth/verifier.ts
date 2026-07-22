@@ -14,6 +14,25 @@ declare global {
   }
 }
 
+interface JwtPayload {
+  sub?: string;
+  tenant_id?: string;
+  role?: string;
+  mfa_pending?: boolean;
+}
+
+function getAuthFailureMessage(info: unknown): string {
+  if (typeof info === "object" && info !== null && "message" in info) {
+    const message = info.message;
+
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+
+  return "Valid access token is required.";
+}
+
 /**
  * Configure the Passport JWT Strategy.
  * This pins the algorithm to RS256, uses the public key, and verifies the issuer/audience.
@@ -30,10 +49,15 @@ export function initializePassport(): void {
         issuer,
         audience
       },
-      (payload, done) => {
+      (payload: JwtPayload, done) => {
         if (!payload.sub || !payload.tenant_id || !payload.role) {
           return done(null, false, { message: "Invalid token claims structure." });
         }
+
+        if (payload.mfa_pending) {
+          return done(null, false, { message: "Complete MFA before accessing this route." });
+        }
+
         return done(null, {
           id: payload.sub,
           tenant_id: payload.tenant_id,
@@ -49,17 +73,21 @@ export function initializePassport(): void {
  * Returns 401 Unauthorized in RFC 9457 Problem+JSON format on failure.
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  passport.authenticate("jwt", { session: false }, (err: unknown, user: Express.User | false, info: any) => {
-    if (err || !user) {
-      res.status(401).json({
-        type: "about:blank",
-        title: "Unauthorized",
-        status: 401,
-        detail: info?.message || "Valid access token is required."
-      });
-      return;
+  passport.authenticate(
+    "jwt",
+    { session: false },
+    (err: unknown, user: Express.User | false, info: unknown) => {
+      if (err || !user) {
+        res.status(401).json({
+          type: "about:blank",
+          title: "Unauthorized",
+          status: 401,
+          detail: getAuthFailureMessage(info)
+        });
+        return;
+      }
+      req.user = user;
+      next();
     }
-    req.user = user;
-    next();
-  })(req, res, next);
+  )(req, res, next);
 }

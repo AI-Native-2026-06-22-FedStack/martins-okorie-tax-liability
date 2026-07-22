@@ -24,7 +24,7 @@ Why — For cheap reads, fixed-window is selected as boundary bursts carry low r
 
 Asked — Implement cost-accounting advisory headers, extend the OpenAPI registry with bearerAuth/401/429 contract, and verify the full test suite.
 
-Produced — Created `apps/api/src/middleware/cost-header.ts` emitting `X-Request-Cost` (eagerly) and `X-Quota-Used` (via `writeHead` intercept) without interfering with the rate limiter. Extended `apps/api/src/openapi/openapi.ts` with `bearerAuth` security scheme, shared 401/429 responses, and the PATCH /cycles/{id}/transition path — all on the existing registry without a hand-written spec file. Created `apps/api/test/openapi-security.test.ts` (7 tests). Fixed express-rate-limit `ERR_ERL_KEY_GEN_IPV6` by using `ipKeyGenerator` and `ERR_ERL_DOUBLE_COUNT` by adding distinct `rl:` / `sd:` prefixes to the store.
+Produced — Created `apps/api/src/middleware/cost-header.ts` emitting `X-Request-Cost` eagerly and `X-Quota-Remaining` from the limiter-provided draft-8 `RateLimit` `r=` value without interfering with the rate limiter. Extended `apps/api/src/openapi/openapi.ts` with `bearerAuth` security scheme, shared 401/429 responses, and the PATCH /cycles/{id}/transition path — all on the existing registry without a hand-written spec file. Created `apps/api/test/openapi-security.test.ts` (7 tests). Fixed express-rate-limit `ERR_ERL_KEY_GEN_IPV6` by using `ipKeyGenerator` and `ERR_ERL_DOUBLE_COUNT` by adding distinct `rl:` / `sd:` prefixes to the store.
 
 Accepted or rejected — Accepted.
 
@@ -49,3 +49,23 @@ Produced — Kept the existing registry in `apps/api/src/openapi/openapi.ts`, ad
 Accepted or rejected — Accepted.
 
 Why — The OpenAPI tests pass with 9 assertions across the Module 2 and security conformance files, and a repo grep found no hand-written OpenAPI or Swagger YAML/JSON spec file.
+
+## Entry 6
+
+Asked — Address approved M3D4 PR cleanup feedback: remove brittle `res.writeHead` monkey-patching from quota headers and sync documentation to the shipped `X-Quota-Remaining` and draft-8 `RateLimit` header format.
+
+Produced — Removed the `writeHead` intercept from `cost-header.ts`, moved `X-Quota-Remaining` population into `tenantRateLimiter` after `express-rate-limit` sets the draft-8 `RateLimit` header, and set the quota header in the 429 handler. Updated the helper contract documentation and corrected the prompt journal's header name from `X-Quota-Used` to `X-Quota-Remaining`.
+
+Accepted or rejected — Accepted.
+
+Why — The rate-limit contract remains intact while quota header emission no longer depends on wrapping `res.writeHead`.
+
+## Entry 7
+
+Asked — Resolve the M3D4-to-main env template conflict by combining the Redis rate-limiting variables into the env layout used by `main`.
+
+Produced — Removed the root `.env.example`, added `apps/api/.env.example` using the same API-local layout as `main`, included the M3D4 `REDIS_URL`, `RATE_LIMIT_WINDOW_MS`, and `RATE_LIMIT_MAX` variables, updated local `apps/api/.env` to the same key order and blank-line grouping, and added `.env` to `.gitignore`.
+
+Accepted or rejected — Accepted.
+
+Why — The committed env template now lives in the API package like `main`, preserves the M3D4 Redis/rate-limit configuration, and the real local `.env` is ignored.

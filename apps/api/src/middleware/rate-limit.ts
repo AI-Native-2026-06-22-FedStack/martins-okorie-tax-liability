@@ -5,6 +5,7 @@ import { Redis } from "ioredis";
 import { RedisStore, type RedisReply } from "rate-limit-redis";
 
 import { sendProblem } from "../errors/problem-json.js";
+import { setQuotaRemainingHeader } from "./cost-header.js";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
@@ -62,6 +63,7 @@ const rawLimiter = rateLimit({
   handler: (req: Request, res: Response) => {
     // Retry-After is already set by express-rate-limit before this handler is called.
     const retryAfter = res.getHeader("Retry-After") ?? 60;
+    setQuotaRemainingHeader(res);
     sendProblem(res, {
       type: "about:blank",
       title: "Too Many Requests",
@@ -117,6 +119,7 @@ export function tenantRateLimiter(req: Request, res: Response, next: NextFunctio
       req.log.error({ err }, "Rate limiter store failed. Bypassing limit (fail-open).");
       return next();
     }
+    setQuotaRemainingHeader(res);
     next();
   });
 }

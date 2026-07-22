@@ -69,3 +69,13 @@ Produced — Verified branch, reran TypeScript typecheck, focused Vitest tests, 
 Accepted or rejected — Accepted.
 
 Why — The verification commands passed or failed in the expected fail-fast mode, the rubric evidence is captured in the PR draft, and the branch is ready to stage, commit, and push.
+
+## Entry 8
+
+Asked — Build M3D5 from the new M3D4 changes.
+
+Produced — Merged `origin/main` into `m3d5-implementation`, kept the M3D5 `/v1` route and managed-secret configuration, carried forward M3D4 Redis rate-limit environment variables and MFA bearer-token rejection coverage, removed the obsolete root `.env.example`, and aligned the ignored `apps/api/.env` with the committed API-local env example.
+
+Accepted or rejected — Accepted.
+
+Why — The M3D5 branch now incorporates the M3D4/main changes while preserving the versioned API, managed secrets, rate-limit config, and auth hardening expected by the later module work.
