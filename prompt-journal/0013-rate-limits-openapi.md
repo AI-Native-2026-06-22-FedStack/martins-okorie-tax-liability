@@ -59,3 +59,13 @@ Produced — Removed the `writeHead` intercept from `cost-header.ts`, moved `X-Q
 Accepted or rejected — Accepted.
 
 Why — The rate-limit contract remains intact while quota header emission no longer depends on wrapping `res.writeHead`.
+
+## Entry 7
+
+Asked — Resolve the M3D4-to-main env template conflict by combining the Redis rate-limiting variables into the env layout used by `main`.
+
+Produced — Removed the root `.env.example`, added `apps/api/.env.example` using the same API-local layout as `main`, included the M3D4 `REDIS_URL`, `RATE_LIMIT_WINDOW_MS`, and `RATE_LIMIT_MAX` variables, updated local `apps/api/.env` to the same key order and blank-line grouping, and added `.env` to `.gitignore`.
+
+Accepted or rejected — Accepted.
+
+Why — The committed env template now lives in the API package like `main`, preserves the M3D4 Redis/rate-limit configuration, and the real local `.env` is ignored.
