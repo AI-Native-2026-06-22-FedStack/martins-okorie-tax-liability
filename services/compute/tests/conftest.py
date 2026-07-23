@@ -1,10 +1,9 @@
 import time
 
-import pytest
 import jwt
+import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-
 
 
 @pytest.fixture(scope="session")

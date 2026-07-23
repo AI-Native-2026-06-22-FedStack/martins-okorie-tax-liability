@@ -1,10 +1,9 @@
 import structlog
-from fastapi import Depends, FastAPI, status
-from pydantic import BaseModel
-
 from app.auth import UserIdentity, get_current_user
 from app.correlation import CorrelationIdMiddleware
 from app.logging_config import configure_logging
+from fastapi import Depends, FastAPI, status
+from pydantic import BaseModel
 
 # Configure structured JSON logging
 configure_logging()

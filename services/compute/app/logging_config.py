@@ -1,7 +1,8 @@
 import json
-import os
 import pathlib
+
 import structlog
+
 
 # Load the shared redaction configuration
 def load_redact_keys() -> set[str]:
@@ -9,7 +10,7 @@ def load_redact_keys() -> set[str]:
     base_dir = pathlib.Path(__file__).resolve().parents[3]
     config_path = base_dir / "shared" / "redaction-config.json"
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             data = json.load(f)
             keys = set()
             for key in data.get("snake_case", []):
@@ -17,7 +18,7 @@ def load_redact_keys() -> set[str]:
                 clean_key = key.replace("*.", "")
                 keys.add(clean_key)
             return keys
-    except Exception as e:
+    except Exception:
         # Secure fallback keys
         return {"income", "deductions", "deduction", "password", "token", "authorization", "mfa_secret", "secret"}
 

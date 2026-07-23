@@ -1,12 +1,11 @@
 import os
 from pathlib import Path
-from typing import Dict
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
 from pwdlib import PasswordHash
+from pydantic import BaseModel
 
 # Initialize password hash using pwdlib's recommended (Argon2id) hasher.
 # Ensures we match the Express service hashing configuration.
@@ -15,7 +14,7 @@ password_hash = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # In-memory store of public keys, keyed by kid
-PUBLIC_KEYS: Dict[str, str] = {}
+PUBLIC_KEYS: dict[str, str] = {}
 DEFAULT_PUBLIC_KEY_KID = "2026-07"
 APP_DIR = Path(__file__).resolve().parent
 
