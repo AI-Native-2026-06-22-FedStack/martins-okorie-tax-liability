@@ -177,3 +177,20 @@ def test_scenario_6_scenarios_returns_422(valid_token):
         },
     )
     assert response.status_code == 422
+
+
+def test_calculate_invalid_shared_schema_payload_returns_422(valid_token):
+    headers = {"Authorization": f"Bearer {valid_token}"}
+    response = client.post(
+        "/v1/calculate",
+        headers=headers,
+        json={
+            "filing_status": "single",
+            "income": 120000.0,
+            "deductions": 14600.0,
+            "state": "CALIFORNIA",
+        },
+    )
+    assert response.status_code == 422
+    assert "Shared JSON Schema" in response.text or "state" in response.text
+

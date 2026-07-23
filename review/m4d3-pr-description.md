@@ -5,7 +5,7 @@ Grows the Module 3 FastAPI service into a full Tax Calculation Bounded Context (
 2. Pydantic v2 typed boundary contracts (`services/compute/app/contracts.py`) enforcing non-negative income and scenario bounds (`2 <= len(scenarios) <= 5`).
 3. Deterministic progressive tax liability computation, effective/marginal rate derivations, quarterly estimate splits, and scenario comparison deltas (`services/compute/app/calc.py`).
 4. Versioned `/v1` FastAPI endpoints (`POST /v1/calculate`, `POST /v1/scenario`) protected by the reused Module 3 JWT auth dependency (`get_current_user`).
-5. A versioned cross-service contract package (`packages/shared-schemas`) containing `calculation.schema.json` (v1.0.0), validated by `Ajv` on Express and `jsonschema` on FastAPI, with an automated contract-drift test suite enforcing semver breaking change rules.
+5. A versioned cross-service contract package (`packages/shared-schemas`) containing `calculation.schema.json` (v1.0.0), loaded by live FastAPI production code (`services/compute/app/schema_validator.py`) and validated by `Ajv` on Express and `jsonschema` on FastAPI, with an automated contract-drift test suite enforcing semver breaking change rules.
 6. A hardened `TaxEngineClient` (`apps/api/src/engine/calc-client.ts`) with per-attempt timeouts, 3 capped retries using exponential backoff with random jitter, selective 4xx/5xx retry logic, and JSON Schema response validation.
 
 ## Testing & Verification Output
