@@ -8,6 +8,7 @@ dependencies = [
     "cryptography>=49.0.0",
     "fastapi>=0.139.0",
     "httpx>=0.28.1",
+    "jsonschema>=4.20.0",
     "pwdlib[argon2]>=0.3.0",
     "pyjwt>=2.8",
     "structlog>=26.1.0",

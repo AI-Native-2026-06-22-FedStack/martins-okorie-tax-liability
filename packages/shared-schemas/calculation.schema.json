@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "calculation.schema.json",
+  "title": "CalculationContract",
+  "description": "Versioned cross-service contract between Express Core Case Service and FastAPI Tax Engine.",
+  "type": "object",
+  "required": [
+    "filing_status",
+    "income",
+    "deductions",
+    "state"
+  ],
+  "properties": {
+    "filing_status": {
+      "type": "string",
+      "enum": [
+        "single",
+        "married_filing_jointly",
+        "head_of_household",
+        "married_filing_separately"
+      ]
+    },
+    "income": {
+      "type": "number",
+      "minimum": 0
+    },
+    "deductions": {
+      "type": "number",
+      "minimum": 0
+    },
+    "state": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 2
+    }
+  },
+  "$defs": {
+    "calculationResponse": {
+      "type": "object",
+      "required": [
+        "federal_liability",
+        "state_liability",
+        "effective_rate",
+        "marginal_rate",
+        "quarterly_estimate"
+      ],
+      "properties": {
+        "federal_liability": { "type": "number" },
+        "state_liability": { "type": "number" },
+        "effective_rate": { "type": "number" },
+        "marginal_rate": { "type": "number" },
+        "quarterly_estimate": { "type": "number" }
+      }
+    }
+  }
+}

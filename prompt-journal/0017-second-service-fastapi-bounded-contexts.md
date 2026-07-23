@@ -30,4 +30,15 @@ Accepted or rejected — Accepted.
 
 Why — `uv run pytest services/compute/tests` passed 36/36 tests, verifying progressive calculation accuracy, edge cases, 401 unauthenticated guards, and 422 scenario count bounds.
 
+## Entry 4
+
+Asked — Execute Task 3: Publish the versioned cross-service contract in `packages/shared-schemas`, link both services to the single JSON Schema source of truth (`calculation.schema.json`), validate payloads on Express (`ajv`) and FastAPI (`jsonschema`), and implement contract-drift testing enforcing semver breaking change detection.
+
+Produced — Created `packages/shared-schemas` holding versioned `calculation.schema.json` (v1.0.0) and `previous-calculation.schema.json` snapshot. Updated root `package.json` with `workspaces`, linked `@capstone/shared-schemas` in `apps/api/package.json` validated via `Ajv`, and updated `services/compute/pyproject.toml` validating via Python `jsonschema`. Added `apps/api/test/contract-schema.test.ts`, `apps/api/test/contract-drift.test.ts`, and `services/compute/tests/test_shared_schema.py`.
+
+Accepted or rejected — Accepted.
+
+Why — Vitest contract tests and Pytest `test_shared_schema.py` passed 39/39 Python tests and 8/8 JS contract tests, verifying cross-service JSON schema validation and drift detection.
+
+
 
