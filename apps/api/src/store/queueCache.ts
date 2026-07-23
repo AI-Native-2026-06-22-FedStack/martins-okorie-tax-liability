@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Redis } from "ioredis";
 
 import { getApiEnv } from "../config/env.js";
@@ -14,6 +15,14 @@ const WAIT_ATTEMPTS = 10;
 const WAIT_MS = 50;
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
+const RELEASE_LOCK_LUA = `
+  if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+  else
+    return 0
+  end
+`;
+
 export const redisClient = new Redis(redisUrl, {
   enableOfflineQueue: false,
   maxRetriesPerRequest: 1,
@@ -23,6 +32,12 @@ export const redisClient = new Redis(redisUrl, {
 redisClient.on("error", (err: Error) => {
   console.warn("Redis connection error:", err.message);
 });
+
+export async function releaseRedisLock(lockKey: string, owner: string): Promise<boolean> {
+  await ensureRedisReady();
+  const result = await redisClient.eval(RELEASE_LOCK_LUA, 1, lockKey, owner);
+  return result === 1;
+}
 
 export async function ensureRedisReady(): Promise<void> {
   if (redisClient.status === "ready") {
@@ -112,7 +127,9 @@ export async function listCachedPlanCycleQueue(
 
   await ensureRedisReady();
   const lockKey = queueLockKey(key);
-  const lockAcquired = await redisClient.set(lockKey, "1", "PX", LOCK_TTL_MS, "NX");
+  const lockOwner = randomUUID();
+  const lockAcquired =
+    (await redisClient.set(lockKey, lockOwner, "PX", LOCK_TTL_MS, "NX")) === "OK";
 
   if (!lockAcquired) {
     const rebuilt = await waitForCachedQueue(key);
@@ -127,7 +144,7 @@ export async function listCachedPlanCycleQueue(
     return rows;
   } finally {
     if (lockAcquired) {
-      await redisClient.del(lockKey);
+      await releaseRedisLock(lockKey, lockOwner);
     }
   }
 }

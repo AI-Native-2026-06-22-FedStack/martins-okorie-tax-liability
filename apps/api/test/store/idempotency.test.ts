@@ -4,7 +4,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { app } from "../../src/app.js";
 import { signAccessToken } from "../../src/auth/tokens.js";
-import { ensureRedisReady, redisClient } from "../../src/store/queueCache.js";
+import { resetApiEnvForTests } from "../../src/config/env.js";
+import { ensureRedisReady, redisClient, releaseRedisLock } from "../../src/store/queueCache.js";
 import { closeDefaultDb, createDrizzleDb, type TaxPulseDb } from "../../src/db/client.js";
 import { taxPlanCycle } from "../../src/db/schema.js";
 import {
@@ -57,6 +58,22 @@ async function countCyclesForTenant(tenantId: string): Promise<number> {
 
 describeWithDatabase("Idempotency-Key create protection", () => {
   beforeAll(() => {
+    Object.assign(process.env, {
+      AWS_ENDPOINT: "http://localhost:8000",
+      AWS_REGION: "us-east-1",
+      DB_HOST: "localhost",
+      DB_NAME: "taxpulse_l",
+      DB_PORT: "5433",
+      DB_SECRET_ID: "taxpulse/db-password",
+      DB_SSL: "disable",
+      DB_USER: "taxpulse_app",
+      DDB_ENDPOINT: "http://localhost:8000",
+      DDB_TABLE_NAME: "taxpulse-plan-cycle-read-model-test",
+      JWT_SECRET_ID: "taxpulse/jwt-signing-keys",
+      PORT: "3000"
+    });
+    resetApiEnvForTests();
+
     const connectionString = process.env.TAXPULSE_TEST_DATABASE_URL;
 
     if (!connectionString) {
@@ -195,5 +212,30 @@ describeWithDatabase("Idempotency-Key create protection", () => {
     expect(second.body.id).not.toBe(first.body.id);
     expect(await countCyclesForTenant(TENANT_A_ID)).toBe(1);
     expect(await countCyclesForTenant(TENANT_B_ID)).toBe(1);
+  });
+});
+
+describe("Atomic idempotency lock release", () => {
+  beforeEach(async () => {
+    await ensureRedisReady();
+    await redisClient.flushdb();
+  });
+
+  it("releases lock atomically only when owner matches", async () => {
+    const lockKey = "lock:tenant-1:key-1";
+    const owner1 = "owner-uuid-1";
+    const owner2 = "owner-uuid-2";
+
+    await redisClient.set(lockKey, owner1, "PX", 5000);
+
+    // Mismatched owner release attempt fails
+    const releasedWrong = await releaseRedisLock(lockKey, owner2);
+    expect(releasedWrong).toBe(false);
+    expect(await redisClient.get(lockKey)).toBe(owner1);
+
+    // Matching owner release attempt succeeds
+    const releasedRight = await releaseRedisLock(lockKey, owner1);
+    expect(releasedRight).toBe(true);
+    expect(await redisClient.get(lockKey)).toBeNull();
   });
 });
