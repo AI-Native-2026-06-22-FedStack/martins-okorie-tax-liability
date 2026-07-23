@@ -1,7 +1,7 @@
 [project]
 name = "compute"
 version = "0.1.0"
-description = "Add your description here"
+description = "TaxPulse calculation engine microservice"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -10,8 +10,11 @@ dependencies = [
     "httpx>=0.28.1",
     "jsonschema>=4.20.0",
     "pwdlib[argon2]>=0.3.0",
+    "pydantic>=2.0.0",
     "pyjwt>=2.8",
     "structlog>=26.1.0",
+    "tenacity>=8.2.0",
+    "uvicorn>=0.30.0",
 ]
 
 [dependency-groups]
