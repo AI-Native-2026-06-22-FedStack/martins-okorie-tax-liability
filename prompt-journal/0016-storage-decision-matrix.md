@@ -40,3 +40,14 @@ Accepted or rejected — Accepted.
 
 Why — The `m4d2-implementation` branch now includes the owner-safe Redis lock fixes, atomic Lua CAS release, and DynamoDB Local integration tests from `m4d1-implementation`, and `npm run typecheck` and `npx vitest run apps/api/test/store` passed with zero errors.
 
+## Entry 5
+
+Asked — Ensure the `m4d2-implementation` branch satisfies all grading rubric criteria for the storage decision matrix, C4 store map, polyglot anti-patterns, read-cost math, README links, and PR description.
+
+Produced — Enriched `ADR-0009` with embedded Mermaid C4 container diagram, 1x/10x/100x cost table, explicit `NoSQL-as-cache` and `cache-as-source-of-truth` anti-pattern resolutions, updated `docs/adr/README.md` and root `README.md` with direct ADR-0009 links, and added `review/m4d2-pr-description.md` with pasted verification evidence, AI reflection, and grading checklist.
+
+Accepted or rejected — Accepted.
+
+Why — The `m4d2-implementation` branch fully covers all six rubric criteria with auditable ADR documentation, rendered C4 store map, cost math, README links, and PR review evidence.
+
+
