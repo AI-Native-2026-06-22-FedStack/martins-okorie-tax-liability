@@ -79,3 +79,14 @@ Produced — Audited the ADR, store tests, Compose stack, evidence, and review a
 Accepted or rejected — Accepted.
 
 Why — The rubric now has repo-backed evidence for the read model, cache-aside behavior, idempotency, local stack, verification output, and AI reflection.
+
+## Entry 9
+
+Asked — Address PR feedback by making cache rebuild and idempotency lock releases owner-safe with atomic Lua compare-and-delete, testing lock expiry overlaps, and exercising DynamoDB Local in readModel.test.ts.
+
+Produced — Updated `queueCache.ts` and `idempotency.ts` to generate UUID lock owner tokens and release locks via an atomic Lua script (`releaseRedisLock`), added test coverage in `cacheAside.test.ts` and `idempotency.test.ts` for lock expiry overlap and owner matching, and added a DynamoDB Local integration test in `readModel.test.ts` covering table creation, cycle upserts, get-by-id, queue list (stage & GSI owner), overdue queries, and cycle deletions.
+
+Accepted or rejected — Accepted.
+
+Why — Vitest store tests passed with 3 test files and 8 active tests, confirming owner-safe Lua CAS lock release and real DynamoDB Local access pattern queries.
+

@@ -1,6 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
-import { ensureRedisReady, redisClient } from "../../src/store/queueCache.js";
+import { resetApiEnvForTests } from "../../src/config/env.js";
+import {
+  ensureRedisReady,
+  redisClient,
+  releaseRedisLock
+} from "../../src/store/queueCache.js";
 import {
   invalidatePlanCycleQueueCacheForTenant,
   listCachedPlanCycleQueue
@@ -62,6 +67,21 @@ class CountingProjector implements PlanCycleQueueProjector {
 
 describe("Plan Cycle Queue cache-aside", () => {
   beforeEach(async () => {
+    Object.assign(process.env, {
+      AWS_ENDPOINT: "http://localhost:8000",
+      AWS_REGION: "us-east-1",
+      DB_HOST: "localhost",
+      DB_NAME: "taxpulse",
+      DB_PORT: "5432",
+      DB_SECRET_ID: "taxpulse/db-password",
+      DB_SSL: "disable",
+      DB_USER: "taxpulse_app",
+      DDB_ENDPOINT: "http://localhost:8000",
+      DDB_TABLE_NAME: "taxpulse-plan-cycle-read-model-test",
+      JWT_SECRET_ID: "taxpulse/jwt-signing-keys",
+      PORT: "3000"
+    });
+    resetApiEnvForTests();
     await ensureRedisReady();
     await redisClient.flushdb();
     setPlanCycleQueueProjectorForTests(undefined);
@@ -145,5 +165,22 @@ describe("Plan Cycle Queue cache-aside", () => {
     expect(rebuilt[0]?.stage).toBe("Review");
     expect(rebuilt[0]?.due_date).toBe("2026-09-15");
     expect(projector.listCalls).toBe(2);
+  });
+
+  it("does not delete a newer request's lock when an expired lock owner releases", async () => {
+    const lockKey = "queue-lock:test";
+    const originalOwner = "owner-request-1";
+    const newOwner = "owner-request-2";
+
+    await redisClient.set(lockKey, originalOwner, "PX", 5000);
+
+    // Simulate lock expiration and re-acquisition by request 2
+    await redisClient.set(lockKey, newOwner, "PX", 5000);
+
+    // Request 1 attempts release after its lock expired
+    const released = await releaseRedisLock(lockKey, originalOwner);
+
+    expect(released).toBe(false);
+    expect(await redisClient.get(lockKey)).toBe(newOwner);
   });
 });

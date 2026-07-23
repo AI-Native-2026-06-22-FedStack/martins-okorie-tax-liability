@@ -3,7 +3,12 @@ import { BatchWriteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { resetApiEnvForTests } from "../../src/config/env.js";
-import { PLAN_CYCLE_QUEUE_GSI_NAME, ensurePlanCycleQueueTable } from "../../src/store/dynamo.js";
+import {
+  PLAN_CYCLE_QUEUE_GSI_NAME,
+  createDynamoDbClient,
+  createDynamoDocumentClient,
+  ensurePlanCycleQueueTable
+} from "../../src/store/dynamo.js";
 import {
   DynamoPlanCycleQueueProjector,
   toPlanCycleQueueItem
@@ -167,5 +172,68 @@ describe("DynamoDB Plan Cycle Queue read model", () => {
     });
     expect(sentCommands.filter((command) => command instanceof QueryCommand)).toHaveLength(4);
     expect(sentCommands.map((command) => command?.constructor?.name)).not.toContain("ScanCommand");
+  });
+
+  it("exercises DynamoDB Local by creating the local table and running all access patterns", async () => {
+    const rawClient = createDynamoDbClient();
+    const docClient = createDynamoDocumentClient();
+
+    await ensurePlanCycleQueueTable(rawClient);
+
+    const projector = new DynamoPlanCycleQueueProjector(docClient);
+
+    const cycleIntake = makeTaxPlanCycle({
+      due_date: "2026-09-30",
+      owner: "Local Integration Advisor",
+      priority: "P1",
+      stage: "Intake"
+    });
+
+    const cycleOverdue = makeTaxPlanCycle({
+      due_date: "2026-01-10",
+      owner: "Local Integration Advisor",
+      priority: "P2",
+      stage: "Intake",
+      tenant_id: cycleIntake.tenant_id
+    });
+
+    // 1. Upsert cycles
+    await projector.upsertCycle(cycleIntake);
+    await projector.upsertCycle(cycleOverdue);
+
+    // 2. Access pattern: getCycleById
+    const fetchedById = await projector.getCycleById(cycleIntake.tenant_id, cycleIntake.id);
+    expect(fetchedById).toMatchObject({
+      id: cycleIntake.id,
+      owner: "Local Integration Advisor",
+      stage: "Intake",
+      tenant_id: cycleIntake.tenant_id
+    });
+
+    // 3. Access pattern: listQueue (stage query)
+    const stageQueue = await projector.listQueue({
+      stage: "Intake",
+      tenant_id: cycleIntake.tenant_id
+    });
+    expect(stageQueue.length).toBeGreaterThanOrEqual(2);
+    expect(stageQueue.map((item) => item.id)).toContain(cycleIntake.id);
+
+    // 4. Access pattern: listQueue with owner (GSI query)
+    const ownerQueue = await projector.listQueue({
+      owner: "Local Integration Advisor",
+      stage: "Intake",
+      tenant_id: cycleIntake.tenant_id
+    });
+    expect(ownerQueue.length).toBeGreaterThanOrEqual(2);
+    expect(ownerQueue.every((item) => item.owner === "Local Integration Advisor")).toBe(true);
+
+    // 5. Access pattern: listOverdueByDueDate
+    const overdueList = await projector.listOverdueByDueDate(cycleIntake.tenant_id);
+    expect(overdueList.some((item) => item.id === cycleOverdue.id)).toBe(true);
+
+    // 6. Access pattern: deleteCycle
+    await projector.deleteCycle(cycleIntake);
+    const deletedFetch = await projector.getCycleById(cycleIntake.tenant_id, cycleIntake.id);
+    expect(deletedFetch).toBeNull();
   });
 });

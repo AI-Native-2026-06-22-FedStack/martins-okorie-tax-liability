@@ -2,7 +2,13 @@ import type { NextFunction, Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 
 import { getApiEnv } from "../config/env.js";
-import { ensureRedisReady, getRedisJson, redisClient, setRedisJson } from "./queueCache.js";
+import {
+  ensureRedisReady,
+  getRedisJson,
+  redisClient,
+  releaseRedisLock,
+  setRedisJson
+} from "./queueCache.js";
 
 interface StoredIdempotencyResponse {
   body: unknown;
@@ -41,12 +47,14 @@ async function acquireIdempotencyLock(lockKey: string, owner: string): Promise<b
   return acquired === "OK";
 }
 
-async function releaseIdempotencyLock(lockKey: string, owner: string): Promise<void> {
-  const currentOwner = await redisClient.get(lockKey);
-
-  if (currentOwner === owner) {
-    await redisClient.del(lockKey);
-  }
+/**
+ * Releases the idempotency lock atomically using Lua compare-and-delete.
+ * IDEMPOTENCY_LOCK_TTL_MS (default 5000ms) exceeds the worst-case
+ * POST /v1/cycles create handler execution time (~100-300ms for database
+ * insertion, read-model projection update, and queue cache invalidation).
+ */
+async function releaseIdempotencyLock(lockKey: string, owner: string): Promise<boolean> {
+  return releaseRedisLock(lockKey, owner);
 }
 
 async function waitForStoredResponse(

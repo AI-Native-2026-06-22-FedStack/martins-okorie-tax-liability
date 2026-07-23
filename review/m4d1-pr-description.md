@@ -8,8 +8,9 @@ Week 4 Day 1 gives TaxPulse its first polyglot backend stores. The local stack n
 
 - Added the Week 4 Day 1 local stack: Postgres 17, DynamoDB Local, and Redis.
 - Added the DynamoDB Plan Cycle Queue read model in `apps/api/src/store/dynamo.ts`.
-- Added Redis cache-aside with TTL, tenant invalidation, and stampede protection in `apps/api/src/store/queueCache.ts`.
-- Added Redis-backed `Idempotency-Key` handling for `POST /v1/cycles` in `apps/api/src/store/idempotency.ts`.
+- Added Redis cache-aside with TTL, tenant invalidation, and owner-safe atomic Lua compare-and-delete stampede protection in `apps/api/src/store/queueCache.ts`.
+- Added Redis-backed `Idempotency-Key` handling for `POST /v1/cycles` with owner-safe atomic CAS release in `apps/api/src/store/idempotency.ts`.
+- Added DynamoDB Local integration test coverage in `apps/api/test/store/readModel.test.ts`.
 - Documented the access patterns, keys, consistency choices, cache keys, and idempotency keys in ADR-0008.
 
 ## Verification
