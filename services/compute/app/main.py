@@ -12,6 +12,7 @@ from app.contracts import (
 from app.correlation import CorrelationIdMiddleware
 from app.db import get_db
 from app.logging_config import configure_logging
+from app.schema_validator import validate_payload_against_shared_schema
 from fastapi import Depends, FastAPI, status
 from pydantic import BaseModel
 
@@ -92,8 +93,9 @@ async def calculate_tax(
 ) -> CalculationResponse:
     """
     Computes deterministic federal/state progressive tax liability.
-    Protected by shared RS256 JWT auth context.
+    Protected by shared RS256 JWT auth context. Validated against shared JSON Schema.
     """
+    validate_payload_against_shared_schema(request.model_dump())
     logger.info(
         "Calculating tax liability in compute service",
         income=request.income,

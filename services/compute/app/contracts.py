@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from app.schema_validator import validate_payload_against_shared_schema
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class CalculationRequest(BaseModel):
@@ -14,6 +15,11 @@ class CalculationRequest(BaseModel):
     income: float = Field(..., ge=0.0, description="Gross income (must be >= 0)")
     deductions: float = Field(..., ge=0.0, description="Total deductions (must be >= 0)")
     state: str = Field(..., min_length=2, max_length=2, description="Two-letter state code")
+
+    @model_validator(mode="after")
+    def validate_with_shared_schema(self) -> "CalculationRequest":
+        validate_payload_against_shared_schema(self.model_dump())
+        return self
 
 
 class CalculationResponse(BaseModel):

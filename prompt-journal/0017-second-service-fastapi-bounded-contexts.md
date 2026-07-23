@@ -50,6 +50,17 @@ Accepted or rejected — Accepted.
 
 Why — Vitest `calc-client.test.ts` passed 5/5 tests, verifying 3-attempt backoff with jitter on downed engine, immediate failure on 4xx, transient 503 recovery, and response schema boundary validation.
 
+## Entry 6
+
+Asked — Connect the shared JSON schema to the live FastAPI boundary so production FastAPI code loads `packages/shared-schemas/calculation.schema.json` and validates live `/v1` requests at the boundary to prevent Python and TypeScript drift.
+
+Produced — Created `services/compute/app/schema_validator.py` loading `packages/shared-schemas/calculation.schema.json` and validating live incoming request dictionaries with `jsonschema.validate`. Connected `validate_payload_against_shared_schema` in `CalculationRequest` Pydantic model validator (`contracts.py`) and top of `POST /v1/calculate` endpoint handler (`main.py`). Added boundary validation test in `test_v1_endpoints.py`.
+
+Accepted or rejected — Accepted.
+
+Why — Pytest passed 43/43 tests cleanly, verifying that production FastAPI endpoints perform live boundary validation against `packages/shared-schemas/calculation.schema.json` and return 422 Unprocessable Entity on schema violations.
+
+
 
 
 
