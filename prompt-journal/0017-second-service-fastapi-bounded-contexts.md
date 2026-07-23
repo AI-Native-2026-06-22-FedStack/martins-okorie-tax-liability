@@ -40,5 +40,16 @@ Accepted or rejected — Accepted.
 
 Why — Vitest contract tests and Pytest `test_shared_schema.py` passed 39/39 Python tests and 8/8 JS contract tests, verifying cross-service JSON schema validation and drift detection.
 
+## Entry 5
+
+Asked — Execute Task 4: Wire and harden the synchronous Express -> Tax Engine HTTP client in `apps/api/src/engine/calc-client.ts` with timeouts, bounded retries (exponential backoff + jitter), 4xx/5xx handling, and Ajv schema validation.
+
+Produced — Implemented `TaxEngineClient` and `UpstreamEngineError` in `apps/api/src/engine/calc-client.ts`. Configured per-attempt timeout (5000ms), 3 capped attempts with exponential backoff and random jitter, immediate failure on 4xx errors, retry on transient 5xx/network errors, and JSON response schema validation against `@capstone/shared-schemas` using `Ajv`. Added unit test suite in `apps/api/test/calc-client.test.ts`.
+
+Accepted or rejected — Accepted.
+
+Why — Vitest `calc-client.test.ts` passed 5/5 tests, verifying 3-attempt backoff with jitter on downed engine, immediate failure on 4xx, transient 503 recovery, and response schema boundary validation.
+
+
 
 
