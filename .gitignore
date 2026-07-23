@@ -3,6 +3,7 @@ dist/
 node_modules/
 .env
 .env.*
+!.env.example
 !apps/api/.env.example
 __pycache__/
 .mypy_cache/

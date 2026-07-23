@@ -1,0 +1,43 @@
+# First-pass, Codex-scaffolded local stack — black-box for now (Module 7 deepens it).
+# Bring up three services with one `docker compose up`:
+#   - postgres        : existing relational store (the M1-M3 data layer).
+#   - dynamodb-local  : Amazon's local DynamoDB image for the read model.
+#   - redis           : cache + idempotency/lock store.
+# Stable host ports expose DATABASE_URI, DDB_ENDPOINT, and REDIS_URL for local clients.
+# This file grows later: D3 adds FastAPI, D4 adds Pact Broker.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: taxpulse_l
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_USER: taxpulse_app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxpulse_app -d taxpulse_l"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "5433:5432"
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.5.3
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    healthcheck:
+      test: ["CMD-SHELL", "java -version >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "8000:8000"
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "6379:6379"

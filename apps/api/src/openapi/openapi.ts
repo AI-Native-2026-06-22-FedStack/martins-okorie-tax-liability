@@ -1,8 +1,5 @@
 import "./extend-zod.js";
-import {
-  OpenAPIRegistry,
-  OpenApiGeneratorV31
-} from "@asteasolutions/zod-to-openapi";
+import { OpenAPIRegistry, OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
 import {
@@ -10,6 +7,7 @@ import {
   CreateCycleResponseSchema,
   CycleIdParamsSchema,
   CycleResponseSchema,
+  ListPlanCycleQueueQuerySchema,
   TenantContextSchema
 } from "../db/dto.js";
 import { DEPRECATION_HEADER, SUNSET_HEADER, SUCCESSOR_LINK } from "../routes/v1/versioning.js";
@@ -24,8 +22,7 @@ registry.registerComponent("securitySchemes", "bearerAuth", {
   type: "http",
   scheme: "bearer",
   bearerFormat: "JWT",
-  description:
-    "RS256 JWT issued by /auth/mfa. Carries tenant_id, role, sub, iss, and aud claims."
+  description: "RS256 JWT issued by /auth/mfa. Carries tenant_id, role, sub, iss, and aud claims."
 });
 
 // ─── Shared 401 / 429 response objects ───────────────────────────────────────
@@ -55,8 +52,7 @@ const response429 = {
       schema: { type: "integer", example: 60 }
     } as const,
     RateLimit: {
-      description:
-        "IETF draft-8 combined header: quota name, remaining (r=), and reset (t=)",
+      description: "IETF draft-8 combined header: quota name, remaining (r=), and reset (t=)",
       schema: {
         type: "string",
         example: '"100-in-1min"; r=0; t=42'
@@ -92,7 +88,8 @@ const rateLimitHeaders = {
     }
   } as const,
   "RateLimit-Policy": {
-    description: "IETF draft-8 quota policy: quota (q=), window seconds (w=), and partition key (pk=)",
+    description:
+      "IETF draft-8 quota policy: quota (q=), window seconds (w=), and partition key (pk=)",
     schema: {
       type: "string",
       example: '"3-in-1min"; q=3; w=60; pk=:dGVuYW50X2lk:'
@@ -146,6 +143,64 @@ const tenantHeaders = z.object({
     }
   })
 });
+const createCycleHeaders = tenantHeaders.extend({
+  "Idempotency-Key": z
+    .string()
+    .min(1)
+    .optional()
+    .openapi({
+      param: {
+        in: "header",
+        name: "Idempotency-Key",
+        required: false
+      }
+    })
+});
+const queueQuery = z.object({
+  limit: ListPlanCycleQueueQuerySchema.shape.limit.openapi({
+    param: {
+      in: "query",
+      name: "limit",
+      required: false
+    }
+  }),
+  owner: ListPlanCycleQueueQuerySchema.shape.owner.openapi({
+    param: {
+      in: "query",
+      name: "owner",
+      required: false
+    }
+  }),
+  stage: ListPlanCycleQueueQuerySchema.shape.stage.openapi({
+    param: {
+      in: "query",
+      name: "stage",
+      required: true
+    }
+  })
+});
+const planCycleQueueRow = registry.register(
+  "PlanCycleQueueRow",
+  z.object({
+    client_id: z.string(),
+    due_date: z.iso.date(),
+    hold_reason: z.string().nullable(),
+    id: z.uuid(),
+    on_hold: z.boolean(),
+    overdue: z.boolean(),
+    owner: z.string(),
+    planning_period: z.string(),
+    priority: z.string(),
+    stage: ListPlanCycleQueueQuerySchema.shape.stage,
+    tenant_id: z.uuid()
+  })
+);
+const planCycleQueueResponse = registry.register(
+  "PlanCycleQueueResponse",
+  z.object({
+    data: z.array(planCycleQueueRow)
+  })
+);
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
 registry.registerPath({
@@ -161,7 +216,7 @@ registry.registerPath({
       },
       required: true
     },
-    headers: tenantHeaders
+    headers: createCycleHeaders
   },
   responses: {
     201: {
@@ -177,6 +232,28 @@ registry.registerPath({
     429: response429
   },
   summary: "Open a Tax Plan Cycle"
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/v1/cycles/queue",
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: queueQuery
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: planCycleQueueResponse
+        }
+      },
+      headers: costAccountingHeaders,
+      description: "Tenant-scoped Plan Cycle Queue read model"
+    },
+    401: response401
+  },
+  summary: "List the DynamoDB-backed Plan Cycle Queue"
 });
 
 registry.registerPath({

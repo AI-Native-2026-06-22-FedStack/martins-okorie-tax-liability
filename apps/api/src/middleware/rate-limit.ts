@@ -1,25 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import slowDown from "express-slow-down";
-import { Redis } from "ioredis";
 import { RedisStore, type RedisReply } from "rate-limit-redis";
 
+import { ensureRedisReady, redisClient } from "../store/queueCache.js";
 import { sendProblem } from "../errors/problem-json.js";
 import { setQuotaRemainingHeader } from "./cost-header.js";
 
-const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-
-// Initialize Redis client with offline queue disabled/handling to prevent hung connections
-export const redisClient = new Redis(redisUrl, {
-  maxRetriesPerRequest: null,
-  enableOfflineQueue: false,
-  retryStrategy: () => null // do not auto-reconnect; the app reconnects on next startup
-});
-
-redisClient.on("error", (err: Error) => {
-  // Silent fail-open log warning on socket error
-  console.warn("Redis connection error, rate limiting will fail-open:", err.message);
-});
+export { redisClient };
 
 // Tunable limits loaded from env/config per environment
 const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60000);
@@ -36,10 +24,7 @@ const slowDownDelayFactor = 200;
 const limiterStore = new RedisStore({
   prefix: "rl:",
   sendCommand: async (...args: string[]) => {
-    // If Redis is not connected, fail-open immediately
-    if (redisClient.status !== "ready") {
-      throw new Error("Redis client is not ready");
-    }
+    await ensureRedisReady();
     const [command, ...commandArgs] = args;
     if (!command) {
       throw new Error("Redis command is required");
@@ -62,7 +47,7 @@ const rawLimiter = rateLimit({
   },
   handler: (req: Request, res: Response) => {
     // Retry-After is already set by express-rate-limit before this handler is called.
-    const retryAfter = res.getHeader("Retry-After") ?? 60;
+    const retryAfter = String(res.getHeader("Retry-After") ?? 60);
     setQuotaRemainingHeader(res);
     sendProblem(res, {
       type: "about:blank",
@@ -78,9 +63,7 @@ const rawLimiter = rateLimit({
 const slowDownStore = new RedisStore({
   prefix: "sd:",
   sendCommand: async (...args: string[]) => {
-    if (redisClient.status !== "ready") {
-      throw new Error("Redis client is not ready");
-    }
+    await ensureRedisReady();
     const [command, ...commandArgs] = args;
     if (!command) {
       throw new Error("Redis command is required");
@@ -114,7 +97,7 @@ export function tenantRateLimiter(req: Request, res: Response, next: NextFunctio
     return next();
   }
 
-  rawLimiter(req, res, (err) => {
+  rawLimiter(req, res, (err: unknown) => {
     if (err) {
       req.log.error({ err }, "Rate limiter store failed. Bypassing limit (fail-open).");
       return next();
@@ -134,7 +117,7 @@ export function tenantSlowDown(req: Request, res: Response, next: NextFunction):
     return next();
   }
 
-  rawSlowDown(req, res, (err) => {
+  rawSlowDown(req, res, (err: unknown) => {
     if (err) {
       req.log.error({ err }, "Slow-down store failed. Bypassing slow-down (fail-open).");
       return next();
