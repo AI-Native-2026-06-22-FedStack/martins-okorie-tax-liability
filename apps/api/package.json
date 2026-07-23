@@ -37,6 +37,7 @@
     "zod": "^4"
   },
   "devDependencies": {
+    "@pact-foundation/pact": "^13.2.0",
     "@types/express": "^5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/passport": "^1.0.17",

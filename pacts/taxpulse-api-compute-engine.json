@@ -1,0 +1,261 @@
+{
+  "consumer": {
+    "name": "taxpulse-api"
+  },
+  "interactions": [
+    {
+      "description": "a request for a single tax calculation",
+      "pending": false,
+      "request": {
+        "body": {
+          "content": {
+            "deductions": 12000,
+            "filing_status": "single",
+            "income": 100000,
+            "state": "CA"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Authorization": [
+            "Bearer test-jwt-token-123"
+          ],
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/v1/calculate"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "effective_rate": 0.24,
+            "federal_liability": 18000,
+            "marginal_rate": 0.24,
+            "quarterly_estimate": 6000,
+            "state_liability": 6000
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.effective_rate": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.federal_liability": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.marginal_rate": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.quarterly_estimate": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.state_liability": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request for scenario tax comparison",
+      "pending": false,
+      "request": {
+        "body": {
+          "content": {
+            "baseline": {
+              "deductions": 12000,
+              "filing_status": "single",
+              "income": 100000,
+              "state": "CA"
+            },
+            "scenarios": [
+              {
+                "deductions": 20000,
+                "income": 100000,
+                "name": "Increased Deductions",
+                "state": "CA"
+              },
+              {
+                "deductions": 12000,
+                "income": 150000,
+                "name": "Bonus Income",
+                "state": "CA"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Authorization": [
+            "Bearer test-jwt-token-123"
+          ],
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/v1/scenario"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "baseline": {
+              "effective_rate": 0.24,
+              "federal_liability": 18000,
+              "marginal_rate": 0.24,
+              "quarterly_estimate": 6000,
+              "state_liability": 6000
+            },
+            "scenarios": [
+              {
+                "delta_vs_baseline": -2000,
+                "name": "Increased Deductions",
+                "total_tax": 22000
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.baseline.effective_rate": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.baseline.federal_liability": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.baseline.marginal_rate": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.baseline.quarterly_estimate": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.baseline.state_liability": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.scenarios": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.scenarios[*].delta_vs_baseline": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.scenarios[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.scenarios[*].total_tax": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "compute-engine"
+  }
+}
