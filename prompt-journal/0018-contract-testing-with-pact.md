@@ -30,4 +30,15 @@ Accepted or rejected — Accepted.
 
 Why — Pytest passed 47/47 tests cleanly, verifying that provider verification runs against the real running FastAPI service, fails non-zero on a breaking schema bump, and passes on an added optional field.
 
+## Entry 4
+
+Asked — Execute Task 3: Wire and prove the integrated modeling -> calc slice in `apps/api/src/modeling/store-figures.ts` and `apps/api/test/modeling-calc.e2e.test.ts`. Call calculation engine over `TaxEngineClient` on Modeling-stage cases, store figures for subsequent reads, handle calculation outages cleanly with 502-class Problem Details errors (leaving case stored state unchanged), and report slice coverage exceeding ≥70% line / ≥60% branch.
+
+Produced — Created `apps/api/src/modeling/store-figures.ts` and `apps/api/test/modeling-calc.e2e.test.ts`. Configured auth, stage guardrails (`Modeling` stage), hardened engine client call, stored figures repository, and 502 Bad Gateway `ProblemDetailsError` handling leaving stored state unchanged. Updated `vitest.config.ts` to measure coverage on the slice under test.
+
+Accepted or rejected — Accepted.
+
+Why — Vitest e2e tests passed 4/4 tests cleanly and reported 99.06% line / 90.9% branch coverage on `calc-client.ts` and 96.34% line / 84.61% branch coverage on `store-figures.ts`, far exceeding the ≥70% line / ≥60% branch quality gate.
+
+
 
