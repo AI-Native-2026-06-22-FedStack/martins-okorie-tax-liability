@@ -29,6 +29,12 @@ app = FastAPI(
 app.add_middleware(CorrelationIdMiddleware)
 
 
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+
 class LegacyTaxCalculationRequest(BaseModel):
     income: float
     deductions: float

@@ -20,3 +20,14 @@ Accepted or rejected — Accepted.
 
 Why — Vitest `calculation.consumer.pact.test.ts` passed 2/2 tests cleanly, generating `pacts/taxpulse-api-compute-engine.json` capturing only fields read by the consumer.
 
+## Entry 3
+
+Asked — Execute Task 2: Implement provider verification in `services/compute/tests/test_calculation_pact_provider.py` replaying consumer pact interactions against the real running FastAPI engine. Prove that a breaking schema change (missing/renamed required field) fails verification and exits non-zero, while a compatible optional-field addition passes.
+
+Produced — Added `services/compute/tests/test_calculation_pact_provider.py` spinning up a real FastAPI Uvicorn test server on `localhost:8989`, replaying single-calculation (`POST /v1/calculate`) and scenario (`POST /v1/scenario`) interactions against the running service, verifying both pact-python `Verifier` integration and explicit breaking change failure vs compatible change pass behaviors. Added `@app.get("/health")` route to `app/main.py`.
+
+Accepted or rejected — Accepted.
+
+Why — Pytest passed 47/47 tests cleanly, verifying that provider verification runs against the real running FastAPI service, fails non-zero on a breaking schema bump, and passes on an added optional field.
+
+
