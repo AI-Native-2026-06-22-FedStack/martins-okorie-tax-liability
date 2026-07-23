@@ -1,10 +1,4 @@
-# First-pass, Codex-scaffolded local stack — black-box for now (Module 7 deepens it).
-# Bring up three services with one `docker compose up`:
-#   - postgres        : existing relational store (the M1-M3 data layer).
-#   - dynamodb-local  : Amazon's local DynamoDB image for the read model.
-#   - redis           : cache + idempotency/lock store.
-# Stable host ports expose DATABASE_URI, DDB_ENDPOINT, and REDIS_URL for local clients.
-# This file grows later: D3 adds FastAPI, D4 adds Pact Broker.
+# TaxPulse local development stack: Express Core, FastAPI Tax Engine, Postgres, DynamoDB Local, Redis, LocalStack, and Pact Broker.
 services:
   postgres:
     image: postgres:17-alpine
@@ -41,3 +35,75 @@ services:
       retries: 12
     ports:
       - "6379:6379"
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,sns
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health | grep -q '\"s3\": \"running\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pact-broker-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pact_broker
+      POSTGRES_USER: pact_broker
+      POSTGRES_PASSWORD: pact_broker_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pact_broker -d pact_broker"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "5434:5432"
+
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    ports:
+      - "9292:9292"
+    environment:
+      PACT_BROKER_DATABASE_ADAPTER: postgres
+      PACT_BROKER_DATABASE_HOSTNAME: pact-broker-db
+      PACT_BROKER_DATABASE_PORT: "5432"
+      PACT_BROKER_DATABASE_NAME: pact_broker
+      PACT_BROKER_DATABASE_USER: pact_broker
+      PACT_BROKER_DATABASE_PASSWORD: pact_broker_password
+      PACT_BROKER_LOG_LEVEL: INFO
+    depends_on:
+      pact-broker-db:
+        condition: service_healthy
+
+  compute:
+    build:
+      context: ./services/compute
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URI=postgres://taxpulse_app@postgres:5432/taxpulse_l
+      - REDIS_URL=redis://redis:6379
+      - COMPUTE_SERVICE_URL=http://compute:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      compute:
+        condition: service_started
