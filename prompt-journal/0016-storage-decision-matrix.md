@@ -29,3 +29,14 @@ Produced — Rewrote ADR-0009 with the MADR title/status format, a focused four-
 Accepted or rejected — Accepted.
 
 Why — ADR-0009 now names one store per required concern and cites the factors that drive each placement, with Redis documented only for temporary cache/idempotency concerns.
+
+## Entry 4
+
+Asked — Merge the `m4d1-implementation` branch (containing the PR fixes for owner-safe Redis locks, atomic Lua CAS lock release, and DynamoDB Local integration tests) into the `m4d2-implementation` branch.
+
+Produced — Checked out `m4d2-implementation`, merged `m4d1-implementation` into `m4d2-implementation` cleanly without conflicts, verified typechecks, and ran the store test suite against local Redis and DynamoDB Local.
+
+Accepted or rejected — Accepted.
+
+Why — The `m4d2-implementation` branch now includes the owner-safe Redis lock fixes, atomic Lua CAS release, and DynamoDB Local integration tests from `m4d1-implementation`, and `npm run typecheck` and `npx vitest run apps/api/test/store` passed with zero errors.
+
