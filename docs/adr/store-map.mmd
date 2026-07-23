@@ -1,0 +1,28 @@
+C4Container
+title TaxPulse Store Map - C4 Container Level
+
+Person(advisor, "Advisor or client caller", "Uses TaxPulse case and calculation workflows through HTTPS APIs.")
+
+System_Boundary(taxpulse, "TaxPulse") {
+  Container(api, "Express Core Case Service", "TypeScript / Express", "Owns Plan Cycle case management, workflow, identity, auth, queue projection writes, cache invalidation, and idempotent creates.")
+  Container(compute, "FastAPI Tax Engine", "Python / FastAPI", "Owns real-time tax-liability calculation behavior and future calculation-owned persistence.")
+
+  ContainerDb(postgres, "Core Case Postgres", "PostgreSQL", "Durable source of truth for tenants, clients, Tax Plan Cycles, workflow transitions, audit, identity, MFA, refresh tokens, and roles.")
+  ContainerDb(dynamo, "Plan Cycle Queue Read Model", "DynamoDB", "Denormalized tenant-scoped queue projection for known key-shaped queue reads.")
+  ContainerDb(redis, "Queue Cache and Idempotency Store", "Redis", "Ephemeral cache, idempotency replay records, and SET NX PX locks. Not a source of truth.")
+  ContainerDb(engineStore, "Tax Engine Datastore", "Future service-owned store", "Future durable store for calculation runs, model inputs, outputs, and compute audit records.")
+}
+
+Rel(advisor, api, "Calls", "HTTPS /v1")
+Rel(api, compute, "Requests real-time tax-liability calculation", "HTTPS with Node-issued RS256 bearer token")
+Rel(compute, api, "Trusts verified JWT issuer/audience/key contract", "HTTP auth boundary")
+
+Rel(api, postgres, "Reads/writes source-of-truth case, workflow, audit, identity, and auth records", "SQL")
+Rel(api, dynamo, "Projects and queries Plan Cycle Queue read model", "DynamoDB Query / BatchWrite")
+Rel(api, redis, "Reads/writes queue cache, idempotency replay records, and locks", "Redis GET/SET/DEL/SCAN")
+Rel(compute, engineStore, "Reads/writes calculation-owned records when persistence is added", "Service-owned data access")
+
+Rel(api, engineStore, "No direct database access", "forbidden")
+Rel(compute, postgres, "No direct database access", "forbidden")
+Rel(compute, dynamo, "No direct queue projection access", "forbidden")
+Rel(compute, redis, "No direct cache or idempotency access", "forbidden")
