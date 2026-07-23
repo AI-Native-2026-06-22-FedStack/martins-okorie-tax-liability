@@ -20,3 +20,14 @@ Accepted or rejected — Accepted.
 
 Why — `uv run pytest services/compute/tests` passed 24/24 tests cleanly, proving model boundary validations and database scenario limit enforcement.
 
+## Entry 3
+
+Asked — Execute Task 2: Implement deterministic tax calculation logic in `services/compute/app/calc.py` and expose versioned `/v1` endpoints (`POST /v1/calculate`, `POST /v1/scenario`) in `services/compute/app/main.py` protected by the reused Module 3 JWT auth dependency `get_current_user`.
+
+Produced — Created `services/compute/app/calc.py` computing progressive federal and state tax liabilities, effective/marginal rates, quarterly estimates, and scenario deltas vs. baseline. Updated `services/compute/app/main.py` to expose `/v1/calculate` and `/v1/scenario` protected by `Depends(get_current_user)` (returning 401 unauthenticated and 422 for invalid inputs/scenario bounds). Created unit tests in `services/compute/tests/test_calc.py` and `services/compute/tests/test_v1_endpoints.py`.
+
+Accepted or rejected — Accepted.
+
+Why — `uv run pytest services/compute/tests` passed 36/36 tests, verifying progressive calculation accuracy, edge cases, 401 unauthenticated guards, and 422 scenario count bounds.
+
+

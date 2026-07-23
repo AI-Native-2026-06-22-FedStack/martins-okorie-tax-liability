@@ -5,9 +5,19 @@ from typing import Any
 
 def get_db_connection(db_path: str | None = None) -> sqlite3.Connection:
     path = db_path or os.getenv("COMPUTE_DB_PATH", ":memory:")
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def get_db():
+    conn = get_db_connection()
+    init_db(conn)
+    seed_brackets(conn)
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def init_db(conn: sqlite3.Connection) -> None:
