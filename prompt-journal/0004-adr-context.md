@@ -62,7 +62,7 @@ Why — The sample artifact names the accepted ADR/checklist-explicitness sugges
 
 # Entry 7
 
-Asked — Add PR-template requirements for quoted AI-review evidence, AI-tool reflection, deliverables checklist, self-assignment, and requesting Isiah Muli as reviewer; update the sample review artifact accordingly.
+Asked — Add PR-template requirements for quoted AI-review evidence, AI-tool reflection, deliverables checklist, self-assignment, and requesting Isaiah Muli as reviewer; update the sample review artifact accordingly.
 
 Produced — Added AI review evidence, AI-tool reflection, PR routing, and deliverables checklist sections to `.github/pull_request_template.md`; converted sample AI output and missed-issue notes to quote blocks; and added an AI-tool reflection paragraph to the sample artifact.
 

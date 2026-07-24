@@ -85,7 +85,7 @@ contracts down, and adding them here would blur the red-green-refactor evidence.
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## AI code-review checklist
 
@@ -104,4 +104,4 @@ contracts down, and adding them here would blur the red-green-refactor evidence.
 - [X] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [X] Deliverables checklist is included and completed.
 - [X] PR is self-assigned in Assignees.
-- [X] `Isiah Muli` is requested under Reviewers as the ES reviewer.
+- [X] `Isaiah Muli` is requested under Reviewers as the ES reviewer.

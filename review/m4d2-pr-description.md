@@ -115,4 +115,4 @@ I accepted Codex's suggestion to format ADR-0009 using the MADR template and to 
 - [x] Anti-patterns named: The ADR records NoSQL-as-cache and cache-as-source-of-truth as considered/rejected, each with the correct fix and the store the data routes back to.
 - [x] Cost view: A 1×/10×/100× cost table for the heaviest read shows the RRU math (0.5 RRU eventual ≤4 KB), a sample rate flagged for confirmation, and a cached-100× row ~10× cheaper, flagging the multiple that needs a cache.
 - [x] PR description: Verification evidence pasted (the ADR’s matrix, map, and cost table, or their rendered output); AI-tool reflection paragraph names at least one accepted and one rejected suggestion.
-- [x] PR setup: Branch is `m4d2-implementation`; PR self-assigned (Assignees); `Isiah Muli` requested under Reviewers as the ES reviewer.
+- [x] PR setup: Branch is `m4d2-implementation`; PR self-assigned (Assignees); `Isaiah Muli` requested under Reviewers as the ES reviewer.

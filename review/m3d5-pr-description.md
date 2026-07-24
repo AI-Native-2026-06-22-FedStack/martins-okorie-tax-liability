@@ -105,4 +105,4 @@ I accepted Codex's suggestion to preload all required Secrets Manager values bef
 - [x] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [x] Branch is `m3d5-implementation`.
 - [x] PR is self-assigned in Assignees.
-- [x] `Isiah Muli` is requested under Reviewers as the ES reviewer.
+- [x] `Isaiah Muli` is requested under Reviewers as the ES reviewer.

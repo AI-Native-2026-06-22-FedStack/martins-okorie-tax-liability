@@ -108,7 +108,7 @@ I accepted Codex's suggestion to model the schema with Drizzle `pgTable` plus `u
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 
@@ -120,4 +120,4 @@ I accepted Codex's suggestion to model the schema with Drizzle `pgTable` plus `u
 - [x] PR description includes Drizzle check output, N+1 red-to-green output, and the Testcontainers create-then-read suite output.
 - [x] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [x] PR is self-assigned in Assignees.
-- [x] `Isiah Muli` is requested under Reviewers as the ES reviewer.
+- [x] `Isaiah Muli` is requested under Reviewers as the ES reviewer.
