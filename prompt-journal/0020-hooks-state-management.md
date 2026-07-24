@@ -20,3 +20,14 @@ Accepted or rejected — Accepted.
 
 Why — `npm run test --workspace=apps/web` passed 26/26 tests across 8 test files, confirming token storage restoration, top-level hook invocation, timer cleanup on unmount, and MFA state step progression without `any` or snapshot assertions.
 
+## Entry 3
+
+Asked — Execute Task 2: Extract reusable custom hooks `useDebounce<T>(value, delayMs)` and `usePagination<T>(items, pageSize)`, test each in isolation via `renderHook`, integrate search debouncing and queue table pagination into `PlanCycleQueueScreen.tsx`, and record ADR-0012 (`docs/adr/ADR-0012-local-state-vs-store.md`) classifying state into Local vs Server vs Shared Client state and rejecting premature global store additions (Redux/Zustand).
+
+Produced — Created `apps/web/src/hooks/useDebounce.ts` with timer cleanup and `apps/web/src/hooks/usePagination.ts` with boundary protection. Added `useDebounce.test.ts` (3 tests) and `usePagination.test.ts` (4 tests) isolation test suites using `renderHook`. Integrated search input and pagination controls in `PlanCycleQueueScreen.tsx`. Recorded `docs/adr/ADR-0012-local-state-vs-store.md` (linked in `docs/adr/README.md`).
+
+Accepted or rejected — Accepted.
+
+Why — `npm run test --workspace=apps/web` passed 33/33 tests across 10 test files, confirming search debouncing delay, timer cleanup, pagination bounds math, and ADR-0012 state classification.
+
+

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo, useState, useTransition } from "react";
 import { KpiCard } from "../atoms/KpiCard";
 import { QueueEmpty, QueueError, QueueSkeleton } from "../atoms/QueueStates";
 import { AppShell } from "../components/AppShell";
@@ -6,6 +6,8 @@ import {
   PlanCycleQueueRow,
   PlanCycleQueueTable,
 } from "../components/PlanCycleQueueTable";
+import { useDebounce } from "../hooks/useDebounce";
+import { usePagination } from "../hooks/usePagination";
 import styles from "./PlanCycleQueueScreen.module.css";
 
 export type ScreenState = "success" | "loading" | "empty" | "error";
@@ -57,6 +59,24 @@ export const defaultMockRows: PlanCycleQueueRow[] = [
     dueDate: "2026-04-30",
     isOverdue: false,
   },
+  {
+    id: "CYCLE-2026-Q1-005",
+    clientName: "Pinnacle Capital",
+    stage: "Data Aggregation",
+    owner: "Sarah Jenkins",
+    priority: "Medium",
+    dueDate: "2026-05-10",
+    isOverdue: false,
+  },
+  {
+    id: "CYCLE-2026-Q1-006",
+    clientName: "Summit Financial",
+    stage: "Executed",
+    owner: "Martin Okorie",
+    priority: "High",
+    dueDate: "2026-02-28",
+    isOverdue: false,
+  },
 ];
 
 export function PlanCycleQueueScreen({
@@ -68,16 +88,59 @@ export function PlanCycleQueueScreen({
   onSelectCycle,
   onLogout,
 }: PlanCycleQueueScreenProps): React.ReactElement {
-  const activeRows = rows;
-  const overdueCount = activeRows.filter((r) => r.isOverdue).length;
-  const reviewCount = activeRows.filter((r) => r.stage === "Review").length;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [, startTransition] = useTransition();
+
+  const debouncedQuery = useDebounce(searchQuery, 300);
+
+  const filteredRows = useMemo(() => {
+    if (!debouncedQuery.trim()) {
+      return rows;
+    }
+    const q = debouncedQuery.toLowerCase();
+    return rows.filter(
+      (r) =>
+        r.clientName.toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q) ||
+        r.owner.toLowerCase().includes(q) ||
+        r.stage.toLowerCase().includes(q)
+    );
+  }, [rows, debouncedQuery]);
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    paginatedItems,
+    canNextPage,
+    canPrevPage,
+    nextPage,
+    prevPage,
+  } = usePagination(filteredRows, 5);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    startTransition(() => {
+      setSearchQuery(val);
+    });
+  };
+
+  const handleSelectCycle = useCallback(
+    (id: string) => {
+      onSelectCycle?.(id);
+    },
+    [onSelectCycle]
+  );
+
+  const overdueCount = rows.filter((r) => r.isOverdue).length;
+  const reviewCount = rows.filter((r) => r.stage === "Review").length;
 
   return (
     <AppShell title="Plan Cycle Queue" activeRole={activeRole} onLogout={onLogout}>
       <div className={styles.screenContainer}>
         {/* KPI Cards Row */}
         <div className={styles.kpiGrid}>
-          <KpiCard title="Open Cycles" count={activeRows.length} />
+          <KpiCard title="Open Cycles" count={rows.length} />
           <KpiCard
             title="Awaiting Review"
             count={reviewCount}
@@ -100,6 +163,14 @@ export function PlanCycleQueueScreen({
         {/* Main Queue Section */}
         <div className={styles.tableHeaderSection}>
           <h2 className={styles.sectionTitle}>Active Plan Cycles</h2>
+          <input
+            type="search"
+            aria-label="Search plan cycles"
+            placeholder="Search by client, ID, owner..."
+            className={styles.searchInput}
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
         </div>
 
         {/* State-driven Presentational Rendering */}
@@ -109,7 +180,34 @@ export function PlanCycleQueueScreen({
           <QueueError message={errorMessage} onRetry={onRetry} />
         )}
         {state === "success" && (
-          <PlanCycleQueueTable rows={activeRows} onSelectCycle={onSelectCycle} />
+          <>
+            <PlanCycleQueueTable rows={paginatedItems} onSelectCycle={handleSelectCycle} />
+            <div className={styles.paginationBar}>
+              <span>
+                Showing page {currentPage} of {totalPages} ({totalItems} cycles)
+              </span>
+              <div className={styles.pageButtons}>
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  onClick={prevPage}
+                  disabled={!canPrevPage}
+                  aria-label="Previous Page"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  onClick={nextPage}
+                  disabled={!canNextPage}
+                  aria-label="Next Page"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </AppShell>
