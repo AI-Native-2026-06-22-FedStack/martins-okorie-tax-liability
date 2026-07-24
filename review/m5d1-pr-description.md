@@ -1,6 +1,7 @@
 ## Summary
 
 Scaffolds `apps/web` as a React 18 + Vite + strict-TS Single-Page Application and builds the typed, presentational component library from the Plan Cycle Queue wireframe:
+
 1. **Design System Layout**: Organized `apps/web/src` into `atoms/`, `components/`, `screens/`, `styles/`, and `test/`.
 2. **ADR-0011** ([docs/adr/ADR-0011-styling-strategy-css-modules.md](file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/docs/adr/ADR-0011-styling-strategy-css-modules.md)): Documents the decision to use CSS Modules with centralized design tokens in `apps/web/src/styles/tokens.css`, weighing `vanilla-extract` as the type-safe alternative.
 3. **Presentational Component Library**:
@@ -56,7 +57,7 @@ I accepted Codex's proposal to organize `apps/web/src` into a design-system dire
 ## PR routing
 
 - Assignees: self-assign this PR (`@martins-okorie`).
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 

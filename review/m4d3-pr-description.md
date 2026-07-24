@@ -77,7 +77,7 @@ I accepted Codex's suggestion to use `Ajv` on the Express side and `jsonschema` 
 ## PR routing
 
 - Assignees: self-assign this PR (`@martins-okorie`).
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 

@@ -92,7 +92,7 @@ I accepted Codex's suggestion to preload all required Secrets Manager values bef
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 - Note: `gh` is not installed in this environment, so PR metadata must be set in the GitHub UI after pushing.
 
 ## Deliverables checklist

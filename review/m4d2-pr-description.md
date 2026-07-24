@@ -106,7 +106,7 @@ I accepted Codex's suggestion to format ADR-0009 using the MADR template and to 
 ## PR routing
 
 - Assignees: self-assign this PR (`@martins-okorie`).
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 

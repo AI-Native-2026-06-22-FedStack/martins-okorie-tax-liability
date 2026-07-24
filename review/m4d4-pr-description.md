@@ -93,7 +93,7 @@ I accepted Codex's recommendation to use Pact JS (`PactV4`) on the Express consu
 ## PR routing
 
 - Assignees: self-assign this PR (`@martins-okorie`).
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 
