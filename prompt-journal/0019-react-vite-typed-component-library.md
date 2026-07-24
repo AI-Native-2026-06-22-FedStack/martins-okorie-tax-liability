@@ -30,4 +30,15 @@ Accepted or rejected — Accepted.
 
 Why — `apps/web/src` is shaped as a design system, CSS Modules scope component styles cleanly with zero inline styles outside design tokens, and ADR-0011 documents the styling decision.
 
+## Entry 4
+
+Asked — Execute Task 2: Build the typed, presentational component library from the wireframe in `apps/web/src` (`atoms/`, `components/`, `screens/`), ensuring all components are pure functions of props (no fetching, no state), using a discriminated union for `Badge` variants, building one generic component `DataTable<T>`, building `QueueStates` (skeleton, empty, error with retry), and rendering `PlanCycleQueueScreen` with KPI cards and table.
+
+Produced — Implemented `Badge` (discriminated union variant `draft | submitted | in_review | approved | overdue`), `KpiCard`, `QueueStates` (loading/empty/error atoms), `DataTable<T>` (reusable generic table shell), `Sidebar` (Workspace / Plan Tools / Firm), `AppShell` (topbar with View-as switcher + sidebar frame), `PlanCycleQueueTable` (concrete `<T>` table use with overdue badge), and `PlanCycleQueueScreen`. Added behavioral Vitest + React Testing Library tests in `apps/web/src/test/`.
+
+Accepted or rejected — Accepted.
+
+Why — `npm run test --workspace=apps/web` passed 16/16 behavioral tests across 6 test files, proving generic `DataTable<T>` type safety over two distinct row types, proper badge variant rendering, and error retry affordances without `any` or snapshot assertions.
+
+
 

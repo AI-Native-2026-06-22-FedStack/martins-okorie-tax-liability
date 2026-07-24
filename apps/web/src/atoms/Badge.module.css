@@ -1,0 +1,39 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.25rem 0.625rem;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  line-height: 1;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.badgeDraft {
+  background-color: var(--color-status-draft-bg);
+  color: var(--color-status-draft-text);
+  border: 1px solid var(--color-border);
+}
+
+.badgeSubmitted {
+  background-color: var(--color-status-submitted-bg);
+  color: var(--color-status-submitted-text);
+}
+
+.badgeInReview {
+  background-color: var(--color-status-review-bg);
+  color: var(--color-status-review-text);
+}
+
+.badgeApproved {
+  background-color: var(--color-status-approved-bg);
+  color: var(--color-status-approved-text);
+}
+
+.badgeOverdue {
+  background-color: var(--color-status-overdue-bg);
+  color: var(--color-status-overdue-text);
+  font-weight: 700;
+}
