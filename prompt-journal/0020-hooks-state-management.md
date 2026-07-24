@@ -30,4 +30,15 @@ Accepted or rejected — Accepted.
 
 Why — `npm run test --workspace=apps/web` passed 33/33 tests across 10 test files, confirming search debouncing delay, timer cleanup, pagination bounds math, and ADR-0012 state classification.
 
+## Entry 4
+
+Asked — Build the Plan Cycle Detail client logic as a reusable custom hook (`usePlanCycleDetail.ts`), test it in isolation (`usePlanCycleDetail.test.ts`), and render the tabbed detail screen (`PlanCycleDetailScreen.tsx`). The hook must track the active tab (`overview | comments | audit`) and stage stepper position, and PRESERVE unsaved comment input across tab switches.
+
+Produced — Created `apps/web/src/hooks/usePlanCycleDetail.ts` composing built-in React hooks (`useState`, `useMemo`), maintaining tab state, stepper steps calculation, comments list, and draft comment retention. Added `usePlanCycleDetail.test.ts` isolation test suite verifying tab transitions, stepper calculations, and draft comment retention across tab switches using `renderHook` and `act()`. Built `PlanCycleDetailScreen.tsx` + `PlanCycleDetailScreen.module.css` and added `PlanCycleDetailScreen.test.tsx`.
+
+Accepted or rejected — Accepted.
+
+Why — `npm run test --workspace=apps/web` passed 40/40 tests across 12 test files, confirming stage stepper highlighting, tab switching, and unsaved draft comment retention across tab transitions without `any` or snapshot assertions.
+
+
 
