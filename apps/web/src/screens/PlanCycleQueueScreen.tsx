@@ -14,8 +14,10 @@ export type PlanCycleQueueScreenProps = {
   rows?: PlanCycleQueueRow[];
   state?: ScreenState;
   errorMessage?: string;
+  activeRole?: "Advisor View" | "Firm Admin View";
   onRetry?: () => void;
   onSelectCycle?: (id: string) => void;
+  onLogout?: () => void;
 };
 
 export const defaultMockRows: PlanCycleQueueRow[] = [
@@ -61,15 +63,17 @@ export function PlanCycleQueueScreen({
   rows = defaultMockRows,
   state = "success",
   errorMessage,
+  activeRole = "Advisor View",
   onRetry,
   onSelectCycle,
+  onLogout,
 }: PlanCycleQueueScreenProps): React.ReactElement {
   const activeRows = rows;
   const overdueCount = activeRows.filter((r) => r.isOverdue).length;
   const reviewCount = activeRows.filter((r) => r.stage === "Review").length;
 
   return (
-    <AppShell title="Plan Cycle Queue">
+    <AppShell title="Plan Cycle Queue" activeRole={activeRole} onLogout={onLogout}>
       <div className={styles.screenContainer}>
         {/* KPI Cards Row */}
         <div className={styles.kpiGrid}>
