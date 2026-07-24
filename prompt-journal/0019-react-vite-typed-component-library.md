@@ -40,5 +40,16 @@ Accepted or rejected — Accepted.
 
 Why — `npm run test --workspace=apps/web` passed 16/16 behavioral tests across 6 test files, proving generic `DataTable<T>` type safety over two distinct row types, proper badge variant rendering, and error retry affordances without `any` or snapshot assertions.
 
+## Entry 5
+
+Asked — Execute Task 3: Write at least 8 behavioral components tests with Vitest + React Testing Library querying elements strictly by accessible role, label, and text (never test IDs or CSS classes), covering real component states (overdue badge, queue table rows, loading skeleton, empty state, error retry affordance), and verifying zero snapshot tests (`toMatchSnapshot`) exist.
+
+Produced — Verified 16 behavioral RTL tests across 6 test files in `apps/web/src/test/`. Confirmed tests query via `getByRole`, `getByText`, and `getByLabelText` using `@testing-library/jest-dom` matchers (`toBeInTheDocument`, `toBeDisabled`). Confirmed `grep -r toMatchSnapshot apps/web` returns 0 matches.
+
+Accepted or rejected — Accepted.
+
+Why — `npm run test --workspace=apps/web` passed 16/16 behavioral tests across 6 test files, verifying user-perceived behavior, state transitions, and generic component type safety without snapshot testing.
+
+
 
 
