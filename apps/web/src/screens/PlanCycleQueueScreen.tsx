@@ -93,6 +93,7 @@ export function PlanCycleQueueScreen({
 
   const debouncedQuery = useDebounce(searchQuery, 300);
 
+  // PERFORMANCE FIX (ADR-0012): Cache filtered queue rows with useMemo to prevent recomputing filtering on every search keystroke render.
   const filteredRows = useMemo(() => {
     if (!debouncedQuery.trim()) {
       return rows;

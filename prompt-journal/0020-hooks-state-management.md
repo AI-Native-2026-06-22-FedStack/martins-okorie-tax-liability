@@ -40,5 +40,16 @@ Accepted or rejected — Accepted.
 
 Why — `npm run test --workspace=apps/web` passed 40/40 tests across 12 test files, confirming stage stepper highlighting, tab switching, and unsaved draft comment retention across tab transitions without `any` or snapshot assertions.
 
+## Entry 5
+
+Asked — Execute Task 3: Record ADR-0012 in `docs/adr/ADR-0012-state-management.md` (MADR format) classifying state (queue list -> server state for D3, detail tab/stepper & sign-in step -> local, auth session -> shared client via hook), choosing built-in hooks by default, naming the bar a store must clear and weighing Zustand as alternative, and applying exactly one targeted performance fix with a named re-render cost note.
+
+Produced — Created `docs/adr/ADR-0012-state-management.md` (linked in `docs/adr/README.md`) capturing state classification, global store bar, and Zustand alternative. Applied `useMemo` in `PlanCycleQueueScreen.tsx` caching filtered queue rows with an explicit code comment naming the search keystroke re-render cost. Verified behavior remains unchanged upon removal.
+
+Accepted or rejected — Accepted.
+
+Why — ADR-0012 documents the 3-bucket state classification and Zustand store bar, `npm run test --workspace=apps/web` passed 40/40 tests across 12 files, and the `useMemo` performance fix is backed by a named cost comment.
+
+
 
 
