@@ -1,9 +1,8 @@
 import pytest
+from app.auth import hash_password, verify_password, verify_token
+from app.main import app
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-
-from app.auth import verify_token, hash_password, verify_password
-from app.main import app
 
 client = TestClient(app)
 

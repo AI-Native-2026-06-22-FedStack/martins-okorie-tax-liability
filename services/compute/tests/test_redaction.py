@@ -1,8 +1,10 @@
 import io
-import sys
 import json
+import sys
+
 import structlog
 from app.logging_config import configure_logging
+
 
 def test_python_redactor_success_path():
     # Capture print output from structlog PrintLoggerFactory
