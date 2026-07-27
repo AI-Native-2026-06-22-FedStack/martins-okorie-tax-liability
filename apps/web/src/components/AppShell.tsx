@@ -6,6 +6,7 @@ export type AppShellProps = {
   title?: string;
   activeRole?: "Advisor View" | "Firm Admin View";
   onRoleChange?: (role: "Advisor View" | "Firm Admin View") => void;
+  onLogout?: () => void;
   children: React.ReactNode;
 };
 
@@ -13,6 +14,7 @@ export function AppShell({
   title = "Plan Cycle Queue",
   activeRole = "Advisor View",
   onRoleChange,
+  onLogout,
   children,
 }: AppShellProps): React.ReactElement {
   return (
@@ -34,6 +36,16 @@ export function AppShell({
               <option value="Firm Admin View">Firm Admin View</option>
             </select>
             <span className={styles.userBadge}>Martin Okorie (Advisor)</span>
+            {onLogout && (
+              <button
+                type="button"
+                className={styles.roleSelect}
+                onClick={onLogout}
+                aria-label="Sign Out"
+              >
+                Sign Out
+              </button>
+            )}
           </div>
         </header>
         <main className={styles.content}>{children}</main>
