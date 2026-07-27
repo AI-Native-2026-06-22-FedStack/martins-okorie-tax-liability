@@ -92,7 +92,7 @@ I accepted Codex's suggestion to preload all required Secrets Manager values bef
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 - Note: `gh` is not installed in this environment, so PR metadata must be set in the GitHub UI after pushing.
 
 ## Deliverables checklist
@@ -105,4 +105,4 @@ I accepted Codex's suggestion to preload all required Secrets Manager values bef
 - [x] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [x] Branch is `m3d5-implementation`.
 - [x] PR is self-assigned in Assignees.
-- [x] `Isiah Muli` is requested under Reviewers as the ES reviewer.
+- [x] `Isaiah Muli` is requested under Reviewers as the ES reviewer.

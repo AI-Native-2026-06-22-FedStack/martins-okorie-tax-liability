@@ -152,7 +152,7 @@ I accepted Codex's tenant-scoped repository helper and typecheck proof because `
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## AI code-review checklist
 
@@ -176,4 +176,4 @@ I accepted Codex's tenant-scoped repository helper and typecheck proof because `
 - [x] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [x] Deliverables checklist is included and completed.
 - [x] PR is self-assigned in Assignees.
-- [x] `Isiah Muli` is requested under Reviewers as the ES reviewer.
+- [x] `Isaiah Muli` is requested under Reviewers as the ES reviewer.

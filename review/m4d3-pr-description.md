@@ -77,7 +77,7 @@ I accepted Codex's suggestion to use `Ajv` on the Express side and `jsonschema` 
 ## PR routing
 
 - Assignees: self-assign this PR (`@martins-okorie`).
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 
@@ -86,4 +86,4 @@ I accepted Codex's suggestion to use `Ajv` on the Express side and `jsonschema` 
 - [x] Versioned shared schema: The calculation boundary is JSON Schema in `packages/shared-schemas` with a semver — the Express Core loads it as a workspace dependency and the engine reads it by path, each validating payloads against it (`ajv` / `jsonschema`); the drift test fails on a breaking bump and passes on an added optional field.
 - [x] Resilient cross-service call: The Express → engine call has a per-attempt timeout, bounded retries with backoff + jitter, retries only transient failures, validates the engine response against the shared schema, and raises an explicit error on exhaustion without corrupting the case.
 - [x] PR description: Verification output pasted (`uv run pytest` green + the failing drift run on a breaking bump + the capped-retries-then-raise behavior); AI-tool reflection paragraph names at least one accepted and one rejected suggestion.
-- [x] PR setup: Branch is `m4d3-implementation`; PR self-assigned (Assignees); `Isiah Muli` requested under Reviewers as the ES reviewer.
+- [x] PR setup: Branch is `m4d3-implementation`; PR self-assigned (Assignees); `Isaiah Muli` requested under Reviewers as the ES reviewer.

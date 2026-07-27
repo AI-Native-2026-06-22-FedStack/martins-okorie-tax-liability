@@ -110,7 +110,7 @@ I accepted Codex's CTE-based tenant-scoped queue read with a derived `overdue` f
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli` as the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## Deliverables checklist
 
@@ -121,4 +121,4 @@ I accepted Codex's CTE-based tenant-scoped queue read with a derived `overdue` f
 - [x] PR description includes test output for the green real-container suite and a deliberately broken query failure.
 - [x] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [x] PR is self-assigned in Assignees.
-- [x] `Isiah Muli` is requested under Reviewers as the ES reviewer.
+- [x] `Isaiah Muli` is requested under Reviewers as the ES reviewer.

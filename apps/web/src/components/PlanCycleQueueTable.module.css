@@ -1,0 +1,27 @@
+.rowContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.caseId {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.clientName {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.dueDateCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.overdueText {
+  color: #f43f5e;
+  font-weight: 600;
+}
