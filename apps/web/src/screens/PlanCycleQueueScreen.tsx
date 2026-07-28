@@ -20,6 +20,7 @@ export type PlanCycleQueueScreenProps = {
   errorMessage?: string;
   activeRole?: "Advisor View" | "Firm Admin View";
   onRetry?: () => void;
+  onCreateCycle?: () => void;
   onSelectCycle?: (id: string) => void;
   onLogout?: () => void;
 };
@@ -32,6 +33,7 @@ export type PlanCycleQueueContentProps = Omit<
 export type PlanCycleQueueServerScreenProps = {
   auth: AuthSessionReturn;
   activeRole?: "Advisor View" | "Firm Admin View";
+  onCreateCycle?: () => void;
   onSelectCycle?: (id: string) => void;
   onLogout?: () => void;
 };
@@ -97,6 +99,7 @@ export function PlanCycleQueueContent({
   rows = defaultMockRows,
   state = "success",
   errorMessage,
+  onCreateCycle,
   onRetry,
   onSelectCycle,
 }: PlanCycleQueueContentProps): React.ReactElement {
@@ -175,6 +178,11 @@ export function PlanCycleQueueContent({
       {/* Main Queue Section */}
       <div className={styles.tableHeaderSection}>
         <h2 className={styles.sectionTitle}>Active Plan Cycles</h2>
+        {onCreateCycle && (
+          <button type="button" className={styles.pageButton} onClick={onCreateCycle}>
+            New Plan Cycle
+          </button>
+        )}
         <input
           type="search"
           aria-label="Search plan cycles"
@@ -237,6 +245,7 @@ export function PlanCycleQueueScreen({
 
 export function PlanCycleQueueServerContent({
   auth,
+  onCreateCycle,
   onSelectCycle,
 }: Omit<PlanCycleQueueServerScreenProps, "activeRole" | "onLogout">): React.ReactElement {
   const query = usePlanCycleQueue(auth);
@@ -257,6 +266,7 @@ export function PlanCycleQueueServerContent({
         const retry = query.refetch;
         void retry();
       }}
+      onCreateCycle={onCreateCycle}
       onSelectCycle={onSelectCycle}
       rows={rows}
       state={state}
@@ -267,12 +277,17 @@ export function PlanCycleQueueServerContent({
 export function PlanCycleQueueServerScreen({
   auth,
   activeRole,
+  onCreateCycle,
   onSelectCycle,
   onLogout,
 }: PlanCycleQueueServerScreenProps): React.ReactElement {
   return (
     <AppShell title="Plan Cycle Queue" activeRole={activeRole} onLogout={onLogout}>
-      <PlanCycleQueueServerContent auth={auth} onSelectCycle={onSelectCycle} />
+      <PlanCycleQueueServerContent
+        auth={auth}
+        onCreateCycle={onCreateCycle}
+        onSelectCycle={onSelectCycle}
+      />
     </AppShell>
   );
 }

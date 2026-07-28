@@ -1,11 +1,18 @@
 {
   "name": "@capstone/shared-schemas",
   "version": "1.0.0",
-  "description": "Versioned cross-service JSON Schema contracts for TaxPulse.",
+  "description": "Versioned cross-service JSON Schema and zod contracts for TaxPulse.",
   "type": "module",
-  "main": "./calculation.schema.json",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": "./calculation.schema.json",
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
     "./calculation.schema.json": "./calculation.schema.json"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
   }
 }

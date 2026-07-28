@@ -8,6 +8,7 @@ import {
   fetchPlanCycleDetail,
   fetchPlanCycleQueue,
   planCycleKeys,
+  useCreatePlanCycle,
   usePlanCycleDetailQuery,
   usePlanCycleQueue,
   useTransitionPlanCycle,
@@ -196,6 +197,61 @@ describe("usePlanCycles server-state hooks", () => {
     ).resolves.toMatchObject({
       id: "cycle_001",
       stage: "Modeling",
+    });
+  });
+
+  it("creates a plan cycle through apiRequest and invalidates the scoped queue key", async () => {
+    const queryClient = createQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    vi.mocked(apiRequest).mockResolvedValue({ id: "cycle_001" });
+
+    const { result } = renderHook(() => useCreatePlanCycle(auth), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        client_id: "client_001",
+        due_date: "2026-08-31",
+        hold_reason: null,
+        on_hold: false,
+        owner: "advisor@taxpulse.test",
+        planning_period: "2026 Q3",
+        priority: "High",
+      });
+    });
+
+    expect(apiRequest).toHaveBeenCalledWith(
+      "/v1/cycles",
+      {
+        body: {
+          client_id: "client_001",
+          due_date: "2026-08-31",
+          hold_reason: null,
+          on_hold: false,
+          owner: "advisor@taxpulse.test",
+          planning_period: "2026 Q3",
+          priority: "High",
+        },
+        headers: {
+          "x-tenant-id": "tenant_123",
+        },
+        method: "POST",
+      },
+      expect.objectContaining({
+        getAccessToken: auth.getAccessToken,
+        logout: auth.logout,
+        refreshSession: auth.refreshSession,
+      })
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: planCycleKeys.queue({
+        limit: 50,
+        owner: "advisor@taxpulse.test",
+        role: "Advisor",
+        stages: ["Intake", "Data Aggregation", "Modeling", "Review", "Client Approval", "Executed"],
+        tenantId: "tenant_123",
+      }),
     });
   });
 

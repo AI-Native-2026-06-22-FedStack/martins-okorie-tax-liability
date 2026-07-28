@@ -6,6 +6,7 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
+import type { CreatePlanCycleInput } from "@capstone/shared-schemas";
 import { ApiAuthAdapter, apiRequest } from "./apiClient";
 import { ApiError } from "./apiError";
 import { AuthSessionReturn, UserRole } from "../hooks/useAuthSession";
@@ -76,6 +77,10 @@ type ApiPlanCycleDetail = ApiPlanCycleQueueRow & {
 type TransitionResponse = {
   status: string;
   message: string;
+};
+
+export type CreatePlanCycleResponse = {
+  id: string;
 };
 
 const ACTIVE_QUEUE_STAGES: PlanCycleStage[] = [
@@ -335,6 +340,53 @@ async function transitionPlanCycle(
     },
     buildApiAuth(auth)
   );
+}
+
+async function createPlanCycle(
+  auth: AuthSessionReturn,
+  tenantId: string,
+  input: CreatePlanCycleInput
+): Promise<CreatePlanCycleResponse> {
+  return apiRequest<CreatePlanCycleResponse>(
+    "/v1/cycles",
+    {
+      body: input,
+      headers: apiHeaders(tenantId),
+      method: "POST",
+    },
+    buildApiAuth(auth)
+  );
+}
+
+export function useCreatePlanCycle(
+  auth: AuthSessionReturn
+): UseMutationResult<CreatePlanCycleResponse, ApiError, CreatePlanCycleInput> {
+  const queryClient = useQueryClient();
+  const scope = makeQueueScope(auth);
+
+  return useMutation<CreatePlanCycleResponse, ApiError, CreatePlanCycleInput>({
+    mutationFn: (input) => {
+      if (!scope) {
+        return Promise.reject(
+          new ApiError({
+            detail: "Sign in before creating a plan cycle.",
+            status: 401,
+            title: "Unauthorized",
+            type: "about:blank",
+          })
+        );
+      }
+
+      return createPlanCycle(auth, scope.tenantId, input);
+    },
+    onSuccess: async () => {
+      if (!scope) {
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: planCycleKeys.queue(scope) });
+    },
+  });
 }
 
 export function useTransitionPlanCycle(

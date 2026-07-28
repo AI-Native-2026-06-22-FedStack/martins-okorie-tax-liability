@@ -57,6 +57,7 @@ function renderRouter(
     return (
       <PlanCycleQueueServerContent
         auth={auth}
+        onCreateCycle={() => navigate("/cycles/new")}
         onSelectCycle={(cycleId) => navigate(`/cycles/${cycleId}`)}
       />
     );
@@ -85,6 +86,7 @@ function renderRouter(
           <Route element={<WorkspaceLayout auth={auth} queryClient={queryClient} />}>
             <Route element={<div>Dashboard Content</div>} path="/dashboard" />
             <Route element={<QueueRoute />} path="/cycles" />
+            <Route element={<div>New Cycle Form</div>} path="/cycles/new" />
             <Route element={<DetailRoute />} path="/cycles/:caseId" />
           </Route>
         </Route>
@@ -208,6 +210,27 @@ describe("workspace router", () => {
     });
     expect(screen.getByRole("heading", { level: 1, name: "Plan Cycle Queue" })).toBeInTheDocument();
     expect(screen.getByText("client_001")).toBeInTheDocument();
+  });
+
+  it("navigates from queue to the new plan cycle form", async () => {
+    const user = userEvent.setup();
+    vi.mocked(usePlanCycleQueue).mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    } as ReturnType<typeof usePlanCycleQueue>);
+
+    renderRouter(makeAuth(), new QueryClient());
+
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: "New Plan Cycle" }));
+    });
+
+    expect(screen.getByRole("heading", { level: 1, name: "New Plan Cycle" })).toBeInTheDocument();
+    expect(screen.getByText("New Cycle Form")).toBeInTheDocument();
+    expect(screen.getByText("Workspace")).toBeInTheDocument();
   });
 
   it("renders route errors inside the shell", async () => {
