@@ -19,3 +19,23 @@ Produced — Downgraded the web app to React 18-compatible dependencies, added `
 Accepted or rejected — Accepted.
 
 Why — `npm run test --workspace=apps/web` passed 46/46 tests across 13 files and `npm run typecheck --workspace=apps/web` completed with 0 errors, confirming the typed fetcher, single refresh retry, refresh stampede guard, logout-on-persistent-401 behavior, and React 18 dependency alignment.
+
+## Entry 3
+
+Asked — Implement Task 2 from the Week 5 Day 3 plan: wire the Plan Cycle Queue and detail as TanStack Query server state through the Task 1 fetcher, add tenant/role-scoped query keys, add a transition mutation with optimistic update/rollback/exact invalidation, render loading/empty/error states, and verify tests/typecheck/grep.
+
+Produced — Installed `@tanstack/react-query`, wrapped the web app in `QueryClientProvider`, added `apps/web/src/api/usePlanCycles.ts` with queue/detail queries and transition mutation, wired server-backed queue/detail screen wrappers, preserved local UI state for search/pagination/tabs/comments, added hook and server-screen tests, and extended the Week 5 Day 3 evidence file.
+
+Accepted or rejected — Accepted.
+
+Why — `npm run test --workspace=apps/web` passed 53/53 tests across 15 files and `npm run typecheck --workspace=apps/web` completed with 0 errors, confirming scoped query keys, fetcher-only API access, optimistic transition rollback, exact query invalidation, and loading/empty/error rendering on the wired screens.
+
+## Entry 4
+
+Asked — Fix the remaining React `act(...)` warnings from older component tests so the Task 2 verification no longer needs a warning note.
+
+Produced — Updated the Sign In and Plan Cycle Detail component tests to wrap state-changing user interactions in React Testing Library `act` boundaries while preserving their existing behavior coverage.
+
+Accepted or rejected — Accepted.
+
+Why — The focused affected-test run and full web test suite both pass without the prior `act(...)` warning output, and `npm run typecheck --workspace=apps/web` completes with 0 errors.

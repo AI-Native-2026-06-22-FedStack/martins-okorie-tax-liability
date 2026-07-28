@@ -74,3 +74,55 @@ $ npm run typecheck --workspace=apps/web
 $ rg "axios|fetch\(" apps/web/src
 apps/web/src/api/apiClient.ts
 ```
+
+## Task 2: Plan Cycle Server State with TanStack Query
+
+### 1. Query Provider and Server-State Hooks
+
+- `apps/web` now depends on `@tanstack/react-query`.
+- `apps/web/src/main.tsx` wraps the app in `QueryClientProvider`.
+- `apps/web/src/api/usePlanCycles.ts` owns plan-cycle server state hooks:
+  - `usePlanCycleQueue(auth)` fetches queue rows through `apiRequest`.
+  - `usePlanCycleDetailQuery(auth, cycleId)` fetches one cycle through `apiRequest`.
+  - `useTransitionPlanCycle(auth, scope)` mutates `PATCH /v1/cycles/:id/transition`.
+
+### 2. Query Key Strategy
+
+- Queue keys include tenant, role, owner/scope, stages, and limit via `planCycleKeys.queue(...)`.
+- Detail keys include tenant, role, and cycle ID via `planCycleKeys.detail(...)`.
+- The queue query issues stage-scoped backend requests because the frozen `/v1/cycles/queue` route requires `stage`.
+
+### 3. Mutation, Optimistic Update, and Invalidation
+
+- The transition mutation snapshots the exact queue/detail cache entries in `onMutate`.
+- It optimistically updates matching queue rows and detail stage.
+- It restores snapshots in `onError`.
+- It invalidates the exact queue and detail keys in `onSettled`.
+
+### 4. Wired Screens and States
+
+- `PlanCycleQueueServerScreen` reads TanStack Query `data`, `isPending`, `isError`, and typed `error.message` to drive loading, empty, error, and success rendering.
+- `PlanCycleDetailServerScreen` reads TanStack Query state for the selected cycle while preserving local tabs and draft comments with `usePlanCycleDetail`.
+- Existing D1 `QueueSkeleton`, `QueueEmpty`, and `QueueError` atoms are reused for non-success states.
+
+### Vitest suite after Task 2
+
+```text
+$ npm run test --workspace=apps/web
+Test Files  15 passed (15)
+Tests       53 passed (53)
+```
+
+### TypeScript typecheck after Task 2
+
+```text
+$ npm run typecheck --workspace=apps/web
+(0 errors)
+```
+
+### Server-state fetch scan
+
+```text
+$ rg "fetch\(|axios|useEffect" apps/web/src/api apps/web/src/screens
+apps/web/src/api/apiClient.ts
+```

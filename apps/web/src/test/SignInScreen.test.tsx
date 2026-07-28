@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { AuthSessionReturn } from "../hooks/useAuthSession";
@@ -32,14 +32,17 @@ describe("SignInScreen Component", () => {
 
   it("submits credentials form via userEvent", async () => {
     const auth = createMockAuth();
+    const user = userEvent.setup();
     render(<SignInScreen auth={auth} />);
 
-    const emailInput = screen.getByLabelText("Email Address");
-    await userEvent.clear(emailInput);
-    await userEvent.type(emailInput, "advisor@taxpulse.com");
+    await act(async () => {
+      const emailInput = screen.getByLabelText("Email Address");
+      await user.clear(emailInput);
+      await user.type(emailInput, "advisor@taxpulse.com");
 
-    const submitButton = screen.getByRole("button", { name: "Sign In" });
-    await userEvent.click(submitButton);
+      const submitButton = screen.getByRole("button", { name: "Sign In" });
+      await user.click(submitButton);
+    });
 
     expect(auth.login).toHaveBeenCalledWith({
       email: "advisor@taxpulse.com",
@@ -58,10 +61,13 @@ describe("SignInScreen Component", () => {
 
   it("switches to mock password reset view when clicking Forgot password?", async () => {
     const auth = createMockAuth();
+    const user = userEvent.setup();
     render(<SignInScreen auth={auth} />);
 
-    const forgotButton = screen.getByRole("button", { name: "Forgot password?" });
-    await userEvent.click(forgotButton);
+    await act(async () => {
+      const forgotButton = screen.getByRole("button", { name: "Forgot password?" });
+      await user.click(forgotButton);
+    });
 
     expect(screen.getByText("Reset Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send Reset Link" })).toBeInTheDocument();

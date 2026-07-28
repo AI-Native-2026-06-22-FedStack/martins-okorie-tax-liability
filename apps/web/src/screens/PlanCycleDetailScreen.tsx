@@ -1,13 +1,24 @@
 import React from "react";
 import { Badge } from "../atoms/Badge";
+import { QueueEmpty, QueueError, QueueSkeleton } from "../atoms/QueueStates";
+import { PlanCycleDetailRecord, usePlanCycleDetailQuery } from "../api/usePlanCycles";
 import { AppShell } from "../components/AppShell";
-import { UsePlanCycleDetailReturn } from "../hooks/usePlanCycleDetail";
+import { AuthSessionReturn } from "../hooks/useAuthSession";
+import { usePlanCycleDetail, UsePlanCycleDetailReturn } from "../hooks/usePlanCycleDetail";
 import styles from "./PlanCycleDetailScreen.module.css";
 
 export type PlanCycleDetailScreenProps = {
   caseId?: string;
   clientName?: string;
   detail: UsePlanCycleDetailReturn;
+  serverCycle?: PlanCycleDetailRecord;
+  onBack?: () => void;
+  onLogout?: () => void;
+};
+
+export type PlanCycleDetailServerScreenProps = {
+  auth: AuthSessionReturn;
+  caseId: string | null;
   onBack?: () => void;
   onLogout?: () => void;
 };
@@ -16,6 +27,7 @@ export function PlanCycleDetailScreen({
   caseId = "CYCLE-2026-Q1-001",
   clientName = "Acme Wealth Management",
   detail,
+  serverCycle,
   onBack,
   onLogout,
 }: PlanCycleDetailScreenProps): React.ReactElement {
@@ -36,6 +48,12 @@ export function PlanCycleDetailScreen({
     addComment(draftComment);
   };
 
+  const displayClientName = serverCycle?.clientName ?? clientName;
+  const displayOwner = serverCycle?.owner ?? "Martin Okorie";
+  const displayDueDate = serverCycle?.dueDate ?? "2026-03-31";
+  const displayPriority = serverCycle?.priority ?? "High";
+  const displayOverdue = serverCycle?.isOverdue ?? true;
+
   return (
     <AppShell title={`Case Detail: ${caseId}`} onLogout={onLogout}>
       <div className={styles.container}>
@@ -43,7 +61,7 @@ export function PlanCycleDetailScreen({
         <div className={styles.header}>
           <div className={styles.titleRow}>
             <div>
-              <h1 className={styles.caseTitle}>{clientName}</h1>
+              <h1 className={styles.caseTitle}>{displayClientName}</h1>
               <span style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-secondary)" }}>
                 Case Ref: {caseId}
               </span>
@@ -126,7 +144,7 @@ export function PlanCycleDetailScreen({
               </div>
               <div className={styles.propCard}>
                 <span className={styles.propLabel}>Assigned Advisor</span>
-                <span className={styles.propValue}>Martin Okorie</span>
+                <span className={styles.propValue}>{displayOwner}</span>
               </div>
               <div className={styles.propCard}>
                 <span className={styles.propLabel}>Quality Reviewer</span>
@@ -134,13 +152,14 @@ export function PlanCycleDetailScreen({
               </div>
               <div className={styles.propCard}>
                 <span className={styles.propLabel}>Target Due Date</span>
-                <span className={styles.propValue} style={{ color: "#f43f5e" }}>
-                  2026-03-31 (Overdue)
+                <span className={styles.propValue} style={{ color: displayOverdue ? "#f43f5e" : undefined }}>
+                  {displayDueDate}
+                  {displayOverdue ? " (Overdue)" : ""}
                 </span>
               </div>
               <div className={styles.propCard}>
                 <span className={styles.propLabel}>Priority</span>
-                <span className={styles.propValue}>High</span>
+                <span className={styles.propValue}>{displayPriority}</span>
               </div>
             </div>
           </div>
@@ -205,5 +224,56 @@ export function PlanCycleDetailScreen({
         )}
       </div>
     </AppShell>
+  );
+}
+
+export function PlanCycleDetailServerScreen({
+  auth,
+  caseId,
+  onBack,
+  onLogout,
+}: PlanCycleDetailServerScreenProps): React.ReactElement {
+  const query = usePlanCycleDetailQuery(auth, caseId);
+  const detail = usePlanCycleDetail({ initialStage: query.data?.stage ?? "Review" });
+
+  if (query.isPending) {
+    return (
+      <AppShell title={`Case Detail: ${caseId ?? "Loading"}`} onLogout={onLogout}>
+        <QueueSkeleton />
+      </AppShell>
+    );
+  }
+
+  if (query.isError) {
+    return (
+      <AppShell title={`Case Detail: ${caseId ?? "Error"}`} onLogout={onLogout}>
+        <QueueError
+          message={query.error.message}
+          onRetry={() => {
+            const retry = query.refetch;
+            void retry();
+          }}
+        />
+      </AppShell>
+    );
+  }
+
+  if (!caseId || !query.data) {
+    return (
+      <AppShell title="Case Detail" onLogout={onLogout}>
+        <QueueEmpty message="No plan cycle detail is available." />
+      </AppShell>
+    );
+  }
+
+  return (
+    <PlanCycleDetailScreen
+      caseId={query.data.id}
+      clientName={query.data.clientName}
+      detail={detail}
+      onBack={onBack}
+      onLogout={onLogout}
+      serverCycle={query.data}
+    />
   );
 }

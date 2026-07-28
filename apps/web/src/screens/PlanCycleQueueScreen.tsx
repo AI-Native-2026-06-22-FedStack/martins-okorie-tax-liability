@@ -6,6 +6,8 @@ import {
   PlanCycleQueueRow,
   PlanCycleQueueTable,
 } from "../components/PlanCycleQueueTable";
+import { usePlanCycleQueue } from "../api/usePlanCycles";
+import { AuthSessionReturn } from "../hooks/useAuthSession";
 import { useDebounce } from "../hooks/useDebounce";
 import { usePagination } from "../hooks/usePagination";
 import styles from "./PlanCycleQueueScreen.module.css";
@@ -18,6 +20,13 @@ export type PlanCycleQueueScreenProps = {
   errorMessage?: string;
   activeRole?: "Advisor View" | "Firm Admin View";
   onRetry?: () => void;
+  onSelectCycle?: (id: string) => void;
+  onLogout?: () => void;
+};
+
+export type PlanCycleQueueServerScreenProps = {
+  auth: AuthSessionReturn;
+  activeRole?: "Advisor View" | "Firm Admin View";
   onSelectCycle?: (id: string) => void;
   onLogout?: () => void;
 };
@@ -212,5 +221,38 @@ export function PlanCycleQueueScreen({
         )}
       </div>
     </AppShell>
+  );
+}
+
+export function PlanCycleQueueServerScreen({
+  auth,
+  activeRole,
+  onSelectCycle,
+  onLogout,
+}: PlanCycleQueueServerScreenProps): React.ReactElement {
+  const query = usePlanCycleQueue(auth);
+  const rows = query.data ?? [];
+
+  const state: ScreenState = query.isPending
+    ? "loading"
+    : query.isError
+    ? "error"
+    : rows.length === 0
+    ? "empty"
+    : "success";
+
+  return (
+    <PlanCycleQueueScreen
+      activeRole={activeRole}
+      errorMessage={query.error?.message}
+      onLogout={onLogout}
+      onRetry={() => {
+        const retry = query.refetch;
+        void retry();
+      }}
+      onSelectCycle={onSelectCycle}
+      rows={rows}
+      state={state}
+    />
   );
 }
