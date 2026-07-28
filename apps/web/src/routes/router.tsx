@@ -12,9 +12,11 @@ import {
 import { QueueError } from "../atoms/QueueStates";
 import { AppShell } from "../components/AppShell";
 import { AuthSessionReturn } from "../hooks/useAuthSession";
-import { DashboardScreen } from "../screens/DashboardScreen";
+import { Dashboard } from "../screens/Dashboard";
 import { PlanCycleDetailServerContent } from "../screens/PlanCycleDetailScreen";
 import { PlanCycleQueueServerContent } from "../screens/PlanCycleQueueScreen";
+import { ScenarioPlannerForm } from "../screens/ScenarioPlannerForm";
+import { ScenarioResultsTable } from "../screens/ScenarioResultsTable";
 import { SignInScreen } from "../screens/SignInScreen";
 import { RequireAuth } from "./RequireAuth";
 
@@ -35,6 +37,14 @@ function routeTitle(pathname: string, caseId?: string): string {
   }
 
   if (pathname.startsWith("/cycles/")) {
+    if (pathname === "/cycles/results") {
+      return "Scenario Results";
+    }
+
+    if (pathname === "/cycles/new") {
+      return "New Plan Cycle";
+    }
+
     return `Case Detail: ${caseId ?? "Loading"}`;
   }
 
@@ -130,6 +140,7 @@ function PlanCycleQueueRoute({ auth }: { auth: AuthSessionReturn }): React.React
   return (
     <PlanCycleQueueServerContent
       auth={auth}
+      onCreateCycle={() => navigate("/cycles/new")}
       onSelectCycle={(cycleId) => navigate(`/cycles/${cycleId}`)}
     />
   );
@@ -144,6 +155,25 @@ function PlanCycleDetailRoute({ auth }: { auth: AuthSessionReturn }): React.Reac
       auth={auth}
       caseId={caseId ?? null}
       onBack={() => navigate("/cycles")}
+    />
+  );
+}
+
+function ScenarioPlannerRoute({ auth }: { auth: AuthSessionReturn }): React.ReactElement {
+  const navigate = useNavigate();
+
+  return <ScenarioPlannerForm auth={auth} onCreated={(cycleId) => navigate(`/cycles/${cycleId}`)} />;
+}
+
+function ScenarioResultsRoute({ auth }: { auth: AuthSessionReturn }): React.ReactElement {
+  const navigate = useNavigate();
+
+  return (
+    <ScenarioResultsTable
+      auth={auth}
+      onEditRow={(cycleId) => navigate(`/cycles/${cycleId}`)}
+      onOpenRow={(cycleId) => navigate(`/cycles/${cycleId}`)}
+      onRemoveRow={() => undefined}
     />
   );
 }
@@ -169,12 +199,20 @@ export function createAppRouter(
           errorElement: <WorkspaceRouteError auth={auth} queryClient={queryClient} />,
           children: [
             {
-              element: <DashboardScreen />,
+              element: <Dashboard auth={auth} />,
               path: "/dashboard",
             },
             {
               element: <PlanCycleQueueRoute auth={auth} />,
               path: "/cycles",
+            },
+            {
+              element: <ScenarioPlannerRoute auth={auth} />,
+              path: "/cycles/new",
+            },
+            {
+              element: <ScenarioResultsRoute auth={auth} />,
+              path: "/cycles/results",
             },
             {
               element: <PlanCycleDetailRoute auth={auth} />,
