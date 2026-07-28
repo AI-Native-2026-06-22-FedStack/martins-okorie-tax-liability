@@ -93,7 +93,7 @@ export function usePlanCycleDetail({
   initialAuditTrail = defaultMockAuditTrail,
 }: UsePlanCycleDetailProps = {}): UsePlanCycleDetailReturn {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
-  const [currentStage] = useState<PlanCycleStage>(initialStage);
+  const currentStage = initialStage;
   const [draftComment, setDraftComment] = useState<string>("");
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
   const [auditTrail] = useState<AuditLogEntry[]>(initialAuditTrail);

@@ -33,7 +33,7 @@ Paste the "what it missed" note as a quote or code block:
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli`.
+- Reviewers: request `Isaiah Muli`.
 
 ## AI code-review checklist
 
@@ -55,4 +55,4 @@ Paste the "what it missed" note as a quote or code block:
 - [ ] "What it missed" note is pasted above as a quote or code block.
 - [ ] AI-tool reflection names one accepted Codex suggestion and one rejected Codex suggestion, with reasons.
 - [ ] PR is self-assigned in Assignees.
-- [ ] `Isiah Muli` is requested under Reviewers.
+- [ ] `Isaiah Muli` is requested under Reviewers.

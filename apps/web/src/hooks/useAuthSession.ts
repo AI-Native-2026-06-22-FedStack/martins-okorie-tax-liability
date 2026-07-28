@@ -35,6 +35,7 @@ export type AuthSessionReturn = {
   error: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   submitMfa: (totpCode: string) => Promise<void>;
+  refreshSession: () => Promise<void>;
   logout: () => void;
   getAccessToken: () => string | null;
   resetPasswordMock: (email: string) => Promise<void>;
@@ -126,6 +127,13 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
   }
 }
 
+function createMockRefreshedTokens(): Pick<SessionState, "accessToken" | "refreshToken"> {
+  return {
+    accessToken: `token_acc_refreshed_${Date.now()}`,
+    refreshToken: `token_ref_refreshed_${Date.now()}`,
+  };
+}
+
 export function useAuthSession(): AuthSessionReturn {
   const [state, dispatch] = useReducer(sessionReducer, null, loadInitialState);
 
@@ -153,13 +161,12 @@ export function useAuthSession(): AuthSessionReturn {
 
     // Schedule token refresh 14 minutes after issuance
     const timer = setTimeout(() => {
-      const mockNewAccess = `token_acc_refreshed_${Date.now()}`;
-      const mockNewRefresh = `token_ref_refreshed_${Date.now()}`;
+      const refreshedTokens = createMockRefreshedTokens();
 
       dispatch({
         type: "TOKEN_REFRESHED",
-        accessToken: mockNewAccess,
-        refreshToken: mockNewRefresh,
+        accessToken: refreshedTokens.accessToken,
+        refreshToken: refreshedTokens.refreshToken,
       });
     }, 14 * 60 * 1000);
 
@@ -226,6 +233,20 @@ export function useAuthSession(): AuthSessionReturn {
     [state.pendingEmail]
   );
 
+  const refreshSession = useCallback(async (): Promise<void> => {
+    if (state.step !== "authenticated" || !state.refreshToken) {
+      dispatch({ type: "LOGOUT" });
+      throw new Error("No authenticated refresh session is available.");
+    }
+
+    const refreshedTokens = createMockRefreshedTokens();
+    dispatch({
+      type: "TOKEN_REFRESHED",
+      accessToken: refreshedTokens.accessToken,
+      refreshToken: refreshedTokens.refreshToken,
+    });
+  }, [state.step, state.refreshToken]);
+
   const logout = useCallback(() => {
     sessionStorage.removeItem(STORAGE_KEY);
     dispatch({ type: "LOGOUT" });
@@ -251,6 +272,7 @@ export function useAuthSession(): AuthSessionReturn {
     error: state.error,
     login,
     submitMfa,
+    refreshSession,
     logout,
     getAccessToken,
     resetPasswordMock,

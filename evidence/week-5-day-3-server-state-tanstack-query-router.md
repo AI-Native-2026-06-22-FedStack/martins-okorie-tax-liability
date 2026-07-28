@@ -1,0 +1,170 @@
+# Evidence: Week 5 Day 3 — Server State, TanStack Query & Router
+
+## Task 1: Auth-Aware Fetch Client
+
+### 1. React 18 Alignment
+
+- `apps/web` is aligned to React 18 dependencies: `react@18.3.1`, `react-dom@18.3.1`, `@types/react@18.3.18`, and `@types/react-dom@18.3.5`.
+- `@testing-library/react` is aligned to `14.3.1` so the React 18 renderer resolves to the same React instance.
+
+### 2. Single Fetch-Based API Client
+
+- `apps/web/src/api/apiClient.ts` exports the single `apiRequest<TResponse>` wrapper around browser `fetch`.
+- Every request receives `Authorization: Bearer <token>` from the D2 `useAuthSession` adapter and an `X-Correlation-Id`.
+- No `axios` or other HTTP client is introduced.
+
+### 3. Typed Error Mapping
+
+- `apps/web/src/api/apiError.ts` defines `ProblemDetails` and `ApiError`.
+- Non-ok RFC 9457 Problem+JSON responses are mapped into typed `ApiError` instances.
+- Malformed or missing error bodies fall back to a typed generic Problem Details shape.
+
+### 4. 401 Refresh Behavior
+
+- `apiRequest` refreshes once on `401`, retries the original request exactly once, and logs out on failed refresh or persistent `401`.
+- Concurrent `401`s share one module-level in-flight refresh promise.
+- `useAuthSession.refreshSession` owns token rotation for this frontend-only task because the frozen backend does not expose a refresh route yet.
+
+### 5. ADR-0013
+
+- `docs/adr/ADR-0013-data-fetching.md` records the decision that TanStack Query owns server state, React Router owns navigation only, and the fetch-based auth-aware client is the single path to the API.
+- Rejected alternatives are `axios`, Router loaders/actions for API data, and per-screen fetch/refresh logic.
+
+## Verification Outputs
+
+### Baseline before Task 1 code
+
+```text
+$ npm run test --workspace=apps/web
+Test Files  12 passed (12)
+Tests       40 passed (40)
+```
+
+### React 18 dependency tree
+
+```text
+$ npm ls react react-dom @testing-library/react --workspace=apps/web
+web@0.0.0
+├─┬ @testing-library/react@14.3.1
+│ ├── react-dom@18.3.1 deduped
+│ └── react@18.3.1 deduped
+├─┬ react-dom@18.3.1
+│ └── react@18.3.1 deduped
+└── react@18.3.1
+```
+
+### Vitest suite after Task 1
+
+```text
+$ npm run test --workspace=apps/web
+Test Files  13 passed (13)
+Tests       46 passed (46)
+```
+
+### TypeScript typecheck
+
+```text
+$ npm run typecheck --workspace=apps/web
+(0 errors)
+```
+
+### Fetch and axios scan
+
+```text
+$ rg "axios|fetch\(" apps/web/src
+apps/web/src/api/apiClient.ts
+```
+
+## Task 2: Plan Cycle Server State with TanStack Query
+
+### 1. Query Provider and Server-State Hooks
+
+- `apps/web` now depends on `@tanstack/react-query`.
+- `apps/web/src/main.tsx` wraps the app in `QueryClientProvider`.
+- `apps/web/src/api/usePlanCycles.ts` owns plan-cycle server state hooks:
+  - `usePlanCycleQueue(auth)` fetches queue rows through `apiRequest`.
+  - `usePlanCycleDetailQuery(auth, cycleId)` fetches one cycle through `apiRequest`.
+  - `useTransitionPlanCycle(auth, scope)` mutates `PATCH /v1/cycles/:id/transition`.
+
+### 2. Query Key Strategy
+
+- Queue keys include tenant, role, owner/scope, stages, and limit via `planCycleKeys.queue(...)`.
+- Detail keys include tenant, role, and cycle ID via `planCycleKeys.detail(...)`.
+- The queue query issues stage-scoped backend requests because the frozen `/v1/cycles/queue` route requires `stage`.
+
+### 3. Mutation, Optimistic Update, and Invalidation
+
+- The transition mutation snapshots the exact queue/detail cache entries in `onMutate`.
+- It optimistically updates matching queue rows and detail stage.
+- It restores snapshots in `onError`.
+- It invalidates the exact queue and detail keys in `onSettled`.
+
+### 4. Wired Screens and States
+
+- `PlanCycleQueueServerScreen` reads TanStack Query `data`, `isPending`, `isError`, and typed `error.message` to drive loading, empty, error, and success rendering.
+- `PlanCycleDetailServerScreen` reads TanStack Query state for the selected cycle while preserving local tabs and draft comments with `usePlanCycleDetail`.
+- Existing D1 `QueueSkeleton`, `QueueEmpty`, and `QueueError` atoms are reused for non-success states.
+
+### Vitest suite after Task 2
+
+```text
+$ npm run test --workspace=apps/web
+Test Files  15 passed (15)
+Tests       53 passed (53)
+```
+
+### TypeScript typecheck after Task 2
+
+```text
+$ npm run typecheck --workspace=apps/web
+(0 errors)
+```
+
+### Server-state fetch scan
+
+```text
+$ rg "fetch\(|axios|useEffect" apps/web/src/api apps/web/src/screens
+apps/web/src/api/apiClient.ts
+```
+
+## Task 3: Guarded React Router Workspace
+
+### 1. Shared Shell Route
+
+- `apps/web` now depends on `react-router@7`.
+- `apps/web/src/routes/router.tsx` exports `createAppRouter(auth, queryClient)` with `createBrowserRouter`.
+- The guarded workspace layout renders one `AppShell` around an `Outlet`.
+- Queue, detail, and dashboard routes render inside that layout so the navigation/header shell persists.
+
+### 2. Guard, Error Element, and Logout
+
+- `apps/web/src/routes/RequireAuth.tsx` redirects unauthenticated internal route access to `/login`.
+- The workspace route has an `errorElement` that renders `QueueError` inside `AppShell`.
+- Layout logout clears the TanStack Query cache with `queryClient.clear()` before calling `auth.logout()`.
+- Router routes do not define loaders or actions for API data.
+
+### Vitest suite after Task 3
+
+```text
+$ npm run test --workspace=apps/web -- --reporter=dot
+Test Files  16 passed (16)
+Tests       58 passed (58)
+```
+
+### TypeScript typecheck after Task 3
+
+```text
+$ npm run typecheck --workspace=apps/web
+(0 errors)
+```
+
+### Router/data ownership scan
+
+```text
+$ rg "loader|action|fetch\(|axios" apps/web/src/routes apps/web/src/screens apps/web/src/api -n
+apps/web/src/api/apiClient.ts:86:  return fetch(`${API_BASE_URL}${path}`, {
+apps/web/src/screens/PlanCycleDetailScreen.tsx:216:                  <td className={styles.auditTd}>{entry.action}</td>
+```
+
+- The only direct `fetch(` remains in `apiClient.ts`.
+- The `action` match is the audit table field, not a React Router action.
