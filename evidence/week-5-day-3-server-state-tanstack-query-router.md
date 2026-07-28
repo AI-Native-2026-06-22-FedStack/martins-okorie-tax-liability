@@ -126,3 +126,45 @@ $ npm run typecheck --workspace=apps/web
 $ rg "fetch\(|axios|useEffect" apps/web/src/api apps/web/src/screens
 apps/web/src/api/apiClient.ts
 ```
+
+## Task 3: Guarded React Router Workspace
+
+### 1. Shared Shell Route
+
+- `apps/web` now depends on `react-router@7`.
+- `apps/web/src/routes/router.tsx` exports `createAppRouter(auth, queryClient)` with `createBrowserRouter`.
+- The guarded workspace layout renders one `AppShell` around an `Outlet`.
+- Queue, detail, and dashboard routes render inside that layout so the navigation/header shell persists.
+
+### 2. Guard, Error Element, and Logout
+
+- `apps/web/src/routes/RequireAuth.tsx` redirects unauthenticated internal route access to `/login`.
+- The workspace route has an `errorElement` that renders `QueueError` inside `AppShell`.
+- Layout logout clears the TanStack Query cache with `queryClient.clear()` before calling `auth.logout()`.
+- Router routes do not define loaders or actions for API data.
+
+### Vitest suite after Task 3
+
+```text
+$ npm run test --workspace=apps/web -- --reporter=dot
+Test Files  16 passed (16)
+Tests       58 passed (58)
+```
+
+### TypeScript typecheck after Task 3
+
+```text
+$ npm run typecheck --workspace=apps/web
+(0 errors)
+```
+
+### Router/data ownership scan
+
+```text
+$ rg "loader|action|fetch\(|axios" apps/web/src/routes apps/web/src/screens apps/web/src/api -n
+apps/web/src/api/apiClient.ts:86:  return fetch(`${API_BASE_URL}${path}`, {
+apps/web/src/screens/PlanCycleDetailScreen.tsx:216:                  <td className={styles.auditTd}>{entry.action}</td>
+```
+
+- The only direct `fetch(` remains in `apiClient.ts`.
+- The `action` match is the audit table field, not a React Router action.

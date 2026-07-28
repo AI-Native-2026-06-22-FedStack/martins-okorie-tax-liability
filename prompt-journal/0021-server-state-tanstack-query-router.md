@@ -39,3 +39,23 @@ Produced — Updated the Sign In and Plan Cycle Detail component tests to wrap s
 Accepted or rejected — Accepted.
 
 Why — The focused affected-test run and full web test suite both pass without the prior `act(...)` warning output, and `npm run typecheck --workspace=apps/web` completes with 0 errors.
+
+## Entry 5
+
+Asked — Implement Task 3 from the Week 5 Day 3 plan: route the workspace with React Router, guard internal routes, render route errors inside the shell, clear TanStack Query cache on logout, and verify tests/typecheck/grep.
+
+Produced — Added React Router, created guarded workspace routing with a shared `AppShell` layout and `Outlet`, split queue/detail screens into content and shell wrappers, added a minimal dashboard route, wired queue-to-detail navigation, added a route error element inside the shell, cleared query cache on logout, and added router behavior tests.
+
+Accepted or rejected — Accepted.
+
+Why — `npm run test --workspace=apps/web -- --reporter=dot` passed 58/58 tests across 16 files and `npm run typecheck --workspace=apps/web` completed with 0 errors, confirming guarded redirects, shared-shell routing, route error containment, logout cache clearing, and no Router-owned API fetching.
+
+## Entry 6
+
+Asked — Check whether any other fixes were needed based on the stage changes.
+
+Produced — Updated the Plan Cycle Detail current-stage badge to derive its visual variant from the actual workflow stage instead of always using the Review variant.
+
+Accepted or rejected — Accepted.
+
+Why — The detail stage badge now stays visually consistent with Intake, Data Aggregation, Modeling, Review, Client Approval, Executed, and Archived stages, and the web test suite plus typecheck both pass.

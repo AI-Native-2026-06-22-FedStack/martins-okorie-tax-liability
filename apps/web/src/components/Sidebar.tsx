@@ -21,6 +21,7 @@ const defaultGroups: NavGroup[] = [
   {
     title: "Workspace",
     items: [
+      { id: "dashboard", label: "Dashboard" },
       { id: "queue", label: "Plan Cycle Queue", active: true },
       { id: "clients", label: "Active Clients" },
       { id: "tasks", label: "Action Items" },

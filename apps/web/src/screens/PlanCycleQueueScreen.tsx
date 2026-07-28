@@ -24,6 +24,11 @@ export type PlanCycleQueueScreenProps = {
   onLogout?: () => void;
 };
 
+export type PlanCycleQueueContentProps = Omit<
+  PlanCycleQueueScreenProps,
+  "activeRole" | "onLogout"
+>;
+
 export type PlanCycleQueueServerScreenProps = {
   auth: AuthSessionReturn;
   activeRole?: "Advisor View" | "Firm Admin View";
@@ -88,15 +93,13 @@ export const defaultMockRows: PlanCycleQueueRow[] = [
   },
 ];
 
-export function PlanCycleQueueScreen({
+export function PlanCycleQueueContent({
   rows = defaultMockRows,
   state = "success",
   errorMessage,
-  activeRole = "Advisor View",
   onRetry,
   onSelectCycle,
-  onLogout,
-}: PlanCycleQueueScreenProps): React.ReactElement {
+}: PlanCycleQueueContentProps): React.ReactElement {
   const [searchQuery, setSearchQuery] = useState("");
   const [, startTransition] = useTransition();
 
@@ -146,90 +149,96 @@ export function PlanCycleQueueScreen({
   const reviewCount = rows.filter((r) => r.stage === "Review").length;
 
   return (
-    <AppShell title="Plan Cycle Queue" activeRole={activeRole} onLogout={onLogout}>
-      <div className={styles.screenContainer}>
-        {/* KPI Cards Row */}
-        <div className={styles.kpiGrid}>
-          <KpiCard title="Open Cycles" count={rows.length} />
-          <KpiCard
-            title="Awaiting Review"
-            count={reviewCount}
-            subtitle="Requires Firm Admin signoff"
-          />
-          <KpiCard
-            title="Overdue Cycles"
-            count={overdueCount}
-            tone={overdueCount > 0 ? "danger" : "default"}
-            subtitle="Past target completion date"
-          />
-          <KpiCard
-            title="Presented This Week"
-            count={5}
-            tone="success"
-            subtitle="Client meetings held"
-          />
-        </div>
-
-        {/* Main Queue Section */}
-        <div className={styles.tableHeaderSection}>
-          <h2 className={styles.sectionTitle}>Active Plan Cycles</h2>
-          <input
-            type="search"
-            aria-label="Search plan cycles"
-            placeholder="Search by client, ID, owner..."
-            className={styles.searchInput}
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-        </div>
-
-        {/* State-driven Presentational Rendering */}
-        {state === "loading" && <QueueSkeleton />}
-        {state === "empty" && <QueueEmpty />}
-        {state === "error" && (
-          <QueueError message={errorMessage} onRetry={onRetry} />
-        )}
-        {state === "success" && (
-          <>
-            <PlanCycleQueueTable rows={paginatedItems} onSelectCycle={handleSelectCycle} />
-            <div className={styles.paginationBar}>
-              <span>
-                Showing page {currentPage} of {totalPages} ({totalItems} cycles)
-              </span>
-              <div className={styles.pageButtons}>
-                <button
-                  type="button"
-                  className={styles.pageButton}
-                  onClick={prevPage}
-                  disabled={!canPrevPage}
-                  aria-label="Previous Page"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  className={styles.pageButton}
-                  onClick={nextPage}
-                  disabled={!canNextPage}
-                  aria-label="Next Page"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+    <div className={styles.screenContainer}>
+      {/* KPI Cards Row */}
+      <div className={styles.kpiGrid}>
+        <KpiCard title="Open Cycles" count={rows.length} />
+        <KpiCard
+          title="Awaiting Review"
+          count={reviewCount}
+          subtitle="Requires Firm Admin signoff"
+        />
+        <KpiCard
+          title="Overdue Cycles"
+          count={overdueCount}
+          tone={overdueCount > 0 ? "danger" : "default"}
+          subtitle="Past target completion date"
+        />
+        <KpiCard
+          title="Presented This Week"
+          count={5}
+          tone="success"
+          subtitle="Client meetings held"
+        />
       </div>
+
+      {/* Main Queue Section */}
+      <div className={styles.tableHeaderSection}>
+        <h2 className={styles.sectionTitle}>Active Plan Cycles</h2>
+        <input
+          type="search"
+          aria-label="Search plan cycles"
+          placeholder="Search by client, ID, owner..."
+          className={styles.searchInput}
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
+      </div>
+
+      {/* State-driven Presentational Rendering */}
+      {state === "loading" && <QueueSkeleton />}
+      {state === "empty" && <QueueEmpty />}
+      {state === "error" && <QueueError message={errorMessage} onRetry={onRetry} />}
+      {state === "success" && (
+        <>
+          <PlanCycleQueueTable rows={paginatedItems} onSelectCycle={handleSelectCycle} />
+          <div className={styles.paginationBar}>
+            <span>
+              Showing page {currentPage} of {totalPages} ({totalItems} cycles)
+            </span>
+            <div className={styles.pageButtons}>
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={prevPage}
+                disabled={!canPrevPage}
+                aria-label="Previous Page"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={nextPage}
+                disabled={!canNextPage}
+                aria-label="Next Page"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function PlanCycleQueueScreen({
+  activeRole = "Advisor View",
+  onLogout,
+  ...contentProps
+}: PlanCycleQueueScreenProps): React.ReactElement {
+  return (
+    <AppShell title="Plan Cycle Queue" activeRole={activeRole} onLogout={onLogout}>
+      <PlanCycleQueueContent {...contentProps} />
     </AppShell>
   );
 }
 
-export function PlanCycleQueueServerScreen({
+export function PlanCycleQueueServerContent({
   auth,
-  activeRole,
   onSelectCycle,
-  onLogout,
-}: PlanCycleQueueServerScreenProps): React.ReactElement {
+}: Omit<PlanCycleQueueServerScreenProps, "activeRole" | "onLogout">): React.ReactElement {
   const query = usePlanCycleQueue(auth);
   const rows = query.data ?? [];
 
@@ -242,10 +251,8 @@ export function PlanCycleQueueServerScreen({
     : "success";
 
   return (
-    <PlanCycleQueueScreen
-      activeRole={activeRole}
+    <PlanCycleQueueContent
       errorMessage={query.error?.message}
-      onLogout={onLogout}
       onRetry={() => {
         const retry = query.refetch;
         void retry();
@@ -254,5 +261,18 @@ export function PlanCycleQueueServerScreen({
       rows={rows}
       state={state}
     />
+  );
+}
+
+export function PlanCycleQueueServerScreen({
+  auth,
+  activeRole,
+  onSelectCycle,
+  onLogout,
+}: PlanCycleQueueServerScreenProps): React.ReactElement {
+  return (
+    <AppShell title="Plan Cycle Queue" activeRole={activeRole} onLogout={onLogout}>
+      <PlanCycleQueueServerContent auth={auth} onSelectCycle={onSelectCycle} />
+    </AppShell>
   );
 }

@@ -4,22 +4,26 @@ import { Sidebar } from "./Sidebar";
 
 export type AppShellProps = {
   title?: string;
+  activeItemId?: string;
   activeRole?: "Advisor View" | "Firm Admin View";
   onRoleChange?: (role: "Advisor View" | "Firm Admin View") => void;
+  onSelectNav?: (id: string) => void;
   onLogout?: () => void;
   children: React.ReactNode;
 };
 
 export function AppShell({
   title = "Plan Cycle Queue",
+  activeItemId = "queue",
   activeRole = "Advisor View",
   onRoleChange,
+  onSelectNav,
   onLogout,
   children,
 }: AppShellProps): React.ReactElement {
   return (
     <div className={styles.layout}>
-      <Sidebar activeItemId="queue" />
+      <Sidebar activeItemId={activeItemId} onSelectNav={onSelectNav} />
       <div className={styles.mainContainer}>
         <header className={styles.topbar}>
           <h1 className={styles.viewTitle}>{title}</h1>
