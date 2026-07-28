@@ -33,7 +33,7 @@ Paste the "what it missed" note as a quote or code block:
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request `Isiah Muli`.
+- Reviewers: request `Isaiah Muli`.
 
 ## AI code-review checklist
 
