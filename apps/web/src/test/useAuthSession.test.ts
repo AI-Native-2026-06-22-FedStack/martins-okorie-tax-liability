@@ -88,6 +88,24 @@ describe("useAuthSession Custom Hook", () => {
     expect(sessionStorage.getItem("taxpulse_session")).toBeNull();
   });
 
+  it("refreshSession updates the access token for the active session", async () => {
+    const { result } = renderHook(() => useAuthSession());
+
+    await act(async () => {
+      await result.current.login({ email: "advisor@taxpulse.com" });
+    });
+
+    const originalAccessToken = result.current.getAccessToken();
+
+    await act(async () => {
+      await result.current.refreshSession();
+    });
+
+    expect(result.current.getAccessToken()).toBeTruthy();
+    expect(result.current.getAccessToken()).not.toBe(originalAccessToken);
+    expect(result.current.getAccessToken()).toContain("token_acc_refreshed_");
+  });
+
   it("clears token refresh timer on unmount preventing leaks and StrictMode double-fire", async () => {
     const { result, unmount } = renderHook(() => useAuthSession());
 
