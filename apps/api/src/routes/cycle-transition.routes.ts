@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/verifier.js";
 import { writeAuditEntry } from "../audit/audit-writer.js";
 import { getDb } from "../db/client.js";
 import { taxPlanCycle, type TaxPlanCycleStage } from "../db/schema.js";
+import { publishStageChanged } from "../events/publishStageChanged.js";
 import {
   findCycleByIdForTenant,
   insertStageTransitionForTenant
@@ -160,6 +161,19 @@ cycleTransitionRouter.patch(
         updated_at: updatedAt
       });
       await invalidatePlanCycleQueueCacheForTenant(user.tenant_id);
+      try {
+        await publishStageChanged({
+          actor: user.id,
+          changedAt: updatedAt,
+          cycleId: id,
+          fromStage,
+          tenantId: user.tenant_id,
+          toStage
+        });
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        req.log.warn({ err: errorMsg }, "Stage-changed event publish failed");
+      }
 
       return res.json({
         status: "success",

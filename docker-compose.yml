@@ -37,13 +37,13 @@ services:
       - "6379:6379"
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.8.1
     ports:
       - "4566:4566"
     environment:
       - SERVICES=s3,sqs,sns
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health | grep -q '\"s3\": \"running\"' || exit 1"]
+      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health | grep -Eq '\"s3\": \"(running|available)\"' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

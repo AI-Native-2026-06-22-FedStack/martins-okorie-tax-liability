@@ -15,6 +15,8 @@
     "@asteasolutions/zod-to-openapi": "^8",
     "@aws-sdk/client-dynamodb": "^3.1092.0",
     "@aws-sdk/client-secrets-manager": "^3.1087.0",
+    "@aws-sdk/client-sns": "^3.1100.0",
+    "@aws-sdk/client-sqs": "^3.1100.0",
     "@aws-sdk/lib-dynamodb": "^3.1092.0",
     "@capstone/shared-schemas": "file:../../packages/shared-schemas",
     "@scalar/express-api-reference": "latest",
