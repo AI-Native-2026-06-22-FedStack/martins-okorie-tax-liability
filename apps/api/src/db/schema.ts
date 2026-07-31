@@ -14,6 +14,10 @@ import {
   type AnyPgColumn
 } from "drizzle-orm/pg-core";
 
+export { actionItem, type ActionItem, type NewActionItem } from "./schema/actionItem.js";
+
+export { outbox, type NewOutboxEvent, type OutboxEvent } from "./schema/outbox.js";
+
 export const taxPlanCycleStages = [
   "Intake",
   "Data Aggregation",
@@ -263,5 +267,3 @@ export const auditEntry = pgTable(
 
 export type AuditEntry = typeof auditEntry.$inferSelect;
 export type NewAuditEntry = typeof auditEntry.$inferInsert;
-
-

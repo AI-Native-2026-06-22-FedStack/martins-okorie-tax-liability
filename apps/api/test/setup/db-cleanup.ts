@@ -14,7 +14,9 @@ beforeEach(async () => {
   await client.connect();
 
   try {
-    await client.query("TRUNCATE audit_entry, stage_transition, tax_plan_cycle RESTART IDENTITY CASCADE");
+    await client.query(
+      "TRUNCATE action_item, outbox, audit_entry, stage_transition, tax_plan_cycle RESTART IDENTITY CASCADE"
+    );
     await client.query(`
       INSERT INTO tenant (id, name)
       VALUES
