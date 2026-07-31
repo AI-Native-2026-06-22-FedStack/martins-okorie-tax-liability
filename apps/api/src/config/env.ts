@@ -5,7 +5,10 @@ loadDotenv();
 
 export const ApiEnvSchema = z.object({
   AWS_ENDPOINT: z.url(),
+  AWS_ENDPOINT_URL: z.url().optional(),
   AWS_REGION: z.string().min(1),
+  AWS_ACCESS_KEY_ID: z.string().min(1).default("test"),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1).default("test"),
   PORT: z.coerce.number().int().positive(),
   DB_HOST: z.string().min(1),
   DB_PORT: z.coerce.number().int().positive(),
@@ -23,6 +26,9 @@ export const ApiEnvSchema = z.object({
     .default(5 * 60_000),
   DDB_ENDPOINT: z.url().default("http://localhost:8000"),
   DDB_TABLE_NAME: z.string().min(1).default("taxpulse-plan-cycle-read-model"),
+  STAGE_CHANGED_TOPIC: z.string().min(1).default("taxpulse-stage-changed"),
+  STAGE_CHANGED_QUEUE: z.string().min(1).default("taxpulse-stage-changed-projection"),
+  STAGE_CHANGED_DLQ: z.string().min(1).default("taxpulse-stage-changed-dlq"),
   QUEUE_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().positive().default(86_400),
   IDEMPOTENCY_LOCK_TTL_MS: z.coerce.number().int().positive().default(30_000)
