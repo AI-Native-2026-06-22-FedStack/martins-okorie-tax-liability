@@ -1,0 +1,23 @@
+{
+  "name": "@taxpulse/tivs-acl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TaxPulse SOAP anti-corruption-layer service for the legacy Taxpayer Identification Verification Service.",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "5.2.1",
+    "opossum": "10.0.0",
+    "soap": "1.10.0"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "17.0.1",
+    "@types/opossum": "8.1.9",
+    "vitest": "4.1.10"
+  }
+}
