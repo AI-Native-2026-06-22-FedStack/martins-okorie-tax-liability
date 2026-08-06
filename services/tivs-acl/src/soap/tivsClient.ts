@@ -1,66 +1,46 @@
 import soap from "soap";
-import {
-  TaxpayerStatus,
-  TaxpayerStatusRequest,
-  TaxpayerVerification,
-  TaxpayerVerificationRequest,
-} from "../acl/dto.js";
-import { translateSoapFault, translateTaxpayerStatus, translateVerification } from "../acl/translate.js";
 
-interface TivsSoapClient extends soap.Client {
+type TINType = "EIN" | "SSN";
+
+interface GeneratedTivsClient {
+  setEndpoint(endpointUrl: string): void;
+  setSecurity(security: unknown): void;
   VerifyTaxpayerAsync(args: {
     TIN: string;
-    TINType: string;
+    TINType: TINType;
     LegalName: string;
   }): Promise<[unknown]>;
-  GetTaxpayerStatusAsync(args: { TIN: string; TINType: string }): Promise<[unknown]>;
+  GetTaxpayerStatusAsync(args: { TIN: string; TINType: TINType }): Promise<[unknown]>;
 }
 
 export interface TivsClient {
-  verifyTaxpayer(request: TaxpayerVerificationRequest): Promise<TaxpayerVerification>;
-  getTaxpayerStatus(request: TaxpayerStatusRequest): Promise<TaxpayerStatus>;
+  verifyTaxpayer(TIN: string, TINType: TINType, LegalName: string): Promise<unknown>;
+  getTaxpayerStatus(TIN: string, TINType: TINType): Promise<unknown>;
 }
 
-export interface TivsClientConfig {
-  wsdlUrl: string;
-  endpointUrl: string;
-  username: string;
-  password: string;
-  timeoutMs: number;
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required`);
+  }
+  return value;
 }
 
-export async function createTivsClient(config: TivsClientConfig): Promise<TivsClient> {
-  const client = (await soap.createClientAsync(config.wsdlUrl)) as TivsSoapClient;
+export async function createTivsClient(): Promise<TivsClient> {
+  const client = (await soap.createClientAsync(requiredEnv("TIVS_WSDL_URL"))) as unknown as GeneratedTivsClient;
 
-  client.setEndpoint(config.endpointUrl);
-  client.setSecurity(new soap.WSSecurity(config.username, config.password));
+  client.setEndpoint(requiredEnv("TIVS_ENDPOINT_URL"));
+  client.setSecurity(new soap.WSSecurity(requiredEnv("TIVS_USERNAME"), requiredEnv("TIVS_PASSWORD")));
 
   return {
-    async verifyTaxpayer(request) {
-      try {
-        const [response] = await client.VerifyTaxpayerAsync({
-          TIN: request.taxpayerId,
-          TINType: request.taxpayerIdType,
-          LegalName: request.legalName,
-        });
-
-        return translateVerification(response as { MatchCode?: string | number; TINType?: string; VerifiedName?: string });
-      } catch (error) {
-        throw translateSoapFault(error);
-      }
+    async verifyTaxpayer(TIN, TINType, LegalName) {
+      const [response] = await client.VerifyTaxpayerAsync({ TIN, TINType, LegalName });
+      return response;
     },
 
-    async getTaxpayerStatus(request) {
-      try {
-        const [response] = await client.GetTaxpayerStatusAsync({
-          TIN: request.taxpayerId,
-          TINType: request.taxpayerIdType,
-        });
-
-        return translateTaxpayerStatus(response as { Standing?: string; AsOfDate?: string });
-      } catch (error) {
-        throw translateSoapFault(error);
-      }
+    async getTaxpayerStatus(TIN, TINType) {
+      const [response] = await client.GetTaxpayerStatusAsync({ TIN, TINType });
+      return response;
     },
   };
 }

@@ -8,30 +8,31 @@ import {
 } from "./acl/dto.js";
 import { renderAuditLine } from "./audit.js";
 import { createTivsClient } from "./soap/tivsClient.js";
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required`);
-  }
-  return value;
-}
+import { translateSoapFault, translateTaxpayerStatus, translateVerification } from "./acl/translate.js";
 
 export async function createApp() {
-  const client = await createTivsClient({
-    wsdlUrl: requiredEnv("TIVS_WSDL_URL"),
-    endpointUrl: requiredEnv("TIVS_ENDPOINT_URL"),
-    username: requiredEnv("TIVS_USERNAME"),
-    password: requiredEnv("TIVS_PASSWORD"),
-    timeoutMs: Number(process.env.TIVS_TIMEOUT_MS ?? 5000),
-  });
+  const client = await createTivsClient();
 
-  const verifyBreaker = createTivsBreaker((request: TaxpayerVerificationRequest) =>
-    client.verifyTaxpayer(request),
-  );
-  const statusBreaker = createTivsBreaker((request: TaxpayerStatusRequest) =>
-    client.getTaxpayerStatus(request),
-  );
+  const verifyBreaker = createTivsBreaker(async (request: TaxpayerVerificationRequest) => {
+    try {
+      const response = await client.verifyTaxpayer(
+        request.taxpayerId,
+        request.taxpayerIdType,
+        request.legalName,
+      );
+      return translateVerification(response);
+    } catch (error) {
+      throw translateSoapFault(error);
+    }
+  });
+  const statusBreaker = createTivsBreaker(async (request: TaxpayerStatusRequest) => {
+    try {
+      const response = await client.getTaxpayerStatus(request.taxpayerId, request.taxpayerIdType);
+      return translateTaxpayerStatus(response);
+    } catch (error) {
+      throw translateSoapFault(error);
+    }
+  });
   const app = express();
 
   app.use(express.json());

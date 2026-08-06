@@ -18,15 +18,16 @@ interface TivsStatusSoapResponse {
   AsOfDate?: string;
 }
 
-export function translateVerification(response: TivsVerifySoapResponse): TaxpayerVerification {
-  const matchCode = String(response.MatchCode ?? "unknown");
+export function translateVerification(response: unknown): TaxpayerVerification {
+  const soapResponse = response as TivsVerifySoapResponse;
+  const matchCode = String(soapResponse.MatchCode ?? "unknown");
   const taxpayerIdType: TaxpayerIdType | "unknown" =
-    response.TINType === "EIN" || response.TINType === "SSN" ? response.TINType : "unknown";
+    soapResponse.TINType === "EIN" || soapResponse.TINType === "SSN" ? soapResponse.TINType : "unknown";
   const base = {
     matchCode,
     taxpayerIdType,
     verified: false,
-    ...(response.VerifiedName ? { verifiedName: response.VerifiedName } : {}),
+    ...(soapResponse.VerifiedName ? { verifiedName: soapResponse.VerifiedName } : {}),
   } satisfies Omit<TaxpayerVerification, "status">;
 
   switch (matchCode) {
@@ -41,9 +42,10 @@ export function translateVerification(response: TivsVerifySoapResponse): Taxpaye
   }
 }
 
-export function translateTaxpayerStatus(response: TivsStatusSoapResponse): TaxpayerStatus {
-  const standing = response.Standing?.toUpperCase();
-  const base = { asOfDate: response.AsOfDate ?? "" };
+export function translateTaxpayerStatus(response: unknown): TaxpayerStatus {
+  const soapResponse = response as TivsStatusSoapResponse;
+  const standing = soapResponse.Standing?.toUpperCase();
+  const base = { asOfDate: soapResponse.AsOfDate ?? "" };
 
   if (standing === "ACTIVE") {
     return { ...base, standing: "active" };

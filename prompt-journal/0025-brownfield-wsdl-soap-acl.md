@@ -29,3 +29,13 @@ Produced — Fetched the EM-shared WSDL into a temporary file outside the reposi
 Accepted or rejected — Accepted.
 
 Why — ADR-0015 now documents the verified operation/message/fault contract with WSDL line references, records the numeric-string `MatchCode`, MMDDYYYY `AsOfDate`, and unknown-TIN code-vs-fault inconsistency, and the ACL service still passes typecheck, tests, and build after the contract corrections.
+
+## Entry 4
+
+Asked — Implement tp-097 by building the TIVS node-soap client inside `services/tivs-acl`, reading the WSDL URL from config, exposing only a narrow interface for `VerifyTaxpayer` and `GetTaxpayerStatus`, keeping the raw SOAP client private, and proving the verification operation is callable.
+
+Produced — Refactored `src/soap/tivsClient.ts` so `createTivsClient()` reads `TIVS_WSDL_URL`, `TIVS_ENDPOINT_URL`, and WS-Security credentials from environment config, builds the generated client with `soap.createClientAsync`, overrides the endpoint, and exposes only `verifyTaxpayer` and `getTaxpayerStatus` through the exported `TivsClient` interface. Moved SOAP response casts out of REST-facing server code into translation, and added a stubbed `tivsClient.test.ts` that proves `verifyTaxpayer` calls `VerifyTaxpayerAsync` through the interface using fictional sample data.
+
+Accepted or rejected — Accepted.
+
+Why — The TIVS client has no hardcoded URL or exported node-soap client/type, the callable interface test passes, and the ACL service passes typecheck, tests, and build.
