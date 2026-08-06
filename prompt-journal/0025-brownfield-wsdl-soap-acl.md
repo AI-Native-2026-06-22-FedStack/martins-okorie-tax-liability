@@ -79,3 +79,13 @@ Produced — Added a mocked node-soap client test inside `typeLeak.test.ts` that
 Accepted or rejected — Accepted.
 
 Why — The ACL test suite remains limited to the two requested test files and now passes 6 tests covering interface callability, type-leak protection, breaker opening behavior, audit redaction, and Pact provider verification.
+
+## Entry 9
+
+Asked — Create a PR description matching the sample PR AI review format and save it under `review/`.
+
+Produced — Added `review/m6d3-pr-description.md` with sample-style sections for summary, related ADR, testing output, AI review evidence, AI-tool reflection, PR routing, AI code-review checklist, and deliverables checklist.
+
+Accepted or rejected — Accepted.
+
+Why — The Week 6 Day 3 PR description now follows the repository's sample review format and is saved in the review directory.
