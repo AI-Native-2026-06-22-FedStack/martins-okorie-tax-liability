@@ -49,3 +49,33 @@ Produced — Reworked the ACL DTOs into TaxPulse vocabulary with `TaxpayerVerifi
 Accepted or rejected — Accepted.
 
 Why — SOAP field names are confined to the translation boundary and tests, the public client returns only DTOs or throws typed domain errors, and the ACL service passes typecheck, tests, and build.
+
+## Entry 6
+
+Asked — Assemble `services/tivs-acl` as a running Express microservice with clean REST DTO endpoints, Opossum circuit breaker, success/failure audit lines with redacted taxpayer identifiers, Core Case Intake consumption that records results on the case, and Pact provider verification against the capstone contract.
+
+Produced — Added injectable ACL Express endpoints for taxpayer verification and taxpayer status, wrapped TIVS calls with an Opossum breaker using `errorThresholdPercentage: 50`, `volumeThreshold: 5`, `timeout: TIVS_TIMEOUT_MS`, and `resetTimeout: 15000`, added complete audit lines with operation/correlation/outcome/duration and last-four taxpayer-id redaction, wired the Core Case Service Intake route to call the ACL and record success or typed domain error metadata on the Tax Plan Cycle, and added Pact provider verification using a local capstone consumer pact. Added tests for endpoint DTO/error behavior, audit redaction, breaker opening after threshold volume, Intake metadata recording, and provider verification.
+
+Accepted or rejected — Accepted.
+
+Why — The breaker does not open on the first transient failure and opens after the configured failure volume, every tested success and error path writes a redacted audit line, Pact provider verification passes green, a deliberate DTO drift (`matched` renamed) failed Pact before restoration, and the ACL service passes typecheck, tests, and build.
+
+## Entry 7
+
+Asked — Create a local `.env` for the day’s TIVS ACL implementation and rework Tasks 1-4 so the deliverable stays focused on the requested repo tree, removing extra helper test files and standalone pact fixture files.
+
+Produced — Created an ignored `services/tivs-acl/.env` for local runtime configuration, removed extra service/API test and pact fixture files, folded the local HTTP helper and capstone consumer pact into `tivsAcl.provider.pact.test.ts`, kept the ACL test surface to `typeLeak.test.ts` and `tivsAcl.provider.pact.test.ts`, removed root/API env-example additions outside the requested tree, cleaned generated `dist`, and added `evidence/week-6-day-3-tivs-acl.md`.
+
+Accepted or rejected — Accepted.
+
+Why — The trimmed ACL deliverable now matches the requested structure, the local `.env` is ignored by git, the ACL test suite has exactly the two requested test files, and root typecheck plus ACL typecheck, build, and tests pass.
+
+## Entry 8
+
+Asked — Re-check the grading rubric and add strict-grader proof for the missing direct node-soap interface callable test and executable breaker-open/audit-redaction tests.
+
+Produced — Added a mocked node-soap client test inside `typeLeak.test.ts` that builds from `TIVS_WSDL_URL` and calls `verifyTaxpayer` through the exported interface, and added breaker threshold plus audit-redaction tests inside `tivsAcl.provider.pact.test.ts` without creating extra test files.
+
+Accepted or rejected — Accepted.
+
+Why — The ACL test suite remains limited to the two requested test files and now passes 6 tests covering interface callability, type-leak protection, breaker opening behavior, audit redaction, and Pact provider verification.

@@ -18,8 +18,11 @@ interface AuditObject {
 export interface TivsAuditLine {
   event: "tivs_acl_call";
   operation: "VerifyTaxpayer" | "GetTaxpayerStatus";
+  correlationId: string;
   outcome: "success" | "error";
+  durationMs: number;
   request: AuditObject;
+  errorCode?: string;
   timestamp: string;
 }
 

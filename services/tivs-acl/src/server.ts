@@ -5,12 +5,25 @@ import {
   TaxpayerStatusRequest,
   TaxpayerVerificationRequest,
   TivsAuthenticationError,
+  TivsDomainError,
 } from "./acl/dto.js";
-import { renderAuditLine } from "./audit.js";
-import { createTivsClient } from "./soap/tivsClient.js";
+import { renderAuditLine, type TivsAuditLine } from "./audit.js";
+import { createTivsClient, type TivsClient } from "./soap/tivsClient.js";
 
-export async function createApp() {
-  const client = await createTivsClient();
+export type AuditSink = (line: TivsAuditLine) => void;
+
+export interface TivsAclAppOptions {
+  client?: TivsClient;
+  auditSink?: AuditSink;
+}
+
+const defaultAuditSink: AuditSink = (line) => {
+  console.info(JSON.stringify(line));
+};
+
+export async function createApp(options: TivsAclAppOptions = {}) {
+  const client = options.client ?? (await createTivsClient());
+  const auditSink = options.auditSink ?? defaultAuditSink;
 
   const verifyBreaker = createTivsBreaker(async (request: TaxpayerVerificationRequest) => {
     return client.verifyTaxpayer(request.taxpayerId, request.taxpayerIdType, request.legalName);
@@ -24,49 +37,82 @@ export async function createApp() {
 
   app.post("/v1/taxpayer-verifications", async (req: Request, res: Response) => {
     const request = req.body as TaxpayerVerificationRequest;
-
-    try {
-      const result = await verifyBreaker.fire(request);
-      console.info(
-        JSON.stringify(
-          renderAuditLine({
-            event: "tivs_acl_call",
-            operation: "VerifyTaxpayer",
-            outcome: "success",
-            request: request as unknown as Record<string, string>,
-            timestamp: new Date().toISOString(),
-          }),
-        ),
-      );
-      res.status(200).json(result);
-    } catch (error) {
-      handleError(error, res);
-    }
+    await auditedCall({
+      auditSink,
+      correlationId: correlationId(req),
+      operation: "VerifyTaxpayer",
+      request: request as unknown as Record<string, string>,
+      res,
+      run: () => verifyBreaker.fire(request),
+    });
   });
 
   app.post("/v1/taxpayer-status", async (req: Request, res: Response) => {
     const request = req.body as TaxpayerStatusRequest;
-
-    try {
-      const result = await statusBreaker.fire(request);
-      console.info(
-        JSON.stringify(
-          renderAuditLine({
-            event: "tivs_acl_call",
-            operation: "GetTaxpayerStatus",
-            outcome: "success",
-            request: request as unknown as Record<string, string>,
-            timestamp: new Date().toISOString(),
-          }),
-        ),
-      );
-      res.status(200).json(result);
-    } catch (error) {
-      handleError(error, res);
-    }
+    await auditedCall({
+      auditSink,
+      correlationId: correlationId(req),
+      operation: "GetTaxpayerStatus",
+      request: request as unknown as Record<string, string>,
+      res,
+      run: () => statusBreaker.fire(request),
+    });
   });
 
   return app;
+}
+
+async function auditedCall<TResult>({
+  auditSink,
+  correlationId,
+  operation,
+  request,
+  res,
+  run,
+}: {
+  auditSink: AuditSink;
+  correlationId: string;
+  operation: TivsAuditLine["operation"];
+  request: Record<string, string>;
+  res: Response;
+  run: () => Promise<TResult>;
+}) {
+  const startedAt = Date.now();
+
+  try {
+    const result = await run();
+    auditSink(
+      renderAuditLine({
+        correlationId,
+        durationMs: Date.now() - startedAt,
+        event: "tivs_acl_call",
+        operation,
+        outcome: "success",
+        request,
+        timestamp: new Date().toISOString(),
+      }),
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    auditSink(
+      renderAuditLine({
+        correlationId,
+        durationMs: Date.now() - startedAt,
+        errorCode: error instanceof TivsDomainError ? error.code : "tivs_unavailable",
+        event: "tivs_acl_call",
+        operation,
+        outcome: "error",
+        request,
+        timestamp: new Date().toISOString(),
+      }),
+    );
+    handleError(error, res);
+  }
+}
+
+function correlationId(req: Request): string {
+  const header = req.get("x-correlation-id");
+  return header && header.length > 0 ? header : "missing-correlation-id";
 }
 
 function handleError(error: unknown, res: Response) {
