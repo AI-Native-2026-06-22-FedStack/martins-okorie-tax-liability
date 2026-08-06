@@ -1,72 +1,57 @@
 import {
-  TaxpayerIdType,
-  TaxpayerNotFoundError,
-  TaxpayerStatus,
-  TaxpayerVerification,
+  TaxpayerIdentifierNotFoundError,
+  TaxpayerComplianceStatus,
+  TaxpayerComplianceStatusResult,
+  TaxpayerVerificationResult,
   TivsAuthenticationError,
   TivsUnavailableError,
 } from "./dto.js";
 
-interface TivsVerifySoapResponse {
+interface VerifyTaxpayerSoapResponse {
   MatchCode?: string | number;
-  TINType?: string;
   VerifiedName?: string;
 }
 
-interface TivsStatusSoapResponse {
+interface GetTaxpayerStatusSoapResponse {
   Standing?: string;
   AsOfDate?: string;
 }
 
-export function translateVerification(response: unknown): TaxpayerVerification {
-  const soapResponse = response as TivsVerifySoapResponse;
-  const matchCode = String(soapResponse.MatchCode ?? "unknown");
-  const taxpayerIdType: TaxpayerIdType | "unknown" =
-    soapResponse.TINType === "EIN" || soapResponse.TINType === "SSN" ? soapResponse.TINType : "unknown";
-  const base = {
-    matchCode,
-    taxpayerIdType,
-    verified: false,
-    ...(soapResponse.VerifiedName ? { verifiedName: soapResponse.VerifiedName } : {}),
-  } satisfies Omit<TaxpayerVerification, "status">;
+export function toVerificationResult(response: unknown): TaxpayerVerificationResult {
+  const soapResponse = response as VerifyTaxpayerSoapResponse;
 
-  switch (matchCode) {
+  switch (String(soapResponse.MatchCode ?? "")) {
     case "0":
-      return { ...base, status: "match", verified: true };
+      return {
+        matched: true,
+        decision: "matched",
+        ...(soapResponse.VerifiedName ? { verifiedLegalName: soapResponse.VerifiedName } : {}),
+      };
+    case "1":
+      return { matched: false, decision: "not_issued" };
     case "2":
-      return { ...base, status: "not_found" };
+      return { matched: false, decision: "not_found" };
     case "3":
-      return { ...base, status: "name_mismatch" };
+      return { matched: false, decision: "name_mismatch" };
     default:
-      return { ...base, status: "unknown" };
+      return { matched: false, decision: "unrecognized" };
   }
 }
 
-export function translateTaxpayerStatus(response: unknown): TaxpayerStatus {
-  const soapResponse = response as TivsStatusSoapResponse;
-  const standing = soapResponse.Standing?.toUpperCase();
-  const base = { asOfDate: soapResponse.AsOfDate ?? "" };
+export function toTaxpayerComplianceStatus(response: unknown): TaxpayerComplianceStatusResult {
+  const soapResponse = response as GetTaxpayerStatusSoapResponse;
 
-  if (standing === "ACTIVE") {
-    return { ...base, standing: "active" };
-  }
-
-  if (standing === "INACTIVE") {
-    return { ...base, standing: "inactive" };
-  }
-
-  if (standing === "SUSPENDED") {
-    return { ...base, standing: "suspended" };
-  }
-
-  return { ...base, standing: "unknown" };
+  return {
+    complianceStatus: toComplianceStatus(soapResponse.Standing),
+    effectiveOn: parseLegacyDate(soapResponse.AsOfDate),
+  };
 }
 
-export function translateSoapFault(error: unknown): Error {
+export function toTivsDomainError(error: unknown): Error {
   const message = error instanceof Error ? error.message : String(error);
 
   if (/TaxpayerNotFoundFault|not found/i.test(message)) {
-    return new TaxpayerNotFoundError();
+    return new TaxpayerIdentifierNotFoundError();
   }
 
   if (/Authentication failed|UsernameToken|security/i.test(message)) {
@@ -74,4 +59,28 @@ export function translateSoapFault(error: unknown): Error {
   }
 
   return new TivsUnavailableError();
+}
+
+function toComplianceStatus(value: string | undefined): TaxpayerComplianceStatus {
+  switch (value?.toUpperCase()) {
+    case "ACTIVE":
+      return "active";
+    case "INACTIVE":
+      return "inactive";
+    case "SUSPENDED":
+      return "suspended";
+    default:
+      return "unknown";
+  }
+}
+
+function parseLegacyDate(value: string | undefined): Date {
+  if (!value || !/^\d{8}$/.test(value)) {
+    return new Date(Number.NaN);
+  }
+
+  const month = Number(value.slice(0, 2));
+  const day = Number(value.slice(2, 4));
+  const year = Number(value.slice(4, 8));
+  return new Date(Date.UTC(year, month - 1, day));
 }

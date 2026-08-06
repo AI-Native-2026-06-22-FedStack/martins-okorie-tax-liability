@@ -1,6 +1,6 @@
 export type TaxpayerIdType = "EIN" | "SSN";
 
-export type TaxpayerVerificationStatus = "match" | "name_mismatch" | "not_found" | "unknown";
+export type VerificationDecision = "matched" | "not_issued" | "not_found" | "name_mismatch" | "unrecognized";
 
 export interface TaxpayerVerificationRequest {
   taxpayerId: string;
@@ -8,12 +8,10 @@ export interface TaxpayerVerificationRequest {
   legalName: string;
 }
 
-export interface TaxpayerVerification {
-  status: TaxpayerVerificationStatus;
-  matchCode: string;
-  verified: boolean;
-  taxpayerIdType: TaxpayerIdType | "unknown";
-  verifiedName?: string;
+export interface TaxpayerVerificationResult {
+  matched: boolean;
+  decision: VerificationDecision;
+  verifiedLegalName?: string;
 }
 
 export interface TaxpayerStatusRequest {
@@ -21,28 +19,40 @@ export interface TaxpayerStatusRequest {
   taxpayerIdType: TaxpayerIdType;
 }
 
-export interface TaxpayerStatus {
-  standing: "active" | "inactive" | "suspended" | "unknown";
-  asOfDate: string;
+export type TaxpayerComplianceStatus = "active" | "inactive" | "suspended" | "unknown";
+
+export interface TaxpayerComplianceStatusResult {
+  complianceStatus: TaxpayerComplianceStatus;
+  effectiveOn: Date;
 }
 
-export class TaxpayerNotFoundError extends Error {
-  constructor() {
-    super("Taxpayer was not found by the verification service.");
-    this.name = "TaxpayerNotFoundError";
+export class TivsDomainError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
+    super(message);
+    this.name = "TivsDomainError";
   }
 }
 
-export class TivsAuthenticationError extends Error {
+export class TaxpayerIdentifierNotFoundError extends TivsDomainError {
   constructor() {
-    super("Taxpayer verification service authentication failed.");
+    super("Taxpayer identifier was not found by the verification service.", "taxpayer_identifier_not_found");
+    this.name = "TaxpayerIdentifierNotFoundError";
+  }
+}
+
+export class TivsAuthenticationError extends TivsDomainError {
+  constructor() {
+    super("Taxpayer verification service authentication failed.", "tivs_authentication_failed");
     this.name = "TivsAuthenticationError";
   }
 }
 
-export class TivsUnavailableError extends Error {
+export class TivsUnavailableError extends TivsDomainError {
   constructor(message = "Taxpayer verification service is unavailable.") {
-    super(message);
+    super(message, "tivs_unavailable");
     this.name = "TivsUnavailableError";
   }
 }

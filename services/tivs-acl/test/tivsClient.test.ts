@@ -59,7 +59,11 @@ describe("TIVS SOAP client", () => {
       TINType: "EIN",
       LegalName: "SYNTHETIC TAXPAYER LLC",
     });
-    expect(response).toEqual({ MatchCode: "0", TINType: "EIN", VerifiedName: "SYNTHETIC TAXPAYER LLC" });
+    expect(response).toEqual({
+      matched: true,
+      decision: "matched",
+      verifiedLegalName: "SYNTHETIC TAXPAYER LLC",
+    });
   });
 
   it("exports only the narrow interface factory at runtime", async () => {

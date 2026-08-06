@@ -1,37 +1,22 @@
 import express, { Request, Response } from "express";
 import { createTivsBreaker } from "./breaker.js";
 import {
-  TaxpayerNotFoundError,
+  TaxpayerIdentifierNotFoundError,
   TaxpayerStatusRequest,
   TaxpayerVerificationRequest,
   TivsAuthenticationError,
 } from "./acl/dto.js";
 import { renderAuditLine } from "./audit.js";
 import { createTivsClient } from "./soap/tivsClient.js";
-import { translateSoapFault, translateTaxpayerStatus, translateVerification } from "./acl/translate.js";
 
 export async function createApp() {
   const client = await createTivsClient();
 
   const verifyBreaker = createTivsBreaker(async (request: TaxpayerVerificationRequest) => {
-    try {
-      const response = await client.verifyTaxpayer(
-        request.taxpayerId,
-        request.taxpayerIdType,
-        request.legalName,
-      );
-      return translateVerification(response);
-    } catch (error) {
-      throw translateSoapFault(error);
-    }
+    return client.verifyTaxpayer(request.taxpayerId, request.taxpayerIdType, request.legalName);
   });
   const statusBreaker = createTivsBreaker(async (request: TaxpayerStatusRequest) => {
-    try {
-      const response = await client.getTaxpayerStatus(request.taxpayerId, request.taxpayerIdType);
-      return translateTaxpayerStatus(response);
-    } catch (error) {
-      throw translateSoapFault(error);
-    }
+    return client.getTaxpayerStatus(request.taxpayerId, request.taxpayerIdType);
   });
   const app = express();
 
@@ -85,13 +70,13 @@ export async function createApp() {
 }
 
 function handleError(error: unknown, res: Response) {
-  if (error instanceof TaxpayerNotFoundError) {
-    res.status(404).json({ code: "taxpayer_not_found", message: error.message });
+  if (error instanceof TaxpayerIdentifierNotFoundError) {
+    res.status(404).json({ code: error.code, message: error.message });
     return;
   }
 
   if (error instanceof TivsAuthenticationError) {
-    res.status(502).json({ code: "tivs_authentication_failed", message: error.message });
+    res.status(502).json({ code: error.code, message: error.message });
     return;
   }
 

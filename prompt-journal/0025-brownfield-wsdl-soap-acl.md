@@ -39,3 +39,13 @@ Produced — Refactored `src/soap/tivsClient.ts` so `createTivsClient()` reads `
 Accepted or rejected — Accepted.
 
 Why — The TIVS client has no hardcoded URL or exported node-soap client/type, the callable interface test passes, and the ACL service passes typecheck, tests, and build.
+
+## Entry 5
+
+Asked — Implement tp-098 and tp-099 by inserting the anti-corruption layer so SOAP responses map to TaxPulse DTOs, `TaxpayerNotFoundFault` maps to a typed domain error, VerifyTaxpayer code `2` uses the same not-found concept, and type-leak regression tests fail if SOAP types reach capstone-facing signatures.
+
+Produced — Reworked the ACL DTOs into TaxPulse vocabulary with `TaxpayerVerificationResult`, `TaxpayerComplianceStatusResult`, and typed `TivsDomainError` subclasses; moved response/fault mapping into `translate.ts`; made the exported TIVS client return DTOs rather than raw SOAP responses; mapped numeric-string match codes into domain decisions, parsed MMDDYYYY dates into `Date`, translated `TaxpayerNotFoundFault` into `TaxpayerIdentifierNotFoundError`, and added translator plus compile-time type-leak tests. Temporarily changed the public verify return type to `unknown` and confirmed `npm run typecheck` fails before restoring the DTO return type.
+
+Accepted or rejected — Accepted.
+
+Why — SOAP field names are confined to the translation boundary and tests, the public client returns only DTOs or throws typed domain errors, and the ACL service passes typecheck, tests, and build.

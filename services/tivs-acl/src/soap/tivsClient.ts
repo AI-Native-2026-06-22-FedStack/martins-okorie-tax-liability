@@ -1,4 +1,9 @@
 import soap from "soap";
+import {
+  TaxpayerComplianceStatusResult,
+  TaxpayerVerificationResult,
+} from "../acl/dto.js";
+import { toTaxpayerComplianceStatus, toTivsDomainError, toVerificationResult } from "../acl/translate.js";
 
 type TINType = "EIN" | "SSN";
 
@@ -14,8 +19,8 @@ interface GeneratedTivsClient {
 }
 
 export interface TivsClient {
-  verifyTaxpayer(TIN: string, TINType: TINType, LegalName: string): Promise<unknown>;
-  getTaxpayerStatus(TIN: string, TINType: TINType): Promise<unknown>;
+  verifyTaxpayer(TIN: string, TINType: TINType, LegalName: string): Promise<TaxpayerVerificationResult>;
+  getTaxpayerStatus(TIN: string, TINType: TINType): Promise<TaxpayerComplianceStatusResult>;
 }
 
 function requiredEnv(name: string): string {
@@ -34,13 +39,21 @@ export async function createTivsClient(): Promise<TivsClient> {
 
   return {
     async verifyTaxpayer(TIN, TINType, LegalName) {
-      const [response] = await client.VerifyTaxpayerAsync({ TIN, TINType, LegalName });
-      return response;
+      try {
+        const [response] = await client.VerifyTaxpayerAsync({ TIN, TINType, LegalName });
+        return toVerificationResult(response);
+      } catch (error) {
+        throw toTivsDomainError(error);
+      }
     },
 
     async getTaxpayerStatus(TIN, TINType) {
-      const [response] = await client.GetTaxpayerStatusAsync({ TIN, TINType });
-      return response;
+      try {
+        const [response] = await client.GetTaxpayerStatusAsync({ TIN, TINType });
+        return toTaxpayerComplianceStatus(response);
+      } catch (error) {
+        throw toTivsDomainError(error);
+      }
     },
   };
 }
