@@ -15,6 +15,10 @@ import {
 } from "../db/dto.js";
 import { ListPlanCycleQueueQuerySchema } from "../db/dto.js";
 import { listCachedPlanCycleQueue } from "../store/queueCache.js";
+import {
+  IntakeTaxpayerVerificationRequestSchema,
+  verifyTaxpayerForIntake
+} from "../tivs/intake-taxpayer-verification.js";
 
 type EmptyParams = Record<string, never>;
 
@@ -66,4 +70,24 @@ export async function listPlanCycleQueueController(
   });
 
   res.json({ data: rows });
+}
+
+export async function verifyIntakeTaxpayerController(
+  req: Request<Record<string, string>, unknown, unknown>,
+  res: Response
+): Promise<void> {
+  const tenantContext = TenantContextSchema.parse({
+    tenant_id: req.user?.tenant_id
+  });
+  const params = CycleIdParamsSchema.parse(req.params);
+  const input = IntakeTaxpayerVerificationRequestSchema.parse(req.body);
+  const result = await verifyTaxpayerForIntake({
+    actor: req.user?.id ?? "TaxPulse System",
+    correlationId: req.correlationId,
+    cycleId: params.id,
+    request: input,
+    tenantId: tenantContext.tenant_id
+  });
+
+  res.status(200).json(result);
 }

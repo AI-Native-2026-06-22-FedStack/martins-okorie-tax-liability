@@ -5,7 +5,8 @@ import {
   getCycleByIdController,
   getCyclePingController,
   listPlanCycleQueueController,
-  throwCycleErrorController
+  throwCycleErrorController,
+  verifyIntakeTaxpayerController
 } from "../controllers/cycle.controller.js";
 import { requireAuth } from "../auth/verifier.js";
 import { idempotencyKeyMiddleware } from "../store/idempotency.js";
@@ -24,6 +25,13 @@ cycleRouter.post(
   createCycleController
 );
 cycleRouter.get("/queue", requireAuth, listPlanCycleQueueController);
+cycleRouter.post(
+  "/:id/intake/taxpayer-verification",
+  requireAuth,
+  tenantSlowDown,
+  tenantRateLimiter,
+  verifyIntakeTaxpayerController
+);
 cycleRouter.get("/:id", getCycleByIdController);
 
 interface ComputeRequestBody {
