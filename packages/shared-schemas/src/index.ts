@@ -13,19 +13,14 @@ export const createPlanCycleSchema = z
       .trim()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Due date must use YYYY-MM-DD format."),
     on_hold: z.boolean().default(false),
-    hold_reason: z
-      .string()
-      .trim()
-      .min(1, "Hold reason cannot be blank.")
-      .nullable()
-      .optional(),
+    hold_reason: z.string().trim().min(1, "Hold reason cannot be blank.").nullable().optional()
   })
   .superRefine((value, ctx) => {
     if (value.on_hold && !value.hold_reason) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Hold reason is required when the cycle is on hold.",
-        path: ["hold_reason"],
+        path: ["hold_reason"]
       });
     }
   });
@@ -44,5 +39,19 @@ export {
   validateStageChangedCloudEvent,
   type StageChangedCloudEvent,
   type StageChangedEventData,
-  type TaxPlanCycleStage,
+  type TaxPlanCycleStage
 } from "./events/stageChanged.js";
+
+export {
+  parsePresentToClientCloudEvent,
+  presentToClientActionItemSchema,
+  presentToClientCloudEventSchema,
+  presentToClientEventDataSchema,
+  presentToClientEventSource,
+  presentToClientEventType,
+  presentToClientSchemaVersion,
+  validatePresentToClientCloudEvent,
+  type PresentToClientActionItem,
+  type PresentToClientCloudEvent,
+  type PresentToClientEventData
+} from "./events/presentToClient.js";

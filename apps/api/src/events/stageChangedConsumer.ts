@@ -1,17 +1,20 @@
 import {
   DeleteMessageCommand,
   ReceiveMessageCommand,
+  SendMessageCommand,
   type Message,
   type SQSClient
 } from "@aws-sdk/client-sqs";
-import {
-  parseStageChangedCloudEvent,
-  type StageChangedCloudEvent
-} from "@capstone/shared-schemas";
+import { parseStageChangedCloudEvent, type StageChangedCloudEvent } from "@capstone/shared-schemas";
 
 import { getApiEnv, type ApiEnv } from "../config/env.js";
 import { ensureRedisReady, redisClient, setRedisJson } from "../store/queueCache.js";
-import { createSqsClient, getAwsEventEndpoint } from "./snsSqsSetup.js";
+import {
+  createSqsClient,
+  STAGE_CHANGED_MAX_RECEIVE_COUNT,
+  stageChangedDlqUrlForName,
+  stageChangedQueueUrlForName
+} from "./snsSqsSetup.js";
 
 const DEDUPE_PREFIX = "event-dedupe:stage-changed";
 const DEDUPE_TTL_SECONDS = 86_400;
@@ -41,11 +44,6 @@ interface SnsEnvelope {
   Message?: unknown;
 }
 
-function queueUrlForName(env: ApiEnv = getApiEnv()): string {
-  const endpoint = getAwsEventEndpoint(env).replace(/\/$/, "");
-  return `${endpoint}/000000000000/${env.STAGE_CHANGED_QUEUE}`;
-}
-
 export function parseStageChangedMessageBody(body: string): StageChangedCloudEvent {
   const parsed = JSON.parse(body) as unknown;
   const candidate =
@@ -69,18 +67,8 @@ export function stageChangedProjectionKey(tenantId: string, cycleId: string): st
 
 async function claimEvent(event: StageChangedCloudEvent): Promise<boolean> {
   await ensureRedisReady();
-  const claimed = await redisClient.set(
-    dedupeKey(event),
-    "processing",
-    "EX",
-    DEDUPE_TTL_SECONDS,
-    "NX"
-  );
+  const claimed = await redisClient.set(dedupeKey(event), "1", "EX", DEDUPE_TTL_SECONDS, "NX");
   return claimed === "OK";
-}
-
-async function markEventProcessed(event: StageChangedCloudEvent): Promise<void> {
-  await redisClient.set(dedupeKey(event), "processed", "EX", DEDUPE_TTL_SECONDS);
 }
 
 async function releaseEventClaim(event: StageChangedCloudEvent): Promise<void> {
@@ -124,14 +112,49 @@ async function deleteMessage(sqs: Pick<SQSClient, "send">, queueUrl: string, mes
   );
 }
 
+async function preserveFailureReasonInDlq(
+  sqs: Pick<SQSClient, "send">,
+  queueUrl: string,
+  deadLetterQueueUrl: string,
+  message: Message,
+  error: unknown,
+  maxReceiveCount: number
+): Promise<boolean> {
+  const receiveCount = Number(message.Attributes?.ApproximateReceiveCount ?? 1);
+
+  if (receiveCount < maxReceiveCount || !message.Body || !message.ReceiptHandle) {
+    return false;
+  }
+
+  await sqs.send(
+    new SendMessageCommand({
+      MessageAttributes: {
+        ...message.MessageAttributes,
+        FailureReason: {
+          DataType: "String",
+          StringValue: errorMessage(error).slice(0, 256)
+        }
+      },
+      MessageBody: message.Body,
+      QueueUrl: deadLetterQueueUrl
+    })
+  );
+  await deleteMessage(sqs, queueUrl, message);
+  return true;
+}
+
 export async function consumeStageChangedOnce({
   env = getApiEnv(),
+  deadLetterQueueUrl = stageChangedDlqUrlForName(env),
   handler,
-  queueUrl = queueUrlForName(env),
+  maxReceiveCount = STAGE_CHANGED_MAX_RECEIVE_COUNT,
+  queueUrl = stageChangedQueueUrlForName(env),
   sqs = createSqsClient(env)
 }: {
+  deadLetterQueueUrl?: string;
   env?: ApiEnv;
   handler?: (event: StageChangedCloudEvent) => Promise<void>;
+  maxReceiveCount?: number;
   queueUrl?: string;
   sqs?: Pick<SQSClient, "send">;
 } = {}): Promise<StageChangedConsumerResult> {
@@ -145,7 +168,9 @@ export async function consumeStageChangedOnce({
 
   const messages = await sqs.send(
     new ReceiveMessageCommand({
+      AttributeNames: ["ApproximateReceiveCount"],
       MaxNumberOfMessages: 10,
+      MessageAttributeNames: ["All"],
       QueueUrl: queueUrl,
       WaitTimeSeconds: 5
     })
@@ -175,17 +200,31 @@ export async function consumeStageChangedOnce({
         await projectStageChangedEvent(event);
       }
 
-      await markEventProcessed(event);
       result.processed += 1;
       await deleteMessage(sqs, queueUrl, message);
       result.deleted += 1;
-    } catch {
+    } catch (error) {
       if (event) {
         await releaseEventClaim(event);
       }
       result.failed += 1;
+      const deadLettered = await preserveFailureReasonInDlq(
+        sqs,
+        queueUrl,
+        deadLetterQueueUrl,
+        message,
+        error,
+        maxReceiveCount
+      );
+      if (deadLettered) {
+        result.deleted += 1;
+      }
     }
   }
 
   return result;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "unknown error";
 }

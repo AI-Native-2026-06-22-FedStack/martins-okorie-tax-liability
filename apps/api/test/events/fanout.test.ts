@@ -1,13 +1,10 @@
-import {
-  CreateTopicCommand,
-  PublishCommand,
-  SubscribeCommand
-} from "@aws-sdk/client-sns";
+import { CreateTopicCommand, PublishCommand, SubscribeCommand } from "@aws-sdk/client-sns";
 import {
   CreateQueueCommand,
   DeleteMessageCommand,
   GetQueueAttributesCommand,
   ReceiveMessageCommand,
+  SendMessageCommand,
   SetQueueAttributesCommand
 } from "@aws-sdk/client-sqs";
 import { describe, expect, it, vi } from "vitest";
@@ -104,6 +101,7 @@ describe("SNS/SQS stage-changed fan-out", () => {
           command.input.QueueName === "taxpulse-stage-changed-projection"
       ) as CreateQueueCommand;
     expect(queueCreate.input.Attributes?.RedrivePolicy).toContain("maxReceiveCount");
+    expect(queueCreate.input.Attributes?.RedrivePolicy).toContain('"maxReceiveCount":"3"');
     expect(queueCreate.input.QueueName).not.toMatch(/\.fifo$/);
 
     const setAttributes = sqsSend.mock.calls
@@ -113,6 +111,19 @@ describe("SNS/SQS stage-changed fan-out", () => {
       "arn:aws:sqs:us-east-1:000000000000:taxpulse-stage-changed-dlq"
     );
     expect(setAttributes.input.Attributes?.Policy).toContain("sns.amazonaws.com");
+  });
+
+  it("rejects a source-queue redrive policy that dead-letters on the first receive", async () => {
+    const { setupStageChangedFanout } = await import("../../src/events/snsSqsSetup.js");
+
+    await expect(
+      setupStageChangedFanout({
+        env,
+        maxReceiveCount: 1,
+        sns: { send: vi.fn() } as never,
+        sqs: { send: vi.fn() } as never
+      })
+    ).rejects.toThrow("maxReceiveCount must be greater than 1");
   });
 
   it("publishes a validated CloudEvent to SNS", async () => {
@@ -139,10 +150,8 @@ describe("SNS/SQS stage-changed fan-out", () => {
     );
   });
 
-  it("projects a received event exactly once and deletes replayed duplicates", async () => {
-    const { buildStageChangedCloudEvent } = await import(
-      "../../src/events/publishStageChanged.js"
-    );
+  it("projects a received event exactly once and deletes three replayed deliveries", async () => {
+    const { buildStageChangedCloudEvent } = await import("../../src/events/publishStageChanged.js");
     const { consumeStageChangedOnce } = await import("../../src/events/stageChangedConsumer.js");
     const event = buildStageChangedCloudEvent({
       actor: "advisor@taxpulse.test",
@@ -163,6 +172,10 @@ describe("SNS/SQS stage-changed fan-out", () => {
           {
             Body: JSON.stringify(event),
             ReceiptHandle: "receipt-2"
+          },
+          {
+            Body: JSON.stringify(event),
+            ReceiptHandle: "receipt-3"
           }
         ]
       })
@@ -170,7 +183,7 @@ describe("SNS/SQS stage-changed fan-out", () => {
     redisSet.mockReset();
     redisDel.mockReset();
     setRedisJson.mockReset();
-    redisSet.mockResolvedValueOnce("OK").mockResolvedValueOnce("OK").mockResolvedValueOnce(null);
+    redisSet.mockResolvedValueOnce("OK").mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     setRedisJson.mockResolvedValue(undefined);
 
     const result = await consumeStageChangedOnce({
@@ -179,7 +192,16 @@ describe("SNS/SQS stage-changed fan-out", () => {
       queueUrl: "http://localhost:4566/000000000000/taxpulse-stage-changed-projection"
     });
 
-    expect(result).toMatchObject({ deleted: 2, duplicates: 1, processed: 1, received: 2 });
+    expect(result).toMatchObject({ deleted: 3, duplicates: 2, processed: 1, received: 3 });
+    expect(redisSet).toHaveBeenCalledTimes(3);
+    expect(redisSet).toHaveBeenNthCalledWith(
+      1,
+      `event-dedupe:stage-changed:${event.data.tenant_id}:${event.id}`,
+      "1",
+      "EX",
+      86400,
+      "NX"
+    );
     expect(setRedisJson).toHaveBeenCalledTimes(1);
     expect(setRedisJson.mock.calls[0][0]).toContain(
       "projection:stage-changed-current-stage:33333333-3333-4333-8333-333333333333:22222222-2222-4222-8222-222222222222"
@@ -189,6 +211,61 @@ describe("SNS/SQS stage-changed fan-out", () => {
       event_id: event.id,
       from_stage: "Intake"
     });
+    expect(sqsSend).toHaveBeenCalledWith(expect.any(DeleteMessageCommand));
+  });
+
+  it("alerts when the DLQ has depth and redrives payloads back to the source queue", async () => {
+    const { alertOnStageChangedDlqDepth, redriveStageChangedDlq } = await import(
+      "../../src/events/snsSqsSetup.js"
+    );
+    const logger = { log: vi.fn() };
+    const sqsSend = vi.fn(async (command) => {
+      if (command instanceof GetQueueAttributesCommand) {
+        return { Attributes: { ApproximateNumberOfMessages: "2" } };
+      }
+      if (command instanceof ReceiveMessageCommand) {
+        return {
+          Messages: [
+            {
+              Body: JSON.stringify({ type: "not-a-cloudevent" }),
+              MessageAttributes: {
+                FailureReason: {
+                  DataType: "String",
+                  StringValue: "schema validation failed"
+                }
+              },
+              ReceiptHandle: "dlq-receipt"
+            }
+          ]
+        };
+      }
+      return {};
+    });
+
+    const depth = await alertOnStageChangedDlqDepth({
+      deadLetterQueueUrl: "http://localhost:4566/000000000000/taxpulse-stage-changed-dlq",
+      logger,
+      sqs: { send: sqsSend } as never
+    });
+
+    expect(depth).toBe(2);
+    expect(logger.log).toHaveBeenCalledWith(expect.stringContaining("DLQ_DEPTH_ALERT"));
+
+    const redrive = await redriveStageChangedDlq({
+      deadLetterQueueUrl: "http://localhost:4566/000000000000/taxpulse-stage-changed-dlq",
+      queueUrl: "http://localhost:4566/000000000000/taxpulse-stage-changed-projection",
+      sqs: { send: sqsSend } as never
+    });
+
+    expect(redrive).toEqual({ moved: 1 });
+    expect(sqsSend).toHaveBeenCalledWith(expect.any(SendMessageCommand));
+    const sendCommand = sqsSend.mock.calls
+      .map(([command]) => command)
+      .find((command) => command instanceof SendMessageCommand) as SendMessageCommand;
+    expect(sendCommand.input.MessageBody).toContain("not-a-cloudevent");
+    expect(sendCommand.input.MessageAttributes?.FailureReason?.StringValue).toBe(
+      "schema validation failed"
+    );
     expect(sqsSend).toHaveBeenCalledWith(expect.any(DeleteMessageCommand));
   });
 
@@ -225,10 +302,48 @@ describe("SNS/SQS stage-changed fan-out", () => {
     expect(sqsSend).not.toHaveBeenCalledWith(expect.any(DeleteMessageCommand));
   });
 
+  it("preserves the failure reason when a poison message reaches the final receive", async () => {
+    const { consumeStageChangedOnce } = await import("../../src/events/stageChangedConsumer.js");
+    const sqsSend = vi.fn(async (command) => {
+      if (command instanceof ReceiveMessageCommand) {
+        return {
+          Messages: [
+            {
+              Attributes: { ApproximateReceiveCount: "3" },
+              Body: JSON.stringify({ type: "not-a-cloudevent" }),
+              ReceiptHandle: "poison-receipt"
+            }
+          ]
+        };
+      }
+      return {};
+    });
+
+    redisSet.mockReset();
+    redisDel.mockReset();
+    setRedisJson.mockReset();
+
+    const result = await consumeStageChangedOnce({
+      deadLetterQueueUrl: "http://localhost:4566/000000000000/taxpulse-stage-changed-dlq",
+      env,
+      maxReceiveCount: 3,
+      sqs: { send: sqsSend },
+      queueUrl: "http://localhost:4566/000000000000/taxpulse-stage-changed-projection"
+    });
+
+    expect(result).toMatchObject({ deleted: 1, failed: 1, received: 1 });
+    expect(sqsSend).toHaveBeenCalledWith(expect.any(SendMessageCommand));
+    const sendCommand = sqsSend.mock.calls
+      .map(([command]) => command)
+      .find((command) => command instanceof SendMessageCommand) as SendMessageCommand;
+    expect(sendCommand.input.QueueUrl).toContain("taxpulse-stage-changed-dlq");
+    expect(sendCommand.input.MessageBody).toContain("not-a-cloudevent");
+    expect(sendCommand.input.MessageAttributes?.FailureReason?.StringValue).toContain("Invalid");
+    expect(sqsSend).toHaveBeenCalledWith(expect.any(DeleteMessageCommand));
+  });
+
   it("uses a stable tenant-and-cycle scoped projection key", async () => {
-    const { stageChangedProjectionKey } = await import(
-      "../../src/events/stageChangedConsumer.js"
-    );
+    const { stageChangedProjectionKey } = await import("../../src/events/stageChangedConsumer.js");
 
     expect(
       stageChangedProjectionKey(

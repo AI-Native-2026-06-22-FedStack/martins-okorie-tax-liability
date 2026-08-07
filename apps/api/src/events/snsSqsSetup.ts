@@ -1,7 +1,10 @@
 import { CreateTopicCommand, SNSClient, SubscribeCommand } from "@aws-sdk/client-sns";
 import {
   CreateQueueCommand,
+  DeleteMessageCommand,
   GetQueueAttributesCommand,
+  ReceiveMessageCommand,
+  SendMessageCommand,
   SQSClient,
   SetQueueAttributesCommand
 } from "@aws-sdk/client-sqs";
@@ -18,6 +21,8 @@ export interface StageChangedMessagingResources {
 }
 
 export const STAGE_CHANGED_QUEUE_TYPE = "standard";
+export const STAGE_CHANGED_MAX_RECEIVE_COUNT = 3;
+export const STAGE_CHANGED_DLQ_ALERT_THRESHOLD = 0;
 
 export function getAwsEventEndpoint(env: ApiEnv = getApiEnv()): string {
   return env.AWS_ENDPOINT_URL ?? env.AWS_ENDPOINT;
@@ -40,6 +45,16 @@ export function createSnsClient(env: ApiEnv = getApiEnv()): SNSClient {
 
 export function createSqsClient(env: ApiEnv = getApiEnv()): SQSClient {
   return new SQSClient(eventClientConfig(env));
+}
+
+export function stageChangedQueueUrlForName(env: ApiEnv = getApiEnv()): string {
+  const endpoint = getAwsEventEndpoint(env).replace(/\/$/, "");
+  return `${endpoint}/000000000000/${env.STAGE_CHANGED_QUEUE}`;
+}
+
+export function stageChangedDlqUrlForName(env: ApiEnv = getApiEnv()): string {
+  const endpoint = getAwsEventEndpoint(env).replace(/\/$/, "");
+  return `${endpoint}/000000000000/${env.STAGE_CHANGED_DLQ}`;
 }
 
 async function getQueueArn(sqs: Pick<SQSClient, "send">, queueUrl: string): Promise<string> {
@@ -81,7 +96,7 @@ export async function setupStageChangedFanout({
   env = getApiEnv(),
   sns = createSnsClient(env),
   sqs = createSqsClient(env),
-  maxReceiveCount = 3,
+  maxReceiveCount = STAGE_CHANGED_MAX_RECEIVE_COUNT,
   visibilityTimeoutSeconds = 30
 }: {
   env?: ApiEnv;
@@ -90,6 +105,10 @@ export async function setupStageChangedFanout({
   maxReceiveCount?: number;
   visibilityTimeoutSeconds?: number;
 } = {}): Promise<StageChangedMessagingResources> {
+  if (maxReceiveCount <= 1) {
+    throw new Error("Stage-changed maxReceiveCount must be greater than 1.");
+  }
+
   const topic = await sns.send(new CreateTopicCommand({ Name: env.STAGE_CHANGED_TOPIC }));
   if (!topic.TopicArn) {
     throw new Error(`SNS topic ${env.STAGE_CHANGED_TOPIC} was not created.`);
@@ -155,4 +174,85 @@ export async function setupStageChangedFanout({
     subscriptionArn: subscription.SubscriptionArn,
     topicArn: topic.TopicArn
   };
+}
+
+export async function readQueueDepth(
+  queueUrl: string,
+  sqs: Pick<SQSClient, "send"> = createSqsClient()
+): Promise<number> {
+  const attributes = await sqs.send(
+    new GetQueueAttributesCommand({
+      AttributeNames: ["ApproximateNumberOfMessages"],
+      QueueUrl: queueUrl
+    })
+  );
+
+  return Number(attributes.Attributes?.ApproximateNumberOfMessages ?? 0);
+}
+
+export async function alertOnStageChangedDlqDepth({
+  deadLetterQueueUrl = stageChangedDlqUrlForName(),
+  logger = console,
+  sqs = createSqsClient(),
+  threshold = STAGE_CHANGED_DLQ_ALERT_THRESHOLD
+}: {
+  deadLetterQueueUrl?: string;
+  logger?: Pick<Console, "log">;
+  sqs?: Pick<SQSClient, "send">;
+  threshold?: number;
+} = {}): Promise<number> {
+  const depth = await readQueueDepth(deadLetterQueueUrl, sqs);
+
+  if (depth > threshold) {
+    logger.log(
+      `DLQ_DEPTH_ALERT queue=stage-changed-dlq depth=${depth} threshold=${threshold} url=${deadLetterQueueUrl}`
+    );
+  }
+
+  return depth;
+}
+
+export async function redriveStageChangedDlq({
+  deadLetterQueueUrl = stageChangedDlqUrlForName(),
+  maxMessages = 10,
+  queueUrl = stageChangedQueueUrlForName(),
+  sqs = createSqsClient()
+}: {
+  deadLetterQueueUrl?: string;
+  maxMessages?: number;
+  queueUrl?: string;
+  sqs?: Pick<SQSClient, "send">;
+} = {}): Promise<{ moved: number }> {
+  const response = await sqs.send(
+    new ReceiveMessageCommand({
+      MaxNumberOfMessages: maxMessages,
+      MessageAttributeNames: ["All"],
+      QueueUrl: deadLetterQueueUrl,
+      WaitTimeSeconds: 1
+    })
+  );
+  let moved = 0;
+
+  for (const message of response.Messages ?? []) {
+    if (!message.Body || !message.ReceiptHandle) {
+      continue;
+    }
+
+    await sqs.send(
+      new SendMessageCommand({
+        MessageAttributes: message.MessageAttributes,
+        MessageBody: message.Body,
+        QueueUrl: queueUrl
+      })
+    );
+    await sqs.send(
+      new DeleteMessageCommand({
+        QueueUrl: deadLetterQueueUrl,
+        ReceiptHandle: message.ReceiptHandle
+      })
+    );
+    moved += 1;
+  }
+
+  return { moved };
 }
