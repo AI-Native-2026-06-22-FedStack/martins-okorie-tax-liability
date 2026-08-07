@@ -1,0 +1,33 @@
+# Keep local-only and secret files out of the build context so no COPY can pull them into a layer.
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Installed dependencies and virtual environments are rebuilt inside image layers.
+node_modules
+**/node_modules
+.venv
+**/.venv
+venv
+**/venv
+
+# VCS metadata, caches, local build output, and editor/test cruft stay local.
+.git
+.gitignore
+dist
+**/dist
+__pycache__
+**/__pycache__
+*.py[cod]
+.pytest_cache
+**/.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+coverage
+**/coverage
+.DS_Store
+.idea
+.vscode
+*.log

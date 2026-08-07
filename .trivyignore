@@ -1,0 +1,8 @@
+# ADR-0019 accepted base-image exceptions for gcr.io/distroless/python3-debian13:nonroot
+# Accepted risk owner: TaxPulse module engineer for the Week 7 local image deliverable.
+# Scope: distroless Python Debian 13.6 base packages only; remove when a fixed base digest is available.
+CVE-2025-69720
+CVE-2026-11940
+CVE-2026-15308
+CVE-2026-7210
+CVE-2026-53615
