@@ -111,7 +111,7 @@ exception.
 ## PR routing
 
 - Assignees: self-assign this PR.
-- Reviewers: request the ES reviewer.
+- Reviewers: request `Isaiah Muli` as the ES reviewer.
 
 ## AI code-review checklist
 
@@ -135,4 +135,4 @@ exception.
 - [X] AI-tool reflection includes one accepted suggestion and one rejected suggestion.
 - [X] Deliverables checklist included at bottom.
 - [X] PR self-assigned.
-- [X] ES requested under Reviewers.
+- [X] `Isaiah Muli` requested under Reviewers as the ES reviewer.
