@@ -11,7 +11,15 @@ Trivy HIGH/CRITICAL scan gate documented in ADR-0019.
 
 ADR: [ADR-0019: Image Strategy](../docs/adr/ADR-0019-image-strategy.md)
 
-## Verification
+## Testing
+
+- `DOCKER_BUILDKIT=1 docker build -f apps/api/Dockerfile -t taxpulse-api:w7d1 .`
+- `DOCKER_BUILDKIT=1 docker build -f services/compute/Dockerfile -t taxpulse-compute:w7d1 .`
+- `trivy image --db-repository ghcr.io/aquasecurity/trivy-db:2 --severity HIGH,CRITICAL --exit-code 1 taxpulse-api:w7d1`
+- `trivy image --db-repository ghcr.io/aquasecurity/trivy-db:2 --severity HIGH,CRITICAL --exit-code 1 taxpulse-compute:w7d1`
+- `git diff --check`
+
+Docker image verification output:
 
 ```text
 $ docker image inspect taxpulse-api:w7d1 taxpulse-compute:w7d1 --format '{{.RepoTags}} {{.Size}} {{.Config.User}} {{json .Config.Healthcheck}} {{json .Config.Cmd}}'
@@ -67,6 +75,29 @@ INFO:     Application shutdown complete.
 INFO:     Finished server process [1]
 ```
 
+## AI review evidence
+
+AI review output:
+
+```text
+Codex review of the local Docker image diff:
+- apps/api uses a multi-stage Dockerfile from a digest-pinned Node 24 slim build base to a digest-pinned distroless Node 24 non-root runtime.
+- services/compute uses a multi-stage Dockerfile from a digest-pinned Python 3.13 slim build base to a digest-pinned distroless Python non-root runtime.
+- Runtime layers copy only production artifacts: pruned Node dependencies plus built API/shared-schema output, and hash-locked Python packages plus compute app/schema files.
+- Both runtime images run as nonroot, define HEALTHCHECK instructions with startup grace, and use exec-form commands so Docker SIGTERM reaches the application process.
+- .dockerignore excludes .env, .env.*, dependency folders, virtual environments, VCS metadata, caches, and build output before the build context reaches Docker.
+- Trivy HIGH/CRITICAL scanning is a hard gate with --exit-code 1; the API image is clean, and the compute image passes with only ADR-0019 documented base-image exceptions.
+```
+
+What it missed:
+
+```text
+The first verification pass missed fixable production Node findings in the API image:
+fast-uri@3.1.4, ip-address@10.2.0, and path-to-regexp@0.1.7. Those were not accepted as
+exceptions. The lockfile and workspace pins were updated, the API image was rebuilt, and
+the final Trivy gate passed with 0 HIGH/CRITICAL findings.
+```
+
 ## AI-tool reflection
 
 I accepted Codex's recommendation to use exec-form commands in both runtime stages
@@ -81,6 +112,19 @@ exception.
 
 - Assignees: self-assign this PR.
 - Reviewers: request the ES reviewer.
+
+## AI code-review checklist
+
+- [X] `apps/api` Dockerfile uses a multi-stage Node 24 slim build and distroless Node 24 non-root runtime.
+- [X] `services/compute` Dockerfile uses a multi-stage Python 3.13 slim build and distroless Python non-root runtime.
+- [X] Runtime stages copy only production artifacts and dependencies, not the full build stage, package-manager caches, or local source cruft.
+- [X] Dockerfiles use exec-form commands and healthchecks suitable for orchestrator readiness checks.
+- [X] API SIGTERM handling drains the HTTP server and closes the default database pool before exiting 0.
+- [X] Uvicorn runs as PID 1 and shuts down cleanly on `docker stop`.
+- [X] Base images are digest-pinned, direct language dependencies are pinned, and production Python transitives are hash-locked.
+- [X] `.dockerignore` and Dockerfile copy boundaries keep `.env`, credentials, VCS metadata, virtualenvs, and dependency folders out of the build context or runtime layers.
+- [X] Trivy HIGH/CRITICAL scan gate runs with `--exit-code 1`; accepted exceptions are documented in ADR-0019.
+- [X] Significant AI-assisted work is recorded in the prompt journal.
 
 ## Deliverables checklist
 
