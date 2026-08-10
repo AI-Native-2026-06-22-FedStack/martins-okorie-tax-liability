@@ -1,50 +1,84 @@
 {
   "// path": "ecs/service.json",
-  "// note": "One ECS service per task definition. Shape only; concrete networking and target groups are filled in Task 3.",
+  "// note": "One ECS service per task definition. Replace resolvedSubnetIds, resolvedSecurityGroupIds, and targetGroupArn with the AWS/floci IDs from the deployment environment before create-service.",
   "services": [
     {
       "serviceName": "taxpulse-api",
-      "taskDefinition": "taxpulse-api:<revision>",
-      "desiredCount": 0,
+      "cluster": "taxpulse-cluster",
+      "taskDefinition": "taxpulse-api:2",
+      "desiredCount": 1,
       "launchType": "FARGATE",
+      "platformVersion": "LATEST",
+      "schedulingStrategy": "REPLICA",
+      "deploymentConfiguration": {
+        "maximumPercent": 200,
+        "minimumHealthyPercent": 100
+      },
+      "healthCheckGracePeriodSeconds": 30,
       "networkConfiguration": {
         "awsvpcConfiguration": {
           "subnets": [
             "subnet-taxpulse-private-app-a",
             "subnet-taxpulse-private-app-b"
           ],
+          "resolvedSubnetIds": [
+            "subnet-4eaa5854",
+            "subnet-e4f198b8"
+          ],
           "securityGroups": [
             "task-sg"
+          ],
+          "resolvedSecurityGroupIds": [
+            "sg-82e6e539d1e4b33fa"
           ],
           "assignPublicIp": "DISABLED"
         }
       },
       "loadBalancers": [
         {
-          "// targetGroupArn": "the ALB target group for the Core Case Service"
+          "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-api-tg/9fda5367923a4d11",
+          "containerName": "api",
+          "containerPort": 3000
         }
       ]
     },
     {
       "serviceName": "taxpulse-compute",
-      "taskDefinition": "taxpulse-compute:<revision>",
-      "desiredCount": 0,
+      "cluster": "taxpulse-cluster",
+      "taskDefinition": "taxpulse-compute:2",
+      "desiredCount": 1,
       "launchType": "FARGATE",
+      "platformVersion": "LATEST",
+      "schedulingStrategy": "REPLICA",
+      "deploymentConfiguration": {
+        "maximumPercent": 200,
+        "minimumHealthyPercent": 100
+      },
+      "healthCheckGracePeriodSeconds": 30,
       "networkConfiguration": {
         "awsvpcConfiguration": {
           "subnets": [
             "subnet-taxpulse-private-app-a",
             "subnet-taxpulse-private-app-b"
           ],
+          "resolvedSubnetIds": [
+            "subnet-4eaa5854",
+            "subnet-e4f198b8"
+          ],
           "securityGroups": [
             "task-sg"
+          ],
+          "resolvedSecurityGroupIds": [
+            "sg-82e6e539d1e4b33fa"
           ],
           "assignPublicIp": "DISABLED"
         }
       },
       "loadBalancers": [
         {
-          "// targetGroupArn": "the ALB target group for the Tax Engine"
+          "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-compute-tg/23066ec2f8ba4317",
+          "containerName": "compute",
+          "containerPort": 8000
         }
       ]
     }

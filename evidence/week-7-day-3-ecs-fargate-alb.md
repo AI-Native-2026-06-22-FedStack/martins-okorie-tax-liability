@@ -274,3 +274,142 @@ Local floci fidelity note:
   empty `UserIdGroupPairs` for those rules. The version-controlled `alb/networking.json`
   is therefore the source of truth for the SG-source chain, and this SG-source readback
   should be repeated against real AWS in Week 8.
+
+## Task 3: ECS Fargate Tasks, Services, ALB, and ADR-0020
+
+Task definitions:
+
+```text
+taxpulse-api:2
+- requiresCompatibilities=FARGATE
+- networkMode=awsvpc
+- cpu=256 memory=512
+- image=000000000000.dkr.ecr.us-east-1.localhost:5100/000000000000/us-east-1/taxpulse-api:w7d1
+- containerPort=3000
+- healthCheck=/ready
+- logConfiguration=awslogs /ecs/taxpulse-api
+- executionRoleArn=arn:aws:iam::000000000000:role/taxpulse-ecs-execution
+- taskRoleArn=arn:aws:iam::000000000000:role/taxpulse-ecs-task
+
+taxpulse-compute:2
+- requiresCompatibilities=FARGATE
+- networkMode=awsvpc
+- cpu=256 memory=512
+- image=000000000000.dkr.ecr.us-east-1.localhost:5100/000000000000/us-east-1/taxpulse-compute:w7d1
+- containerPort=8000
+- healthCheck=/health
+- logConfiguration=awslogs /ecs/taxpulse-compute
+- executionRoleArn=arn:aws:iam::000000000000:role/taxpulse-ecs-execution
+- taskRoleArn=arn:aws:iam::000000000000:role/taxpulse-ecs-task
+```
+
+Created ALB:
+
+```text
+arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/taxpulse-alb/89fcd392b0674cad
+dns=taxpulse-alb-89fcd392b0674cad.elb.floci
+scheme=internet-facing
+subnets=subnet-f6b22bc8,subnet-e9005df2
+securityGroups=sg-a8540ab47c2a3ccb2
+```
+
+Created target groups:
+
+```text
+taxpulse-api-tg
+- arn=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-api-tg/9fda5367923a4d11
+- TargetType=ip
+- port=3000
+- healthCheckPath=/ready
+
+taxpulse-compute-tg
+- arn=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-compute-tg/23066ec2f8ba4317
+- TargetType=ip
+- port=8000
+- healthCheckPath=/health
+```
+
+Listener and rules:
+
+```text
+listener=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/taxpulse-alb/89fcd392b0674cad/3adae4526d0a4617
+port=443
+protocol=HTTPS
+default=fixed 404
+priority 5: /v1/calculate, /v1/scenario, /compute/* -> taxpulse-compute-tg
+priority 10: /v1/*, /v1 -> taxpulse-api-tg
+```
+
+Service steady state:
+
+```json
+[
+  {
+    "name": "taxpulse-api",
+    "taskDefinition": "taxpulse-api:2",
+    "desired": 1,
+    "running": 1,
+    "pending": 0,
+    "status": "ACTIVE"
+  },
+  {
+    "name": "taxpulse-compute",
+    "taskDefinition": "taxpulse-compute:2",
+    "desired": 1,
+    "running": 1,
+    "pending": 0,
+    "status": "ACTIVE"
+  }
+]
+```
+
+Target health before the replacement smoke:
+
+```json
+{
+  "api": {
+    "target": "172.18.0.9:3000",
+    "state": "healthy"
+  },
+  "compute": {
+    "target": "172.18.0.8:8000",
+    "state": "healthy"
+  }
+}
+```
+
+Direct readiness probes from inside floci:
+
+```text
+GET http://172.18.0.9:3000/ready -> {"database":"ok","service":"taxpulse-api","status":"ready"}
+GET http://172.18.0.8:8000/health -> {"status":"ok"}
+```
+
+Replacement smoke:
+
+```text
+stopped task arn:aws:ecs:us-east-1:000000000000:task/taxpulse-cluster/a66df51a9acf4604b5ae7df9e913fbc8
+reason=Task 3 replacement smoke test
+
+replacement running tasks:
+arn:aws:ecs:us-east-1:000000000000:task/taxpulse-cluster/d1151c95489f482e8860051cdc5dd8ca
+arn:aws:ecs:us-east-1:000000000000:task/taxpulse-cluster/092e2e2577384062ab9f621615c6a846
+
+taxpulse-api desired=1 running=1 pending=0
+replacement target health=healthy
+```
+
+Local floci fidelity notes:
+
+- The first API task revisions failed until the local Secrets Manager values were seeded.
+  The JWT signing secret must be a JSON object with `keyId`, `privateKey`, and `publicKey`.
+- After stopping the API task, ECS launched a replacement immediately, direct `/ready`
+  returned ready, and the replacement target later reported `healthy`.
+- The floci ALB DNS name `taxpulse-alb-89fcd392b0674cad.elb.floci` did not resolve from
+  inside the floci container, so the smoke-through-ALB request could not be completed in
+  this local emulator run. Repeat this smoke against real AWS in Week 8.
+
+ADR:
+
+- `docs/adr/0020-ecs-fargate-vs-alternatives.md` is `Accepted` and records why ECS
+  Fargate was selected, including the why-not-Kubernetes rationale.

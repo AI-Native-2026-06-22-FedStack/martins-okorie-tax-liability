@@ -39,3 +39,13 @@ Produced — Added `alb/networking.json` with public ALB subnets, private app/da
 Accepted or rejected — Accepted.
 
 Why — Task 2 definitions now keep tasks and Postgres private, restrict private inbound rules to upstream security groups in code, use distinct least-privilege role documents, and pass JSON plus no-wildcard IAM checks.
+
+## Entry 5
+
+Asked — Complete Task 3 by defining ECS Fargate task definitions and services behind an ALB, routing `/v1` case traffic to the Core Case Service and calculation traffic to the Tax Engine, proving steady state and replacement behavior on floci, and recording ADR-0020.
+
+Produced — Filled the ECS task definitions with valid Fargate sizing, `awsvpc`, pinned immutable `w7d1` ECR images, ports, readiness health checks, awslogs configuration, and distinct role ARNs; filled ECS services with private subnet placement, target-group registration, and desired count one; created the floci ALB, `ip` target groups, HTTPS listener, path rules, services, and synthetic local secrets needed for startup; verified both services running with healthy target groups before the replacement smoke; stopped an API task and observed ECS launch a replacement; and updated ADR-0020 plus evidence.
+
+Accepted or rejected — Accepted.
+
+Why — The version-controlled ECS/ALB definitions now deploy to floci with both services running on Fargate metadata, target groups registered on readiness endpoints, replacement behavior observed, and the Fargate-over-Kubernetes decision recorded in ADR-0020.
