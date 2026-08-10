@@ -59,3 +59,13 @@ Produced — Re-ran `docker compose config`, inspected image tags, service lists
 Accepted or rejected — Accepted.
 
 Why — The rubric verification passed: the stack resolves pinned m7d1 images, uses service-health startup gates without Compose sleep gates, keeps the ACL mock profile-gated, and preserves identical seed state while AWS calls target floci.
+
+## Entry 7
+
+Asked — Create the Week 7 Day 2 PR description in the `review` directory using the repository pull request template.
+
+Produced — Added `review/m7d2-pr-description.md` with the template sections filled out: summary, related ADR, actual testing and verification output, AI review evidence, what-it-missed note, AI-tool reflection, PR routing, AI code-review checklist, and deliverables checklist.
+
+Accepted or rejected — Accepted.
+
+Why — The PR description follows the repository template and is grounded in the verified Week 7 Day 2 Compose, seed, floci, profile, and test evidence.
