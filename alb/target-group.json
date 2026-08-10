@@ -1,0 +1,44 @@
+{
+  "// path": "alb/target-group.json",
+  "// note": "Create each targetGroups entry with aws elbv2 create-target-group. TargetType ip is required for awsvpc/Fargate.",
+  "targetGroups": [
+    {
+      "Name": "taxpulse-api-tg",
+      "ResolvedTargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-api-tg/9fda5367923a4d11",
+      "Protocol": "HTTP",
+      "Port": 3000,
+      "TargetType": "ip",
+      "VpcId": "taxpulse-vpc",
+      "ResolvedVpcId": "vpc-dbc97338",
+      "HealthCheckEnabled": true,
+      "HealthCheckProtocol": "HTTP",
+      "HealthCheckPath": "/ready",
+      "HealthCheckIntervalSeconds": 15,
+      "HealthCheckTimeoutSeconds": 5,
+      "HealthyThresholdCount": 2,
+      "UnhealthyThresholdCount": 3,
+      "Matcher": {
+        "HttpCode": "200-399"
+      }
+    },
+    {
+      "Name": "taxpulse-compute-tg",
+      "ResolvedTargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-compute-tg/23066ec2f8ba4317",
+      "Protocol": "HTTP",
+      "Port": 8000,
+      "TargetType": "ip",
+      "VpcId": "taxpulse-vpc",
+      "ResolvedVpcId": "vpc-dbc97338",
+      "HealthCheckEnabled": true,
+      "HealthCheckProtocol": "HTTP",
+      "HealthCheckPath": "/health",
+      "HealthCheckIntervalSeconds": 15,
+      "HealthCheckTimeoutSeconds": 5,
+      "HealthyThresholdCount": 2,
+      "UnhealthyThresholdCount": 3,
+      "Matcher": {
+        "HttpCode": "200-399"
+      }
+    }
+  ]
+}

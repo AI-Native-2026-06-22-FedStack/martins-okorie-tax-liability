@@ -1,0 +1,81 @@
+{
+  "roleName": "taxpulse-ecs-task",
+  "roleArn": "arn:aws:iam::000000000000:role/taxpulse-ecs-task",
+  "assumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AllowEcsTasksToAssumeRuntimeRole",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ecs-tasks.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "inlinePolicies": [
+    {
+      "policyName": "taxpulse-runtime-aws-calls",
+      "policyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "ReadRuntimeSecrets",
+            "Effect": "Allow",
+            "Action": [
+              "secretsmanager:GetSecretValue"
+            ],
+            "Resource": [
+              "arn:aws:secretsmanager:us-east-1:000000000000:secret:taxpulse/local/db-password",
+              "arn:aws:secretsmanager:us-east-1:000000000000:secret:taxpulse/local/jwt-signing-keys"
+            ]
+          },
+          {
+            "Sid": "MaintainPlanCycleQueueReadModel",
+            "Effect": "Allow",
+            "Action": [
+              "dynamodb:BatchWriteItem",
+              "dynamodb:CreateTable",
+              "dynamodb:DescribeTable",
+              "dynamodb:PutItem",
+              "dynamodb:Query"
+            ],
+            "Resource": [
+              "arn:aws:dynamodb:us-east-1:000000000000:table/taxpulse-plan-cycle-read-model",
+              "arn:aws:dynamodb:us-east-1:000000000000:table/taxpulse-plan-cycle-read-model/index/GSI1"
+            ]
+          },
+          {
+            "Sid": "PublishAndConfigureStageChangedTopic",
+            "Effect": "Allow",
+            "Action": [
+              "sns:CreateTopic",
+              "sns:Publish",
+              "sns:Subscribe"
+            ],
+            "Resource": [
+              "arn:aws:sns:us-east-1:000000000000:taxpulse-stage-changed"
+            ]
+          },
+          {
+            "Sid": "ConfigureAndConsumeStageChangedQueues",
+            "Effect": "Allow",
+            "Action": [
+              "sqs:CreateQueue",
+              "sqs:DeleteMessage",
+              "sqs:GetQueueAttributes",
+              "sqs:ReceiveMessage",
+              "sqs:SendMessage",
+              "sqs:SetQueueAttributes"
+            ],
+            "Resource": [
+              "arn:aws:sqs:us-east-1:000000000000:taxpulse-stage-changed-projection",
+              "arn:aws:sqs:us-east-1:000000000000:taxpulse-stage-changed-dlq"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

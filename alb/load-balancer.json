@@ -1,0 +1,34 @@
+{
+  "// path": "alb/load-balancer.json",
+  "// note": "Internet-facing ALB in public subnets only. See alb/networking.json for the subnet and security group definitions.",
+  "Name": "taxpulse-alb",
+  "ResolvedLoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/taxpulse-alb/89fcd392b0674cad",
+  "ResolvedDnsName": "taxpulse-alb-89fcd392b0674cad.elb.floci",
+  "Scheme": "internet-facing",
+  "Type": "application",
+  "IpAddressType": "ipv4",
+  "Subnets": [
+    "subnet-taxpulse-public-a",
+    "subnet-taxpulse-public-b"
+  ],
+  "ResolvedSubnetIds": [
+    "subnet-f6b22bc8",
+    "subnet-e9005df2"
+  ],
+  "SecurityGroups": [
+    "alb-sg"
+  ],
+  "ResolvedSecurityGroupIds": [
+    "sg-a8540ab47c2a3ccb2"
+  ],
+  "Tags": [
+    {
+      "Key": "Project",
+      "Value": "TaxPulse"
+    },
+    {
+      "Key": "ManagedBy",
+      "Value": "version-controlled-json"
+    }
+  ]
+}

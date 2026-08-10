@@ -1,0 +1,62 @@
+{
+  "// path": "alb/listener.json",
+  "// note": "Routes /v1 to the Core Case Service target group. HTTPS cert ARN is supplied by the deployment environment.",
+  "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/taxpulse-alb/89fcd392b0674cad",
+  "ResolvedListenerArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/taxpulse-alb/89fcd392b0674cad/3adae4526d0a4617",
+  "Port": 443,
+  "Protocol": "HTTPS",
+  "Certificates": [
+    {
+      "CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/taxpulse-local"
+    }
+  ],
+  "DefaultActions": [
+    {
+      "Type": "fixed-response",
+      "FixedResponseConfig": {
+        "StatusCode": "404",
+        "ContentType": "application/json",
+        "MessageBody": "{\"error\":\"not_found\"}"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "Priority": 5,
+      "Conditions": [
+        {
+          "Field": "path-pattern",
+          "Values": [
+            "/v1/calculate",
+            "/v1/scenario",
+            "/compute/*"
+          ]
+        }
+      ],
+      "Actions": [
+        {
+          "Type": "forward",
+          "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-compute-tg/23066ec2f8ba4317"
+        }
+      ]
+    },
+    {
+      "Priority": 10,
+      "Conditions": [
+        {
+          "Field": "path-pattern",
+          "Values": [
+            "/v1/*",
+            "/v1"
+          ]
+        }
+      ],
+      "Actions": [
+        {
+          "Type": "forward",
+          "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-api-tg/9fda5367923a4d11"
+        }
+      ]
+    }
+  ]
+}
