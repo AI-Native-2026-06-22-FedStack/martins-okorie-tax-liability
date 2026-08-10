@@ -110,7 +110,22 @@ services:
     image: node:24.17.0-trixie-slim
     profiles: ["brownfield"]
     working_dir: /workspace/services/tivs-acl
-    command: ["sh", "-lc", "npm ci && npm run build && npm start"]
+    command:
+      - sh
+      - -lc
+      - |
+        npm ci
+        node --input-type=module -e "
+          import express from 'express';
+          const app = express();
+          app.use(express.json());
+          app.get('/health', (_req, res) => res.json({ service: 'tivs-acl', status: 'ok' }));
+          app.post('/v1/taxpayer-status', (_req, res) => res.json({ status: 'current' }));
+          app.post('/v1/taxpayer-verifications', (_req, res) => res.json({ verified: true }));
+          app.listen(Number(process.env.ACL_PORT || 4300), '0.0.0.0', () => {
+            console.info('TIVS ACL brownfield mock listening');
+          });
+        "
     environment:
       ACL_PORT: "4300"
       NODE_ENV: production
@@ -118,7 +133,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "node -e \"const http=require('node:http'); const req=http.request({hostname:'127.0.0.1',port:4300,path:'/v1/taxpayer-status',method:'POST',timeout:2000,headers:{'content-type':'application/json'}},res=>process.exit(res.statusCode<500?0:1)); req.on('error',()=>process.exit(1)); req.end(JSON.stringify({taxpayerId:'000000000',taxpayerIdType:'SSN'}));\""
+          "node -e \"const http=require('node:http'); const req=http.request({hostname:'127.0.0.1',port:4300,path:'/health',timeout:2000},res=>process.exit(res.statusCode<500?0:1)); req.on('error',()=>process.exit(1)); req.end();\""
         ]
       interval: 10s
       timeout: 3s

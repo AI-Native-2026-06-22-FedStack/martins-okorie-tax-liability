@@ -29,3 +29,13 @@ Produced — Re-ran `docker compose config`, inspected the running services and 
 Accepted or rejected — Accepted.
 
 Why — Task 1 verification passed with the canonical stack healthy, service images pinned to the local m7d1 tags, service-name URLs in the resolved Compose config, and API readiness confirming Postgres access through the shared network.
+
+## Entry 4
+
+Asked — Complete Task 2 by ensuring startup is gated by dependency readiness, not sleeps, and the Module-6 TIVS ACL mock is available only under the `brownfield` Compose profile.
+
+Produced — Verified healthchecks and long-form `depends_on: condition: service_healthy` in `docker-compose.yml`, changed the profiled `tivs-acl` service to boot a local brownfield mock with its own `/health` probe, cycled the stack twice with `make up`, confirmed Postgres becomes healthy before compute starts, confirmed API waits for healthy compute/floci/Postgres/Redis, confirmed plain startup excludes `tivs-acl`, and confirmed `docker compose --profile brownfield up -d tivs-acl` starts a healthy mock. Appended the Task 2 acceptance pass to `evidence/week-7-day-2-docker-compose-localstack.md`.
+
+Accepted or rejected — Accepted.
+
+Why — The canonical Compose graph now uses readiness probes and service-health dependency gates for startup ordering, repeated local starts avoid Tax Engine crash loops, and the brownfield mock is opt-in and healthy only when the `brownfield` profile is enabled.

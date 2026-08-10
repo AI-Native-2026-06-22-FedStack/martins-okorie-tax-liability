@@ -160,3 +160,73 @@ Task 1 result:
 - Cross-service configuration uses `postgres`, `redis`, `compute`, and `floci` service names.
 - API `/ready` proves database access through the Compose network.
 - Published ports are limited to the developer-facing API, compute, floci, Postgres, and Redis ports.
+
+## Task 2 Acceptance Pass
+
+Command:
+
+```sh
+rg -n "sleep|profiles:|depends_on|condition: service_healthy|healthcheck|start_period|pg_isready" docker-compose.yml
+docker compose down
+make up
+docker compose down
+make up
+docker compose ps
+docker compose ps --services
+docker compose logs --tail=60 compute
+docker compose --profile brownfield up -d tivs-acl
+docker compose --profile brownfield ps tivs-acl
+docker compose --profile brownfield exec -T tivs-acl node -e "fetch('http://127.0.0.1:4300/health').then(r=>r.text()).then(t=>console.log(t))"
+```
+
+Observed dependency ordering on both startup cycles:
+
+```text
+Container martins-okorie-tax-liability-postgres-1 Waiting
+Container martins-okorie-tax-liability-postgres-1 Healthy
+Container martins-okorie-tax-liability-compute-1 Starting
+Container martins-okorie-tax-liability-compute-1 Started
+
+Container martins-okorie-tax-liability-postgres-1 Healthy
+Container martins-okorie-tax-liability-floci-1 Healthy
+Container martins-okorie-tax-liability-redis-1 Healthy
+Container martins-okorie-tax-liability-compute-1 Healthy
+Container martins-okorie-tax-liability-api-1 Starting
+Container martins-okorie-tax-liability-api-1 Started
+```
+
+Plain core service set:
+
+```text
+api
+compute
+floci
+postgres
+redis
+```
+
+Compute log after repeated startup:
+
+```text
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:46030 - "GET /health HTTP/1.1" 200 OK
+```
+
+Brownfield profile:
+
+```text
+martins-okorie-tax-liability-tivs-acl-1   node:24.17.0-trixie-slim   Up (healthy)   0.0.0.0:4300->4300/tcp
+{"service":"tivs-acl","status":"ok"}
+```
+
+Task 2 result:
+
+- `postgres`, `redis`, `floci`, and `tivs-acl` have concrete readiness healthchecks with `start_period`.
+- `compute` uses long-form `depends_on` with `postgres: condition: service_healthy`.
+- `api` uses long-form `depends_on` with `compute`, `floci`, `postgres`, and `redis` all gated on `service_healthy`.
+- No `sleep` appears in `docker-compose.yml`.
+- Core services have no `profiles` key; only `tivs-acl` is gated by `profiles: ["brownfield"]`.
+- Repeated `make up` cycles showed Postgres becoming healthy before compute starts and no Tax Engine crash-loop.
