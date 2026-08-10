@@ -1,19 +1,28 @@
 {
-  "// path": "ecr/lifecycle-policy.json",
-  "// note": "Skeleton only. Two rules; the counts and tag selection are filled in Task 1.",
   "rules": [
     {
       "rulePriority": 1,
-      "description": "keep the last N tagged images",
-      "selection": {},
+      "description": "Keep the 10 most recent tagged images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPatternList": [
+          "*"
+        ],
+        "countType": "imageCountMoreThan",
+        "countNumber": 10
+      },
       "action": {
         "type": "expire"
       }
     },
     {
       "rulePriority": 2,
-      "description": "expire untagged beyond the most recent one",
-      "selection": {},
+      "description": "Keep only the most recent untagged image",
+      "selection": {
+        "tagStatus": "untagged",
+        "countType": "imageCountMoreThan",
+        "countNumber": 1
+      },
       "action": {
         "type": "expire"
       }

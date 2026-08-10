@@ -19,3 +19,13 @@ Produced — Added skeletal deployment-definition directories and files for ECR 
 Accepted or rejected — Accepted.
 
 Why — The Week 7 Day 3 deployment definitions now live in version-controlled files, the local images and AWS CLI are present, JSON syntax validates, and floci ECR is reachable locally with no real cloud account involved.
+
+## Entry 3
+
+Asked — Complete Task 1 by creating one immutable ECR repository per service in floci, pushing the existing `w7d1` API and Tax Engine images without using `latest` or rebuilding, adding a two-rule lifecycle policy, and proving immutable tag behavior.
+
+Produced — Updated `ecr/lifecycle-policy.json` with the concrete two-rule retention policy, mounted the Docker socket into the floci service so ECR could start its backing registry, created `taxpulse-api` and `taxpulse-compute` repositories with `IMMUTABLE` tag settings, attached the lifecycle policy to both, pushed the existing `taxpulse-api:w7d1` and `taxpulse-compute:w7d1` images to floci ECR, verified both images through `describe-images`, and recorded floci fidelity gaps in evidence.
+
+Accepted or rejected — Accepted.
+
+Why — The local ECR repositories, lifecycle policies, and pinned `w7d1` image pushes are present in floci, while unsupported floci behaviors around Docker-layer immutable-tag enforcement and lifecycle preview are documented for repeat verification in real AWS.
