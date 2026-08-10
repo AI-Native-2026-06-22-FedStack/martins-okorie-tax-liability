@@ -8,7 +8,16 @@
       "desiredCount": 0,
       "launchType": "FARGATE",
       "networkConfiguration": {
-        "// awsvpcConfiguration": "private subnets + task security group from Task 2"
+        "awsvpcConfiguration": {
+          "subnets": [
+            "subnet-taxpulse-private-app-a",
+            "subnet-taxpulse-private-app-b"
+          ],
+          "securityGroups": [
+            "task-sg"
+          ],
+          "assignPublicIp": "DISABLED"
+        }
       },
       "loadBalancers": [
         {
@@ -22,7 +31,16 @@
       "desiredCount": 0,
       "launchType": "FARGATE",
       "networkConfiguration": {
-        "// awsvpcConfiguration": "private subnets + task security group from Task 2"
+        "awsvpcConfiguration": {
+          "subnets": [
+            "subnet-taxpulse-private-app-a",
+            "subnet-taxpulse-private-app-b"
+          ],
+          "securityGroups": [
+            "task-sg"
+          ],
+          "assignPublicIp": "DISABLED"
+        }
       },
       "loadBalancers": [
         {

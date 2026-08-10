@@ -7,7 +7,7 @@
       "protocol": "HTTP",
       "port": 3000,
       "targetType": "ip",
-      "vpcId": "<vpc id from Task 2>",
+      "vpcId": "taxpulse-vpc",
       "healthCheckPath": "/ready",
       "healthCheckProtocol": "HTTP"
     },
@@ -16,7 +16,7 @@
       "protocol": "HTTP",
       "port": 8000,
       "targetType": "ip",
-      "vpcId": "<vpc id from Task 2>",
+      "vpcId": "taxpulse-vpc",
       "healthCheckPath": "/health",
       "healthCheckProtocol": "HTTP"
     }

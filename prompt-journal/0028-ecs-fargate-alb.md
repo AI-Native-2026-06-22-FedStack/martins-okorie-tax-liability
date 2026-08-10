@@ -29,3 +29,13 @@ Produced — Updated `ecr/lifecycle-policy.json` with the concrete two-rule rete
 Accepted or rejected — Accepted.
 
 Why — The local ECR repositories, lifecycle policies, and pinned `w7d1` image pushes are present in floci, while unsupported floci behaviors around Docker-layer immutable-tag enforcement and lifecycle preview are documented for repeat verification in real AWS.
+
+## Entry 4
+
+Asked — Complete Task 2 by keeping only the ALB public, placing Fargate tasks and Postgres privately, chaining `alb-sg`, `task-sg`, and `db-sg`, and separating the ECS execution role from the least-privilege application runtime role.
+
+Produced — Added `alb/networking.json` with public ALB subnets, private app/database subnets, and SG-sourced private rules; updated ALB and ECS service definitions to use those placements; updated `ecs/task-definition.json` with distinct execution and task role ARNs; rewrote `iam/execution-role.json` with only the ECS task execution managed policy; rewrote `iam/task-role.json` with exact runtime actions and ARNs for Secrets Manager, DynamoDB, SNS, and SQS; created the local VPC, subnets, SGs, and IAM roles in floci where supported; and recorded verification in evidence.
+
+Accepted or rejected — Accepted.
+
+Why — Task 2 definitions now keep tasks and Postgres private, restrict private inbound rules to upstream security groups in code, use distinct least-privilege role documents, and pass JSON plus no-wildcard IAM checks.

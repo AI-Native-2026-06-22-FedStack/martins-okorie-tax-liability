@@ -10,8 +10,8 @@
       "networkMode": "awsvpc",
       "cpu": "<valid-fargate-cpu>",
       "memory": "<valid-fargate-memory>",
-      "executionRoleArn": "<execution role arn from Task 2>",
-      "taskRoleArn": "<task role arn from Task 2>",
+      "executionRoleArn": "arn:aws:iam::000000000000:role/taxpulse-ecs-execution",
+      "taskRoleArn": "arn:aws:iam::000000000000:role/taxpulse-ecs-task",
       "containerDefinitions": [
         {
           "name": "api",
@@ -30,8 +30,8 @@
       "networkMode": "awsvpc",
       "cpu": "<valid-fargate-cpu>",
       "memory": "<valid-fargate-memory>",
-      "executionRoleArn": "<execution role arn from Task 2>",
-      "taskRoleArn": "<task role arn from Task 2>",
+      "executionRoleArn": "arn:aws:iam::000000000000:role/taxpulse-ecs-execution",
+      "taskRoleArn": "arn:aws:iam::000000000000:role/taxpulse-ecs-task",
       "containerDefinitions": [
         {
           "name": "compute",

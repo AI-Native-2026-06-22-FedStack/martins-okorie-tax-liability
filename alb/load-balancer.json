@@ -1,10 +1,15 @@
 {
   "// path": "alb/load-balancer.json",
-  "// note": "Skeleton only. Internet-facing ALB in public subnets; concrete subnet and security group IDs are filled in Task 3.",
+  "// note": "Internet-facing ALB in public subnets only. See alb/networking.json for the subnet and security group definitions.",
   "name": "taxpulse-alb",
   "scheme": "internet-facing",
   "type": "application",
   "ipAddressType": "ipv4",
-  "subnets": [],
-  "securityGroups": []
+  "subnets": [
+    "subnet-taxpulse-public-a",
+    "subnet-taxpulse-public-b"
+  ],
+  "securityGroups": [
+    "alb-sg"
+  ]
 }

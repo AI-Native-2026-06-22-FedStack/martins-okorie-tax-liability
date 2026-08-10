@@ -1,0 +1,197 @@
+{
+  "vpc": {
+    "name": "taxpulse-vpc",
+    "cidrBlock": "10.42.0.0/16",
+    "enableDnsHostnames": true,
+    "enableDnsSupport": true
+  },
+  "subnets": [
+    {
+      "name": "taxpulse-public-a",
+      "subnetId": "subnet-taxpulse-public-a",
+      "availabilityZone": "us-east-1a",
+      "cidrBlock": "10.42.0.0/24",
+      "tier": "public",
+      "mapPublicIpOnLaunch": true,
+      "routeTable": "taxpulse-public-rt"
+    },
+    {
+      "name": "taxpulse-public-b",
+      "subnetId": "subnet-taxpulse-public-b",
+      "availabilityZone": "us-east-1b",
+      "cidrBlock": "10.42.1.0/24",
+      "tier": "public",
+      "mapPublicIpOnLaunch": true,
+      "routeTable": "taxpulse-public-rt"
+    },
+    {
+      "name": "taxpulse-private-app-a",
+      "subnetId": "subnet-taxpulse-private-app-a",
+      "availabilityZone": "us-east-1a",
+      "cidrBlock": "10.42.10.0/24",
+      "tier": "private-app",
+      "mapPublicIpOnLaunch": false,
+      "routeTable": "taxpulse-private-app-rt"
+    },
+    {
+      "name": "taxpulse-private-app-b",
+      "subnetId": "subnet-taxpulse-private-app-b",
+      "availabilityZone": "us-east-1b",
+      "cidrBlock": "10.42.11.0/24",
+      "tier": "private-app",
+      "mapPublicIpOnLaunch": false,
+      "routeTable": "taxpulse-private-app-rt"
+    },
+    {
+      "name": "taxpulse-private-db-a",
+      "subnetId": "subnet-taxpulse-private-db-a",
+      "availabilityZone": "us-east-1a",
+      "cidrBlock": "10.42.20.0/24",
+      "tier": "private-db",
+      "mapPublicIpOnLaunch": false,
+      "routeTable": "taxpulse-private-db-rt"
+    },
+    {
+      "name": "taxpulse-private-db-b",
+      "subnetId": "subnet-taxpulse-private-db-b",
+      "availabilityZone": "us-east-1b",
+      "cidrBlock": "10.42.21.0/24",
+      "tier": "private-db",
+      "mapPublicIpOnLaunch": false,
+      "routeTable": "taxpulse-private-db-rt"
+    }
+  ],
+  "routeTables": [
+    {
+      "name": "taxpulse-public-rt",
+      "routes": [
+        {
+          "destinationCidrBlock": "0.0.0.0/0",
+          "target": "internet-gateway"
+        }
+      ]
+    },
+    {
+      "name": "taxpulse-private-app-rt",
+      "routes": []
+    },
+    {
+      "name": "taxpulse-private-db-rt",
+      "routes": []
+    }
+  ],
+  "securityGroups": [
+    {
+      "groupName": "alb-sg",
+      "description": "Internet entrypoint for the TaxPulse ALB.",
+      "inboundRules": [
+        {
+          "description": "HTTPS from the internet to the ALB only.",
+          "protocol": "tcp",
+          "fromPort": 443,
+          "toPort": 443,
+          "cidrBlocks": [
+            "0.0.0.0/0"
+          ]
+        }
+      ],
+      "outboundRules": [
+        {
+          "description": "Forward HTTPS listener traffic to API tasks.",
+          "protocol": "tcp",
+          "fromPort": 3000,
+          "toPort": 3000,
+          "destinationSecurityGroup": "task-sg"
+        },
+        {
+          "description": "Forward internal Tax Engine traffic to compute tasks.",
+          "protocol": "tcp",
+          "fromPort": 8000,
+          "toPort": 8000,
+          "destinationSecurityGroup": "task-sg"
+        }
+      ]
+    },
+    {
+      "groupName": "task-sg",
+      "description": "Private Fargate tasks; inbound traffic is ALB-originated only.",
+      "inboundRules": [
+        {
+          "description": "Core Case Service from alb-sg only.",
+          "protocol": "tcp",
+          "fromPort": 3000,
+          "toPort": 3000,
+          "sourceSecurityGroup": "alb-sg"
+        },
+        {
+          "description": "Tax Engine from alb-sg only.",
+          "protocol": "tcp",
+          "fromPort": 8000,
+          "toPort": 8000,
+          "sourceSecurityGroup": "alb-sg"
+        }
+      ],
+      "outboundRules": [
+        {
+          "description": "Database access from app tasks to Postgres only.",
+          "protocol": "tcp",
+          "fromPort": 5432,
+          "toPort": 5432,
+          "destinationSecurityGroup": "db-sg"
+        },
+        {
+          "description": "AWS API calls through VPC endpoints or the local floci endpoint.",
+          "protocol": "tcp",
+          "fromPort": 443,
+          "toPort": 443,
+          "destination": "vpc-endpoints"
+        }
+      ]
+    },
+    {
+      "groupName": "db-sg",
+      "description": "Private Postgres; inbound traffic is app-task-originated only.",
+      "inboundRules": [
+        {
+          "description": "Postgres from task-sg only.",
+          "protocol": "tcp",
+          "fromPort": 5432,
+          "toPort": 5432,
+          "sourceSecurityGroup": "task-sg"
+        }
+      ],
+      "outboundRules": []
+    }
+  ],
+  "placements": {
+    "loadBalancer": {
+      "subnets": [
+        "subnet-taxpulse-public-a",
+        "subnet-taxpulse-public-b"
+      ],
+      "securityGroups": [
+        "alb-sg"
+      ]
+    },
+    "fargateTasks": {
+      "subnets": [
+        "subnet-taxpulse-private-app-a",
+        "subnet-taxpulse-private-app-b"
+      ],
+      "securityGroups": [
+        "task-sg"
+      ],
+      "assignPublicIp": "DISABLED"
+    },
+    "postgres": {
+      "subnets": [
+        "subnet-taxpulse-private-db-a",
+        "subnet-taxpulse-private-db-b"
+      ],
+      "securityGroups": [
+        "db-sg"
+      ],
+      "publiclyAccessible": false
+    }
+  }
+}

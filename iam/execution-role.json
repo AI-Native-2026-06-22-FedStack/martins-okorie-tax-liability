@@ -1,11 +1,11 @@
 {
-  "// path": "iam/execution-role.json",
-  "// note": "Skeleton only. Execution role is for ECS launch-agent permissions and must stay separate from the runtime task role.",
   "roleName": "taxpulse-ecs-execution",
+  "roleArn": "arn:aws:iam::000000000000:role/taxpulse-ecs-execution",
   "assumeRolePolicyDocument": {
     "Version": "2012-10-17",
     "Statement": [
       {
+        "Sid": "AllowEcsTasksToAssumeExecutionRole",
         "Effect": "Allow",
         "Principal": {
           "Service": "ecs-tasks.amazonaws.com"
@@ -14,5 +14,8 @@
       }
     ]
   },
-  "policies": []
+  "managedPolicyArns": [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  ],
+  "inlinePolicies": []
 }

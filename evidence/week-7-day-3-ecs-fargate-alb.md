@@ -157,3 +157,120 @@ Local floci fidelity notes:
   could not be tested through floci.
 - `ecr start-lifecycle-policy-preview` returned `UnsupportedOperation`, so lifecycle
   expiration preview/run must be repeated against real AWS in Week 8.
+
+## Task 2: Private Network, Security Groups, and ECS IAM Roles
+
+Version-controlled placement:
+
+```text
+alb=alb-sg
+tasks=subnet-taxpulse-private-app-a,subnet-taxpulse-private-app-b publicIp=DISABLED sg=task-sg
+postgres=subnet-taxpulse-private-db-a,subnet-taxpulse-private-db-b publiclyAccessible=false sg=db-sg
+```
+
+Security-group chain in `alb/networking.json`:
+
+- `alb-sg` allows TCP 443 from `0.0.0.0/0`.
+- `task-sg` allows TCP 3000 and TCP 8000 from `alb-sg` only.
+- `db-sg` allows TCP 5432 from `task-sg` only.
+- No private inbound rule uses an IP range or `0.0.0.0/0`.
+
+ECS service placement:
+
+```text
+taxpulse-api assignPublicIp=DISABLED subnets=subnet-taxpulse-private-app-a,subnet-taxpulse-private-app-b securityGroups=task-sg
+taxpulse-compute assignPublicIp=DISABLED subnets=subnet-taxpulse-private-app-a,subnet-taxpulse-private-app-b securityGroups=task-sg
+```
+
+Task-definition role references:
+
+```text
+executionRole=arn:aws:iam::000000000000:role/taxpulse-ecs-execution
+taskRole=arn:aws:iam::000000000000:role/taxpulse-ecs-task
+rolesDistinct=true
+```
+
+IAM role verification:
+
+```text
+iam/execution-role.json:
+- role: arn:aws:iam::000000000000:role/taxpulse-ecs-execution
+- assume principal: ecs-tasks.amazonaws.com
+- managed policy: arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+- inline policies: none
+
+iam/task-role.json:
+- role: arn:aws:iam::000000000000:role/taxpulse-ecs-task
+- assume principal: ecs-tasks.amazonaws.com
+- exact runtime actions only:
+  secretsmanager:GetSecretValue
+  dynamodb:BatchWriteItem
+  dynamodb:CreateTable
+  dynamodb:DescribeTable
+  dynamodb:PutItem
+  dynamodb:Query
+  sns:CreateTopic
+  sns:Publish
+  sns:Subscribe
+  sqs:CreateQueue
+  sqs:DeleteMessage
+  sqs:GetQueueAttributes
+  sqs:ReceiveMessage
+  sqs:SendMessage
+  sqs:SetQueueAttributes
+- exact resources only:
+  arn:aws:secretsmanager:us-east-1:000000000000:secret:taxpulse/local/db-password
+  arn:aws:secretsmanager:us-east-1:000000000000:secret:taxpulse/local/jwt-signing-keys
+  arn:aws:dynamodb:us-east-1:000000000000:table/taxpulse-plan-cycle-read-model
+  arn:aws:dynamodb:us-east-1:000000000000:table/taxpulse-plan-cycle-read-model/index/GSI1
+  arn:aws:sns:us-east-1:000000000000:taxpulse-stage-changed
+  arn:aws:sqs:us-east-1:000000000000:taxpulse-stage-changed-projection
+  arn:aws:sqs:us-east-1:000000000000:taxpulse-stage-changed-dlq
+```
+
+Wildcard check:
+
+```sh
+jq -e '([.. | objects | select(has("Resource")) | .Resource | (if type == "array" then .[] else . end) | select(. == "*")] | length) == 0 and ([.. | objects | select(has("Action")) | .Action | (if type == "array" then .[] else . end) | select(. == "*" or test(":\\*$"))] | length) == 0' iam/task-role.json
+```
+
+Observed:
+
+```text
+true
+```
+
+floci IAM state:
+
+```json
+{
+  "AttachedPolicies": [
+    {
+      "PolicyName": "AmazonECSTaskExecutionRolePolicy",
+      "PolicyArn": "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+    }
+  ]
+}
+```
+
+floci network state:
+
+```text
+created vpc vpc-dbc97338
+created subnet taxpulse-public-a subnet-f6b22bc8
+created subnet taxpulse-public-b subnet-e9005df2
+created subnet taxpulse-private-app-a subnet-4eaa5854
+created subnet taxpulse-private-app-b subnet-e4f198b8
+created subnet taxpulse-private-db-a subnet-654c5d9f
+created subnet taxpulse-private-db-b subnet-63331f96
+created sg alb-sg sg-a8540ab47c2a3ccb2
+created sg task-sg sg-82e6e539d1e4b33fa
+created sg db-sg sg-6f4d40a7e232e1b10
+```
+
+Local floci fidelity note:
+
+- floci EC2 accepted SG-sourced ingress commands, but `describe-security-groups` returned
+  empty `UserIdGroupPairs` for those rules. The version-controlled `alb/networking.json`
+  is therefore the source of truth for the SG-source chain, and this SG-source readback
+  should be repeated against real AWS in Week 8.

@@ -1,9 +1,14 @@
 {
   "// path": "alb/listener.json",
-  "// note": "Skeleton only. Routes /v1 to the Core Case Service target group; concrete ARNs are filled in Task 3.",
+  "// note": "Routes /v1 to the Core Case Service target group. HTTPS cert ARN is supplied by the deployment environment.",
   "loadBalancerArn": "<taxpulse ALB arn>",
-  "port": 80,
-  "protocol": "HTTP",
+  "port": 443,
+  "protocol": "HTTPS",
+  "certificates": [
+    {
+      "certificateArn": "<taxpulse ACM certificate arn>"
+    }
+  ],
   "defaultActions": [
     {
       "type": "fixed-response",
