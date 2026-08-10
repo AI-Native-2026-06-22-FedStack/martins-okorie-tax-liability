@@ -49,3 +49,23 @@ Produced — Filled the ECS task definitions with valid Fargate sizing, `awsvpc`
 Accepted or rejected — Accepted.
 
 Why — The version-controlled ECS/ALB definitions now deploy to floci with both services running on Fargate metadata, target groups registered on readiness endpoints, replacement behavior observed, and the Fargate-over-Kubernetes decision recorded in ADR-0020.
+
+## Entry 6
+
+Asked — Verify the Week 7 Day 3 deliverable against the grading rubric for immutable ECR, Fargate services behind an ALB, least-exposure networking, and least-privilege IAM.
+
+Produced — Ran static JSON, IAM, networking, Compose, and whitespace checks; queried live floci ECR, ECS, ELBv2, target health, listener rules, and IAM state; confirmed both services are running and healthy behind `ip` target groups; and identified the duplicate-tag rejection as a floci fidelity caveat because `ecr put-image` is unsupported and the backing registry does not enforce immutable overwrites.
+
+Accepted or rejected — Accepted.
+
+Why — The rubric checks pass except for the duplicate-tag rejection proof, which remains documented as an emulator limitation to repeat against real AWS.
+
+## Entry 7
+
+Asked — Create the Week 7 Day 3 PR description using the repository template and include the required verification output, AI-tool reflection, routing, and deliverables checklist.
+
+Produced — Added `review/m7d3-pr-description.md` with the template sections, ADR link, observed verification output, AI review evidence, AI-tool reflection, PR routing, AI code-review checklist, and deliverables checklist. The description documents the floci duplicate-tag and ALB DNS fidelity caveats rather than claiming unsupported emulator behavior passed.
+
+Accepted or rejected — Accepted.
+
+Why — The PR description is ready to paste into GitHub and includes the required verification, reflection, reviewer routing, and checklist items grounded in the actual floci results.
