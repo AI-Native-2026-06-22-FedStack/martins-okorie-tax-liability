@@ -1,0 +1,10 @@
+{
+  "// path": "alb/load-balancer.json",
+  "// note": "Skeleton only. Internet-facing ALB in public subnets; concrete subnet and security group IDs are filled in Task 3.",
+  "name": "taxpulse-alb",
+  "scheme": "internet-facing",
+  "type": "application",
+  "ipAddressType": "ipv4",
+  "subnets": [],
+  "securityGroups": []
+}

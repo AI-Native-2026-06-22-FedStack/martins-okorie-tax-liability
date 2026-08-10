@@ -1,0 +1,24 @@
+{
+  "// path": "alb/target-group.json",
+  "// note": "Skeleton only. Target type is ip for awsvpc/Fargate; health checks must use the m7d1 readiness endpoints.",
+  "targetGroups": [
+    {
+      "name": "taxpulse-api-tg",
+      "protocol": "HTTP",
+      "port": 3000,
+      "targetType": "ip",
+      "vpcId": "<vpc id from Task 2>",
+      "healthCheckPath": "/ready",
+      "healthCheckProtocol": "HTTP"
+    },
+    {
+      "name": "taxpulse-compute-tg",
+      "protocol": "HTTP",
+      "port": 8000,
+      "targetType": "ip",
+      "vpcId": "<vpc id from Task 2>",
+      "healthCheckPath": "/health",
+      "healthCheckProtocol": "HTTP"
+    }
+  ]
+}

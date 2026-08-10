@@ -1,0 +1,34 @@
+{
+  "// path": "ecs/service.json",
+  "// note": "One ECS service per task definition. Shape only; concrete networking and target groups are filled in Task 3.",
+  "services": [
+    {
+      "serviceName": "taxpulse-api",
+      "taskDefinition": "taxpulse-api:<revision>",
+      "desiredCount": 0,
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "// awsvpcConfiguration": "private subnets + task security group from Task 2"
+      },
+      "loadBalancers": [
+        {
+          "// targetGroupArn": "the ALB target group for the Core Case Service"
+        }
+      ]
+    },
+    {
+      "serviceName": "taxpulse-compute",
+      "taskDefinition": "taxpulse-compute:<revision>",
+      "desiredCount": 0,
+      "launchType": "FARGATE",
+      "networkConfiguration": {
+        "// awsvpcConfiguration": "private subnets + task security group from Task 2"
+      },
+      "loadBalancers": [
+        {
+          "// targetGroupArn": "the ALB target group for the Tax Engine"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "// path": "iam/task-role.json",
+  "// note": "Skeleton only. Task role is for least-privilege application runtime permissions and must stay separate from the execution role.",
+  "roleName": "taxpulse-ecs-task",
+  "assumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ecs-tasks.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "policies": []
+}

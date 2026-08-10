@@ -1,0 +1,18 @@
+{
+  "// path": "iam/execution-role.json",
+  "// note": "Skeleton only. Execution role is for ECS launch-agent permissions and must stay separate from the runtime task role.",
+  "roleName": "taxpulse-ecs-execution",
+  "assumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ecs-tasks.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "policies": []
+}

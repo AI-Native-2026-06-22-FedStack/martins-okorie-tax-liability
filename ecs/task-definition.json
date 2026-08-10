@@ -1,0 +1,46 @@
+{
+  "// path": "ecs/task-definition.json",
+  "// note": "One task definition per service. Shape only; concrete fields are filled in Task 3.",
+  "taskDefinitions": [
+    {
+      "family": "taxpulse-api",
+      "requiresCompatibilities": [
+        "FARGATE"
+      ],
+      "networkMode": "awsvpc",
+      "cpu": "<valid-fargate-cpu>",
+      "memory": "<valid-fargate-memory>",
+      "executionRoleArn": "<execution role arn from Task 2>",
+      "taskRoleArn": "<task role arn from Task 2>",
+      "containerDefinitions": [
+        {
+          "name": "api",
+          "image": "<immutable ECR tag for taxpulse-api, never latest>",
+          "portMappings": [],
+          "healthCheck": {},
+          "logConfiguration": {}
+        }
+      ]
+    },
+    {
+      "family": "taxpulse-compute",
+      "requiresCompatibilities": [
+        "FARGATE"
+      ],
+      "networkMode": "awsvpc",
+      "cpu": "<valid-fargate-cpu>",
+      "memory": "<valid-fargate-memory>",
+      "executionRoleArn": "<execution role arn from Task 2>",
+      "taskRoleArn": "<task role arn from Task 2>",
+      "containerDefinitions": [
+        {
+          "name": "compute",
+          "image": "<immutable ECR tag for taxpulse-compute, never latest>",
+          "portMappings": [],
+          "healthCheck": {},
+          "logConfiguration": {}
+        }
+      ]
+    }
+  ]
+}
