@@ -21,8 +21,10 @@ class NotFoundLikeError extends Error {
 
 describe("DynamoDB Plan Cycle Queue read model", () => {
   beforeEach(() => {
+    const localAwsEndpoint = process.env.AWS_ENDPOINT_URL ?? "http://localhost:4566";
     Object.assign(process.env, {
-      AWS_ENDPOINT: "http://localhost:8000",
+      AWS_ENDPOINT: localAwsEndpoint,
+      AWS_ENDPOINT_URL: localAwsEndpoint,
       AWS_REGION: "us-east-1",
       DB_HOST: "localhost",
       DB_NAME: "taxpulse",
@@ -30,7 +32,7 @@ describe("DynamoDB Plan Cycle Queue read model", () => {
       DB_SECRET_ID: "taxpulse/db-password",
       DB_SSL: "disable",
       DB_USER: "taxpulse_app",
-      DDB_ENDPOINT: "http://localhost:8000",
+      DDB_ENDPOINT: process.env.DDB_ENDPOINT ?? localAwsEndpoint,
       DDB_TABLE_NAME: "taxpulse-plan-cycle-read-model-test",
       JWT_SECRET_ID: "taxpulse/jwt-signing-keys",
       PORT: "3000"
