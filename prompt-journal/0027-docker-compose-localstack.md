@@ -49,3 +49,13 @@ Produced — Updated the Makefile targets so `up` starts the stack and delegates
 Accepted or rejected — Accepted.
 
 Why — Task 3 verification passed with a 14.28-second clean `make up`, repeat `make seed` preserving the same database and floci resource counts, AWS CLI calls resolving through floci, and all configured test suites passing against the running stack.
+
+## Entry 6
+
+Asked — Verify the Week 7 Day 2 deliverable against the grading rubric for canonical Compose images, healthchecked startup, brownfield profile behavior, Makefile targets, idempotent seed, floci endpoint routing, and README documentation.
+
+Produced — Re-ran `docker compose config`, inspected image tags, service lists, health status, profile service inclusion, Tax Engine logs, floci STS calls, and two `make seed` runs with database and SNS/SQS resource counts. Stopped the brownfield mock after verifying it starts under the profile so the running stack returned to the core services.
+
+Accepted or rejected — Accepted.
+
+Why — The rubric verification passed: the stack resolves pinned m7d1 images, uses service-health startup gates without Compose sleep gates, keeps the ACL mock profile-gated, and preserves identical seed state while AWS calls target floci.
