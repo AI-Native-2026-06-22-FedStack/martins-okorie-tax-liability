@@ -122,3 +122,41 @@ TaxPulse local seed complete.
 
 - `floci/floci:1.5.11-compat` was not available from Docker Hub during verification, so the stack uses Floci's documented `latest-compat` image.
 - Docker emitted an Apple Silicon warning for the Week 7 Day 1 local images because they were built as `linux/amd64`; the containers still started and reported healthy.
+
+## Task 1 Acceptance Pass
+
+Command:
+
+```sh
+docker compose config
+docker compose ps
+docker image ls --format '{{.Repository}}:{{.Tag}} {{.ID}}' | grep -E 'taxpulse-api|taxpulse-compute|postgres|redis|floci'
+docker run --rm --network martins-okorie-tax-liability_taxpulse-local curlimages/curl:8.16.0 -fsS http://api:3000/ready
+```
+
+Observed:
+
+```text
+docker compose config parsed successfully.
+api        taxpulse-api:w7d1           Up (healthy)   0.0.0.0:3000->3000/tcp
+compute    taxpulse-compute:w7d1       Up (healthy)   0.0.0.0:8001->8000/tcp
+floci      floci/floci:latest-compat   Up (healthy)   0.0.0.0:4566->4566/tcp
+postgres   postgres:17.6-alpine        Up (healthy)   0.0.0.0:55433->5432/tcp
+redis      redis:7.4.5-alpine          Up (healthy)   0.0.0.0:6379->6379/tcp
+
+taxpulse-api:w7d1 abdc5c722f1d
+taxpulse-compute:w7d1 fbaa420625b8
+postgres:17.6-alpine ef257d85f76e
+redis:7.4.5-alpine bb186d083732
+floci/floci:latest-compat 15ba10dace4a
+
+{"database":"ok","service":"taxpulse-api","status":"ready"}
+```
+
+Task 1 result:
+
+- The API and compute services use the Week 7 Day 1 local image tags, not `latest` and not Compose rebuilds.
+- Postgres and Redis use official pinned images.
+- Cross-service configuration uses `postgres`, `redis`, `compute`, and `floci` service names.
+- API `/ready` proves database access through the Compose network.
+- Published ports are limited to the developer-facing API, compute, floci, Postgres, and Redis ports.

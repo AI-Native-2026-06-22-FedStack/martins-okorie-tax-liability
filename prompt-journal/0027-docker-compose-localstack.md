@@ -19,3 +19,13 @@ Produced — Replaced the root Compose stack with `api`, `compute`, `postgres`, 
 Accepted or rejected — Accepted.
 
 Why — The local stack starts with healthy core services, every AWS-shaped call is pointed at floci on port 4566, the seed script is idempotent, and the evidence file captures the successful verification results.
+
+## Entry 3
+
+Asked — Complete Task 1 by verifying the canonical `docker-compose.yml` uses the m7d1 service images, official pinned Postgres and Redis images, service-name addressing, one shared network, health-gated dependencies, and only needed developer ports.
+
+Produced — Re-ran `docker compose config`, inspected the running services and local image tags, confirmed the brownfield `tivs-acl` service stays profiled, verified the API and compute services are healthy from the m7d1 tags, and used a one-off network curl container to call `http://api:3000/ready`, proving the API reaches Postgres through the Compose network. Appended the Task 1 acceptance pass to `evidence/week-7-day-2-docker-compose-localstack.md`.
+
+Accepted or rejected — Accepted.
+
+Why — Task 1 verification passed with the canonical stack healthy, service images pinned to the local m7d1 tags, service-name URLs in the resolved Compose config, and API readiness confirming Postgres access through the shared network.
