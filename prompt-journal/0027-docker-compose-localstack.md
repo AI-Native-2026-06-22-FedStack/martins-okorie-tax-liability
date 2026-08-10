@@ -39,3 +39,13 @@ Produced — Verified healthchecks and long-form `depends_on: condition: service
 Accepted or rejected — Accepted.
 
 Why — The canonical Compose graph now uses readiness probes and service-health dependency gates for startup ordering, repeated local starts avoid Tax Engine crash loops, and the brownfield mock is opt-in and healthy only when the `brownfield` profile is enabled.
+
+## Entry 5
+
+Asked — Complete Task 3 by wrapping the stack in `make up`, `make down`, `make seed`, and `make test`, exporting the floci endpoint for every AWS call, making the seed safe to run twice, and documenting cold-start timing and endpoint behavior.
+
+Produced — Updated the Makefile targets so `up` starts the stack and delegates to `seed`, `down` removes default and brownfield-profile containers and volumes, and `test` runs the API, web, and compute suites against the running stack. Expanded `scripts/seed.sh` with idempotent floci SNS/SQS resources, kept the Postgres seed on upserts, pointed the DynamoDB read-model test endpoint at `AWS_ENDPOINT_URL`, and updated the cold-start README and evidence with the passing checks.
+
+Accepted or rejected — Accepted.
+
+Why — Task 3 verification passed with a 14.28-second clean `make up`, repeat `make seed` preserving the same database and floci resource counts, AWS CLI calls resolving through floci, and all configured test suites passing against the running stack.

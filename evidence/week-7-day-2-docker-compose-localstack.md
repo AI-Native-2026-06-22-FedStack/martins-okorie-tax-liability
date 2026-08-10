@@ -230,3 +230,96 @@ Task 2 result:
 - No `sleep` appears in `docker-compose.yml`.
 - Core services have no `profiles` key; only `tivs-acl` is gated by `profiles: ["brownfield"]`.
 - Repeated `make up` cycles showed Postgres becoming healthy before compute starts and no Tax Engine crash-loop.
+
+## Task 3 Acceptance Pass
+
+Command:
+
+```sh
+make down
+/usr/bin/time -p make up
+docker compose ps
+make seed
+make seed
+docker compose exec -T postgres psql -U taxpulse_app -d taxpulse_l -c "select count(*) as tenants from tenant; select count(*) as cycles from tax_plan_cycle;"
+docker compose exec -T floci aws --endpoint-url http://127.0.0.1:4566 sns list-topics --query 'length(Topics)'
+docker compose exec -T floci aws --endpoint-url http://127.0.0.1:4566 sqs list-queues --query 'length(QueueUrls)'
+AWS_ENDPOINT_URL=http://localhost:4566 docker compose exec -T floci aws s3 ls
+AWS_ENDPOINT_URL=http://localhost:4566 docker compose exec -T floci aws --endpoint-url http://127.0.0.1:4566 sts get-caller-identity
+make test
+```
+
+Observed clean start timing:
+
+```text
+real 14.28
+user 1.07
+sys 0.70
+```
+
+Observed health:
+
+```text
+api        taxpulse-api:w7d1           Up (healthy)   0.0.0.0:3000->3000/tcp
+compute    taxpulse-compute:w7d1       Up (healthy)   0.0.0.0:8001->8000/tcp
+floci      floci/floci:latest-compat   Up (healthy)   0.0.0.0:4566->4566/tcp
+postgres   postgres:17.6-alpine        Up (healthy)   0.0.0.0:55433->5432/tcp
+redis      redis:7.4.5-alpine          Up (healthy)   0.0.0.0:6379->6379/tcp
+```
+
+Observed idempotent re-seed:
+
+```text
+secret exists: taxpulse/local/db-password
+secret exists: taxpulse/local/jwt-signing-keys
+subscription exists: arn:aws:sqs:us-east-1:000000000000:taxpulse-stage-changed-projection
+INSERT 0 2
+INSERT 0 2
+TaxPulse local seed complete.
+
+tenants
+---------
+2
+
+cycles
+--------
+2
+
+SNS topics: 1
+SQS queues: 2
+```
+
+Observed floci endpoint call:
+
+```json
+{
+  "UserId": "000000000000",
+  "Account": "000000000000",
+  "Arn": "arn:aws:iam::000000000000:root"
+}
+```
+
+Observed test suite:
+
+```text
+npx vitest run apps/api/test --no-file-parallelism
+Test Files 22 passed | 7 skipped (29)
+Tests 79 passed | 29 skipped (108)
+
+npm run test --workspace=web
+Test Files 19 passed (19)
+Tests 75 passed (75)
+
+uv run --locked pytest
+tests/test_tax_liability.py ......... [100%]
+9 passed in 0.14s
+```
+
+Task 3 result:
+
+- `Makefile` now exports `AWS_ENDPOINT_URL=http://localhost:4566` plus local AWS test credentials and provides exactly `up`, `down`, `seed`, and `test`.
+- `make up` starts dependencies and compute, runs the idempotent seed, then starts the API against the seeded local stack.
+- `make down` uses the brownfield profile during teardown so default and profiled containers plus volumes are removed cleanly.
+- `scripts/seed.sh` uses existence checks and upserts for floci secrets, SNS/SQS resources, tenants, and tax plan cycles.
+- Re-running `make seed` leaves the same state: two tenants, two cycles, one topic, and two queues.
+- The AWS CLI checks hit floci through the local endpoint, not a real AWS account.

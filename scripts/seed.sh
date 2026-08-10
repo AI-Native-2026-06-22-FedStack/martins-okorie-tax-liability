@@ -54,6 +54,134 @@ create_secret_from_stdin() {
   echo "secret created: $secret_id"
 }
 
+queue_url_for_name() {
+  local queue_name="$1"
+  aws_in_floci sqs get-queue-url --queue-name "$queue_name" --query QueueUrl --output text 2>/dev/null || true
+}
+
+queue_arn_for_url() {
+  local queue_url="$1"
+  aws_in_floci sqs get-queue-attributes \
+    --queue-url "$queue_url" \
+    --attribute-names QueueArn \
+    --query 'Attributes.QueueArn' \
+    --output text
+}
+
+topic_arn_for_name() {
+  local topic_name="$1"
+  aws_in_floci sns list-topics \
+    --query "Topics[?ends_with(TopicArn, ':${topic_name}')].TopicArn | [0]" \
+    --output text
+}
+
+ensure_queue() {
+  local queue_name="$1"
+  local queue_url
+  queue_url="$(queue_url_for_name "$queue_name")"
+
+  if [[ -n "$queue_url" && "$queue_url" != "None" ]]; then
+    echo "queue exists: $queue_name"
+    printf '%s\n' "$queue_url"
+    return 0
+  fi
+
+  queue_url="$(
+    aws_in_floci sqs create-queue \
+      --queue-name "$queue_name" \
+      --query QueueUrl \
+      --output text
+  )"
+  echo "queue created: $queue_name" >&2
+  printf '%s\n' "$queue_url"
+}
+
+ensure_topic() {
+  local topic_name="$1"
+  local topic_arn
+  topic_arn="$(topic_arn_for_name "$topic_name")"
+
+  if [[ -n "$topic_arn" && "$topic_arn" != "None" ]]; then
+    echo "topic exists: $topic_name"
+    printf '%s\n' "$topic_arn"
+    return 0
+  fi
+
+  topic_arn="$(
+    aws_in_floci sns create-topic \
+      --name "$topic_name" \
+      --query TopicArn \
+      --output text
+  )"
+  echo "topic created: $topic_name" >&2
+  printf '%s\n' "$topic_arn"
+}
+
+ensure_subscription() {
+  local topic_arn="$1"
+  local queue_arn="$2"
+  local existing_subscription
+  existing_subscription="$(
+    aws_in_floci sns list-subscriptions-by-topic \
+      --topic-arn "$topic_arn" \
+      --query "Subscriptions[?Endpoint=='${queue_arn}'].SubscriptionArn | [0]" \
+      --output text
+  )"
+
+  if [[ -n "$existing_subscription" && "$existing_subscription" != "None" ]]; then
+    echo "subscription exists: $queue_arn"
+    return 0
+  fi
+
+  aws_in_floci sns subscribe \
+    --topic-arn "$topic_arn" \
+    --protocol sqs \
+    --notification-endpoint "$queue_arn" \
+    --attributes RawMessageDelivery=true >/dev/null
+  echo "subscription created: $queue_arn"
+}
+
+seed_event_resources() {
+  local topic_name="taxpulse-stage-changed"
+  local queue_name="taxpulse-stage-changed-projection"
+  local dlq_name="taxpulse-stage-changed-dlq"
+
+  local topic_arn
+  local queue_url
+  local dlq_url
+  local queue_arn
+  local dlq_arn
+
+  topic_arn="$(ensure_topic "$topic_name" | tail -n 1)"
+  dlq_url="$(ensure_queue "$dlq_name" | tail -n 1)"
+  queue_url="$(ensure_queue "$queue_name" | tail -n 1)"
+  dlq_arn="$(queue_arn_for_url "$dlq_url")"
+  queue_arn="$(queue_arn_for_url "$queue_url")"
+
+  local attrs_file
+  attrs_file="$(mktemp)"
+  python3 - "$dlq_arn" >"$attrs_file" <<'PY'
+import json
+import sys
+
+dlq_arn = sys.argv[1]
+print(json.dumps({
+    "RedrivePolicy": json.dumps({
+        "deadLetterTargetArn": dlq_arn,
+        "maxReceiveCount": "3",
+    }),
+    "VisibilityTimeout": "30",
+}))
+PY
+
+  docker compose exec -T floci sh -lc \
+    "cat >/tmp/taxpulse-sqs-attributes.json && aws --endpoint-url http://127.0.0.1:4566 sqs set-queue-attributes --queue-url '$queue_url' --attributes file:///tmp/taxpulse-sqs-attributes.json >/dev/null" \
+    <"$attrs_file"
+  rm -f "$attrs_file"
+
+  ensure_subscription "$topic_arn" "$queue_arn"
+}
+
 seed_database() {
   docker compose exec -T postgres psql -U taxpulse_app -d taxpulse_l -v ON_ERROR_STOP=1 <<'SQL'
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -189,6 +317,7 @@ PY
 
 wait_for_floci
 seed_runtime_secrets
+seed_event_resources
 seed_database
 
 echo "TaxPulse local seed complete."

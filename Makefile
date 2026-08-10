@@ -7,15 +7,16 @@ export AWS_SECRET_ACCESS_KEY ?= test
 
 up:
 	docker compose up -d postgres redis floci compute
-	./scripts/seed.sh
+	$(MAKE) seed
 	docker compose up -d api
 
 down:
-	docker compose down -v
+	docker compose --profile brownfield down -v
 
 seed:
 	./scripts/seed.sh
 
 test:
-	AWS_ENDPOINT_URL=$(AWS_ENDPOINT_URL) npm test
-	TAXPULSE_TEST_DATABASE_URL=postgresql://taxpulse_app@localhost:55433/taxpulse_l uv run --locked pytest
+	AWS_ENDPOINT_URL=$(AWS_ENDPOINT_URL) DDB_ENDPOINT=$(AWS_ENDPOINT_URL) AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) npx vitest run apps/api/test --no-file-parallelism
+	npm run test --workspace=web
+	AWS_ENDPOINT_URL=$(AWS_ENDPOINT_URL) TAXPULSE_TEST_DATABASE_URL=postgresql://taxpulse_app@localhost:55433/taxpulse_l uv run --locked pytest
