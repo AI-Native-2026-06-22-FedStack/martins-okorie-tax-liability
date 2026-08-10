@@ -2,8 +2,10 @@ import type { Server } from "node:http";
 
 import { getApiEnv } from "./config/env.js";
 import { initializeRuntimeSecrets } from "./config/secrets.js";
+import { closeDefaultDb } from "./db/client.js";
 
 let server: Server | undefined;
+let shutdownStarted = false;
 
 async function start(): Promise<void> {
   const env = getApiEnv();
@@ -16,26 +18,50 @@ async function start(): Promise<void> {
   });
 }
 
-function shutdown(signal: NodeJS.Signals): void {
-  console.log(`received ${signal}; closing taxpulse-api`);
-
-  if (!server) {
-    process.exit(0);
-  }
-
-  server.close((error?: Error) => {
-    if (error) {
-      console.error("taxpulse-api shutdown failed", error);
-      process.exit(1);
+function closeHttpServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!server) {
+      resolve();
+      return;
     }
 
-    console.log("taxpulse-api closed");
-    process.exit(0);
+    server.close((error?: Error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
   });
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
+  if (shutdownStarted) {
+    return;
+  }
+
+  shutdownStarted = true;
+  console.log(`received ${signal}; closing taxpulse-api`);
+
+  try {
+    await closeHttpServer();
+    await closeDefaultDb();
+
+    console.log("taxpulse-api closed");
+    process.exit(0);
+  } catch (error) {
+    console.error("taxpulse-api shutdown failed", error);
+    process.exit(1);
+  }
+}
+
+process.on("SIGINT", (signal) => {
+  void shutdown(signal);
+});
+process.on("SIGTERM", (signal) => {
+  void shutdown(signal);
+});
 
 start().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
