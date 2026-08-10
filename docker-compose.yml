@@ -1,7 +1,10 @@
-# TaxPulse local development stack: Express Core, FastAPI Tax Engine, Postgres, DynamoDB Local, Redis, LocalStack, and Pact Broker.
+# Canonical local TaxPulse stack for Week 7 Day 2.
+# All AWS-shaped calls target floci at http://floci:4566 inside the stack and
+# http://localhost:4566 from the host.
+
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17.6-alpine
     environment:
       POSTGRES_DB: taxpulse_l
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -9,101 +12,129 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taxpulse_app -d taxpulse_l"]
       interval: 5s
-      timeout: 5s
+      timeout: 3s
       retries: 12
+      start_period: 10s
     ports:
       - "55433:5432"
-
-  dynamodb-local:
-    image: amazon/dynamodb-local:2.5.3
-    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
-    healthcheck:
-      test: ["CMD-SHELL", "java -version >/dev/null 2>&1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-    ports:
-      - "8000:8000"
+    networks:
+      - taxpulse-local
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.5-alpine
     command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
-      timeout: 5s
+      timeout: 3s
       retries: 12
+      start_period: 5s
     ports:
       - "6379:6379"
+    networks:
+      - taxpulse-local
 
-  localstack:
-    image: localstack/localstack:3.8.1
+  floci:
+    image: floci/floci:latest-compat
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_STORAGE_MODE: memory
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:4566/_localstack/health', timeout=2)\""
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     ports:
       - "4566:4566"
-    environment:
-      - SERVICES=s3,sqs,sns
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health | grep -Eq '\"s3\": \"(running|available)\"' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  pact-broker-db:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: pact_broker
-      POSTGRES_USER: pact_broker
-      POSTGRES_PASSWORD: pact_broker_password
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pact_broker -d pact_broker"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-    ports:
-      - "5434:5432"
-
-  pact-broker:
-    image: pactfoundation/pact-broker:latest
-    ports:
-      - "9292:9292"
-    environment:
-      PACT_BROKER_DATABASE_ADAPTER: postgres
-      PACT_BROKER_DATABASE_HOSTNAME: pact-broker-db
-      PACT_BROKER_DATABASE_PORT: "5432"
-      PACT_BROKER_DATABASE_NAME: pact_broker
-      PACT_BROKER_DATABASE_USER: pact_broker
-      PACT_BROKER_DATABASE_PASSWORD: pact_broker_password
-      PACT_BROKER_LOG_LEVEL: INFO
-    depends_on:
-      pact-broker-db:
-        condition: service_healthy
+    networks:
+      - taxpulse-local
 
   compute:
-    build:
-      context: ./services/compute
-      dockerfile: Dockerfile
-    ports:
-      - "8001:8000"
+    image: taxpulse-compute:w7d1
+    pull_policy: never
     environment:
-      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      JWT_AUDIENCE: taxpulse-clients
+      JWT_ISSUER: taxpulse-api
     depends_on:
       postgres:
         condition: service_healthy
+    ports:
+      - "8001:8000"
+    networks:
+      - taxpulse-local
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    ports:
-      - "3000:3000"
+    image: taxpulse-api:w7d1
+    pull_policy: never
+    env_file:
+      - .env.local
     environment:
-      - DATABASE_URI=postgres://taxpulse_app@postgres:5432/taxpulse_l
-      - REDIS_URL=redis://redis:6379
-      - COMPUTE_SERVICE_URL=http://compute:8000
+      AWS_ACCESS_KEY_ID: test
+      AWS_ENDPOINT: http://floci:4566
+      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_REGION: us-east-1
+      AWS_SECRET_ACCESS_KEY: test
+      COMPUTE_SERVICE_URL: http://compute:8000
+      DB_HOST: postgres
+      DB_NAME: taxpulse_l
+      DB_PORT: "5432"
+      DB_SECRET_ID: taxpulse/local/db-password
+      DB_SSL: disable
+      DB_USER: taxpulse_app
+      DDB_ENDPOINT: http://floci:4566
+      JWT_AUDIENCE: taxpulse-clients
+      JWT_ISSUER: taxpulse-api
+      JWT_SECRET_ID: taxpulse/local/jwt-signing-keys
+      PORT: "3000"
+      REDIS_URL: redis://redis:6379
     depends_on:
+      compute:
+        condition: service_healthy
+      floci:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      compute:
-        condition: service_started
+    ports:
+      - "3000:3000"
+    networks:
+      - taxpulse-local
+
+  tivs-acl:
+    image: node:24.17.0-trixie-slim
+    profiles: ["brownfield"]
+    working_dir: /workspace/services/tivs-acl
+    command: ["sh", "-lc", "npm ci && npm run build && npm start"]
+    environment:
+      ACL_PORT: "4300"
+      NODE_ENV: production
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const http=require('node:http'); const req=http.request({hostname:'127.0.0.1',port:4300,path:'/v1/taxpayer-status',method:'POST',timeout:2000,headers:{'content-type':'application/json'}},res=>process.exit(res.statusCode<500?0:1)); req.on('error',()=>process.exit(1)); req.end(JSON.stringify({taxpayerId:'000000000',taxpayerIdType:'SSN'}));\""
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    ports:
+      - "4300:4300"
+    volumes:
+      - .:/workspace:ro
+      - tivs-acl-node-modules:/workspace/services/tivs-acl/node_modules
+    networks:
+      - taxpulse-local
+
+networks:
+  taxpulse-local:
+    driver: bridge
+
+volumes:
+  tivs-acl-node-modules:
