@@ -1,0 +1,14 @@
+{
+  "name": "@taxpulse/lambda-present-to-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TaxPulse present-to-client Lambda stub for low-traffic workflow commands.",
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "2.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.15",
+    "typescript": "5.5.4"
+  }
+}

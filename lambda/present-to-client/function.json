@@ -1,0 +1,16 @@
+{
+  "functionName": "taxpulse-present-to-client",
+  "runtime": "nodejs24.x",
+  "architectures": ["arm64"],
+  "handler": "handler.handler",
+  "timeout": 30,
+  "memorySize": 256,
+  "role": "arn:aws:iam::000000000000:role/taxpulse-present-to-client-lambda",
+  "environment": {
+    "variables": {
+      "TAXPULSE_API_BASE_URL": "http://api:3000"
+    }
+  },
+  "layers": ["arn:aws:lambda:us-east-1:000000000000:layer:taxpulse-node-powertools:1"],
+  "description": "Low-traffic present-to-client workflow command stub. Runs on Node 24 ARM64 and forwards to the Core Case Service."
+}
