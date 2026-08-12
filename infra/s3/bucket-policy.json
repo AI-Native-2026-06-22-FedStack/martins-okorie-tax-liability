@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowCloudFrontOacReadOnly",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudfront.amazonaws.com"
+      },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::__BUCKET_NAME__/*",
+      "Condition": {
+        "StringEquals": {
+          "AWS:SourceArn": "__DISTRIBUTION_ARN__"
+        }
+      }
+    }
+  ]
+}

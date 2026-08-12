@@ -10,11 +10,13 @@ import { initializePassport } from "./auth/verifier.js";
 import { correlationMiddleware } from "./logging/correlation.js";
 import { costHeaderMiddleware } from "./middleware/cost-header.js";
 import { v1Router } from "./routes/v1/index.js";
+import { createCorsMiddleware, loadCorsConfig } from "./config/cors.js";
 
 export const app = express();
 initializePassport();
 
 app.use(express.json());
+app.use(createCorsMiddleware(loadCorsConfig()));
 app.use(correlationMiddleware);
 app.use(costHeaderMiddleware);
 app.use(passport.initialize());
