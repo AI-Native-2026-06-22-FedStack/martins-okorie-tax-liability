@@ -29,3 +29,13 @@ Produced — Added an explicit CloudFront viewer-request rewrite function at `in
 Accepted or rejected — Accepted.
 
 Why — The code contract now includes both accepted SPA fallback forms while preserving private-bucket/OAC-only definitions; floci readback confirms public-access-block, no static website hosting, and OAC origin configuration, but the emulator does not preserve fallback fields or serve the generated CloudFront hostname correctly.
+
+## Entry 4
+
+Asked — Complete Task 2 by wiring the deployed SPA to the deployed API across origins using configuration only: exact CloudFront origin CORS on the Core Case Service and Lambda route, `Authorization` allowed for bearer-token preflight, and SPA API base URL set by config without changing SPA logic.
+
+Produced — Updated Core API CORS config to the exact floci CloudFront origin with `GET`, `POST`, and `PATCH`; added an authenticated cross-origin CORS test; added exact-origin CORS and `OPTIONS` handling to the present-to-client Lambda and API Gateway definition; added a tracked SPA env example for `VITE_API_BASE_URL=http://localhost:3000`; rebuilt the Lambda artifact; redacted logged authorization headers; and recorded the verification in evidence.
+
+Accepted or rejected — Accepted.
+
+Why — Focused Core API tests passed, the authenticated cross-origin request reached auth with the bearer token while logs redacted the header, the Lambda preflight returned exact-origin CORS headers with `Authorization`, and the SPA API base URL is controlled by configuration rather than component or routing edits.

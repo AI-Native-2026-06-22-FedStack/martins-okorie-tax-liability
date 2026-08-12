@@ -94,6 +94,7 @@ services:
       JWT_SECRET_ID: taxpulse/local/jwt-signing-keys
       PORT: "3000"
       REDIS_URL: redis://redis:6379
+      SPA_CLOUDFRONT_ORIGIN: http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566
     depends_on:
       compute:
         condition: service_healthy

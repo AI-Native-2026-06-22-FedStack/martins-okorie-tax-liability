@@ -145,15 +145,48 @@ Files added or updated:
 - `apps/api/src/config/env.ts`
 - `apps/api/.env.example`
 - `apps/api/test/cors.test.ts`
+- `apps/web/.env.example`
+- `apigw/http-api.json`
+- `lambda/present-to-client/handler.ts`
+- `lambda/present-to-client/dist/handler.js`
+- `docker-compose.yml`
+- `shared/redaction-config.json`
 
-The API now allows the exact `SPA_CLOUDFRONT_ORIGIN` only, defaults that origin to the
-floci endpoint `http://localhost:4566`, allows `GET` and `POST`, and includes
-`Authorization` in the preflight allow headers. It does not use wildcard CORS.
+The Core Case Service now allows the exact `SPA_CLOUDFRONT_ORIGIN` only:
+`http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566`. It allows the SPA's
+used methods `GET`, `POST`, and `PATCH`, and includes `Authorization` in the preflight
+allow headers. It does not use wildcard CORS.
+
+The serverless present-to-client route also returns exact-origin CORS headers and answers
+`OPTIONS` preflight with `Authorization` allowed. The API Gateway definition carries the
+same CORS contract.
+
+The SPA API base URL is configured through Vite environment configuration:
+
+```text
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+No SPA component or routing code was edited for Task 2.
 
 Focused verification:
 
 ```text
-✓ test/cors.test.ts (2 tests)
+✓ test/cors.test.ts (3 tests)
+Core API preflight returned:
+  access-control-allow-origin: http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566
+  access-control-allow-methods: GET, POST, PATCH
+  access-control-allow-headers: Content-Type, Authorization, X-Correlation-Id
+
+Core API authenticated cross-origin POST returned 400 instead of 401, confirming the
+bearer token reached the protected route and auth accepted it before body validation.
+The request log redacted the bearer value as `authorization: "[REDACTED]"`.
+
+Lambda OPTIONS returned:
+  statusCode: 204
+  access-control-allow-origin: http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566
+  access-control-allow-methods: POST, OPTIONS
+  access-control-allow-headers: Content-Type, Authorization, X-Correlation-Id
 ```
 
 ## Task 3: Deploy Script

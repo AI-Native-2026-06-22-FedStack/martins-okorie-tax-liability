@@ -4,9 +4,12 @@ import { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { app } from "../src/app.js";
+import { signAccessToken } from "../src/auth/tokens.js";
 
 let server: Server;
 let baseUrl: string;
+const spaCloudFrontOrigin = "http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566";
+const tenantId = "11111111-1111-4111-8111-111111111111";
 
 describe("SPA CORS configuration", () => {
   beforeAll(async () => {
@@ -36,15 +39,15 @@ describe("SPA CORS configuration", () => {
     const response = await fetch(`${baseUrl}/v1/cycles`, {
       headers: {
         "Access-Control-Request-Headers": "Authorization, Content-Type",
-        "Access-Control-Request-Method": "POST",
-        "Origin": "http://localhost:4566"
+        "Access-Control-Request-Method": "PATCH",
+        "Origin": spaCloudFrontOrigin
       },
       method: "OPTIONS"
     });
 
     expect(response.status).toBe(204);
-    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:4566");
-    expect(response.headers.get("access-control-allow-methods")).toBe("GET, POST");
+    expect(response.headers.get("access-control-allow-origin")).toBe(spaCloudFrontOrigin);
+    expect(response.headers.get("access-control-allow-methods")).toBe("GET, POST, PATCH");
     expect(response.headers.get("access-control-allow-headers")).toContain("Authorization");
     expect(response.headers.get("access-control-allow-origin")).not.toBe("*");
   });
@@ -61,5 +64,22 @@ describe("SPA CORS configuration", () => {
 
     expect(response.status).toBe(403);
     expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
+  it("keeps the bearer token on an authenticated cross-origin request", async () => {
+    const token = signAccessToken({ role: "Firm Admin", sub: "advisor-123", tenant_id: tenantId });
+    const response = await fetch(`${baseUrl}/v1/cycles`, {
+      body: JSON.stringify({}),
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Origin": spaCloudFrontOrigin
+      },
+      method: "POST"
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("access-control-allow-origin")).toBe(spaCloudFrontOrigin);
+    expect(response.headers.get("access-control-allow-origin")).not.toBe("*");
   });
 });

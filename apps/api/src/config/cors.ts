@@ -2,7 +2,9 @@ import type { RequestHandler } from "express";
 import { z } from "zod";
 
 export const CorsEnvSchema = z.object({
-  SPA_CLOUDFRONT_ORIGIN: z.url().default("http://localhost:4566")
+  SPA_CLOUDFRONT_ORIGIN: z
+    .url()
+    .default("http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566")
 });
 
 export type CorsConfig = {
@@ -17,7 +19,7 @@ export function loadCorsConfig(source: NodeJS.ProcessEnv = process.env): CorsCon
   return {
     allowedOrigin: env.SPA_CLOUDFRONT_ORIGIN,
     allowedHeaders: ["Content-Type", "Authorization", "X-Correlation-Id"],
-    allowedMethods: ["GET", "POST"]
+    allowedMethods: ["GET", "POST", "PATCH"]
   };
 }
 
