@@ -1,0 +1,16 @@
+{
+  "name": "taxpulse-serverless-http-api",
+  "protocolType": "HTTP",
+  "routes": [
+    {
+      "routeKey": "POST /transitions/present-to-client",
+      "targetFunctionName": "taxpulse-present-to-client",
+      "integrationType": "AWS_PROXY",
+      "payloadFormatVersion": "2.0"
+    }
+  ],
+  "stage": {
+    "name": "local",
+    "autoDeploy": true
+  }
+}
