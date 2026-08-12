@@ -39,3 +39,13 @@ Produced — Updated Core API CORS config to the exact floci CloudFront origin w
 Accepted or rejected — Accepted.
 
 Why — Focused Core API tests passed, the authenticated cross-origin request reached auth with the bearer token while logs redacted the header, the Lambda preflight returned exact-origin CORS headers with `Authorization`, and the SPA API base URL is controlled by configuration rather than component or routing edits.
+
+## Entry 5
+
+Asked — Complete Task 3 by adding tiered Cache-Control and a deploy-time CloudFront invalidation hook: long-cache fingerprinted assets, keep `index.html` fresh, invalidate only `/index.html`, run the deploy against floci, and confirm a redeploy serves the fresh entry point without invalidating assets.
+
+Produced — Verified `deploy/spa-deploy.sh` already uploads everything except `index.html` with `Cache-Control: max-age=31536000, immutable`, uploads `index.html` with `Cache-Control: no-cache`, and calls `cloudfront create-invalidation --paths "/index.html"` only; rebuilt and redeployed the SPA artifacts to floci; read back S3 metadata for `index.html`, JavaScript, and CSS assets; read back the CloudFront invalidation batch; and updated evidence.
+
+Accepted or rejected — Accepted.
+
+Why — floci readback showed `index.html` was reuploaded with a newer `LastModified` and `no-cache`, fingerprinted assets had `max-age=31536000, immutable`, and the completed invalidation batch contained exactly one path: `/index.html`.

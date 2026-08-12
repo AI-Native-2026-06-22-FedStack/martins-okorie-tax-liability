@@ -220,6 +220,65 @@ Cache header readback:
 }
 ```
 
+Redeploy verification on floci:
+
+```text
+Uploading immutable SPA assets
+Uploading fresh SPA entry point
+Invalidating CloudFront entry point
+SPA deploy complete
+Bucket: taxpulse-spa-floci
+DistributionId: EBE8OZYBEI79JH
+```
+
+Before redeploy, `index.html` was last modified at:
+
+```json
+{
+  "CacheControl": "no-cache",
+  "LastModified": "Wed, 12 Aug 2026 16:40:08 GMT"
+}
+```
+
+After redeploy, `index.html` was fresh and still no-cache:
+
+```json
+{
+  "CacheControl": "no-cache",
+  "LastModified": "Wed, 12 Aug 2026 16:49:47 GMT",
+  "ContentType": "text/html"
+}
+```
+
+Fingerprint asset readback after redeploy:
+
+```json
+{
+  "assets/index-BTyqfvbq.js": {
+    "CacheControl": "max-age=31536000, immutable",
+    "ContentType": "application/javascript"
+  },
+  "assets/index-Ds6L69AK.css": {
+    "CacheControl": "max-age=31536000, immutable",
+    "ContentType": "text/css"
+  }
+}
+```
+
+CloudFront invalidation readback confirms only the entry point was invalidated:
+
+```json
+{
+  "Status": "Completed",
+  "InvalidationBatch": {
+    "Paths": {
+      "Quantity": 1,
+      "Items": ["/index.html"]
+    }
+  }
+}
+```
+
 ## Verification Limits
 
 CloudFront URL loading and deep-link routing could not be completed. floci created
