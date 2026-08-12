@@ -54,8 +54,10 @@ Definitions added:
 - `infra/s3/bucket-policy.json`
 
 The CloudFront distribution definition uses an S3 origin with `OriginAccessControlId`,
-redirects viewers to HTTPS, serves `index.html` as the root object, and maps both 403
-and 404 missing-path responses back to `/index.html` for client-side routing.
+redirects viewers to HTTPS, serves `index.html` as the root object, maps both 403
+and 404 missing-path responses back to `/index.html`, and associates
+`infra/cloudfront/spa-rewrite.js` as an equivalent viewer-request rewrite for
+extensionless client-side routes such as `/filings/42`.
 
 The bucket policy template allows `s3:GetObject` only to the CloudFront service principal
 and scopes access with `AWS:SourceArn` to the created distribution ARN. The deploy script
@@ -100,15 +102,39 @@ CloudFront readback confirmed the private S3 origin uses OAC and HTTPS redirect:
 ```json
 {
   "DomainName": "taxpulse-spa-floci.s3.us-east-1.amazonaws.com",
-  "OriginAccessControlId": "33d6fef8-9c1b-468f-8b85-ada0c366ee8e",
+  "OriginAccessControlId": "74d1c8ac-edf6-4909-a8f7-e851aa5ed664",
   "ViewerProtocolPolicy": "redirect-to-https"
 }
 ```
 
-The checked-in distribution template contains 403 and 404 fallbacks to `/index.html`.
-floci accepted the distribution creation but normalized `CustomErrorResponses` to
-`Quantity: 0` on readback, so the code contract is present while the emulator readback
-does not preserve that field.
+The checked-in distribution template contains both fallback mechanisms:
+
+- `CustomErrorResponses` mapping 403 and 404 to `/index.html`
+- `FunctionAssociations` for `infra/cloudfront/spa-rewrite.js`, which rewrites
+  extensionless route requests to `/index.html`
+
+floci accepted the distribution creation but normalized both `CustomErrorResponses` and
+`FunctionAssociations` to `Quantity: 0` on readback, so the code contract is present
+while the emulator readback does not preserve either fallback field.
+
+No static website hosting is configured:
+
+```text
+An error occurred (NoSuchWebsiteConfiguration) when calling the GetBucketWebsite operation:
+The specified bucket does not have a website configuration.
+```
+
+Objects uploaded:
+
+```json
+[
+  "assets/index-DPKaR8BL.js",
+  "assets/index-Ds6L69AK.css",
+  "favicon.svg",
+  "icons.svg",
+  "index.html"
+]
+```
 
 ## Task 2: Deployed API CORS
 
@@ -163,7 +189,14 @@ Cache header readback:
 
 ## Verification Limits
 
-CloudFront URL loading and deep-link routing could not be completed because
-`ELEC7495ZQN5DK.cloudfront.net` did not resolve inside the floci container. floci also
-did not preserve `CustomErrorResponses` on distribution readback even though the
-checked-in distribution definition includes the `/index.html` fallback.
+CloudFront URL loading and deep-link routing could not be completed. floci created
+distribution `E8QHBU60URLFRL`, but requests to the local CloudFront hostname were handled
+as S3 requests and returned `NoSuchBucket` rather than serving through the distribution.
+floci also did not preserve the checked-in `CustomErrorResponses` or viewer-request
+`FunctionAssociations` on distribution readback.
+
+floci's S3 emulator also returned `index.html` directly over a bucket-style host even
+though all public-access-block flags and the OAC-scoped bucket policy were applied. The
+repository definitions still enforce the intended private-origin contract: no public
+bucket policy, no static website hosting, OAC on the CloudFront origin, and an
+OAC-scoped `AWS:SourceArn` bucket policy.

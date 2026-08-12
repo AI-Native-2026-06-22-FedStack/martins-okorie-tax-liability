@@ -28,6 +28,15 @@
       }
     },
     "Compress": true,
+    "FunctionAssociations": {
+      "Quantity": 1,
+      "Items": [
+        {
+          "EventType": "viewer-request",
+          "FunctionARN": "__REWRITE_FUNCTION_ARN__"
+        }
+      ]
+    },
     "ForwardedValues": {
       "QueryString": false,
       "Cookies": {

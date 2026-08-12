@@ -9,6 +9,7 @@ AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-test}"
 SPA_BUCKET_NAME="${SPA_BUCKET_NAME:-taxpulse-spa-floci}"
 DIST_DIR="${SPA_DIST_DIR:-$ROOT_DIR/apps/web/dist}"
 CLOUDFRONT_CONFIG_TEMPLATE="$ROOT_DIR/infra/cloudfront/distribution.json"
+REWRITE_FUNCTION_CODE="$ROOT_DIR/infra/cloudfront/spa-rewrite.js"
 BUCKET_POLICY_TEMPLATE="$ROOT_DIR/infra/s3/bucket-policy.json"
 
 export AWS_ACCESS_KEY_ID
@@ -51,8 +52,27 @@ oac_id="$(aws_local cloudfront create-origin-access-control \
   --query 'OriginAccessControl.Id' \
   --output text)"
 
+echo "Publishing SPA route rewrite function"
+rewrite_function_name="taxpulse-spa-route-rewrite"
+rewrite_function_etag="$(aws_local cloudfront create-function \
+  --name "$rewrite_function_name" \
+  --function-config Comment="Rewrite SPA client-side routes to index.html",Runtime=cloudfront-js-1.0 \
+  --function-code "fileb://$REWRITE_FUNCTION_CODE" \
+  --query 'ETag' \
+  --output text 2>/dev/null || true)"
+
+if [[ -n "$rewrite_function_etag" && "$rewrite_function_etag" != "None" ]]; then
+  aws_local cloudfront publish-function \
+    --name "$rewrite_function_name" \
+    --if-match "$rewrite_function_etag" >/dev/null
+fi
+
+rewrite_function_arn="arn:aws:cloudfront::000000000000:function/$rewrite_function_name"
 distribution_config="$tmp_dir/distribution.json"
-sed "s/__OAC_ID__/$oac_id/g" "$CLOUDFRONT_CONFIG_TEMPLATE" > "$distribution_config"
+sed \
+  -e "s/__OAC_ID__/$oac_id/g" \
+  -e "s#__REWRITE_FUNCTION_ARN__#$rewrite_function_arn#g" \
+  "$CLOUDFRONT_CONFIG_TEMPLATE" > "$distribution_config"
 
 existing_distribution_id="$(aws_local cloudfront list-distributions \
   --query "DistributionList.Items[?Comment=='TaxPulse local SPA distribution for floci'].Id | [0]" \
