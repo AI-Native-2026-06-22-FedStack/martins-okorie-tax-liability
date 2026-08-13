@@ -15,4 +15,7 @@ This directory records accepted and proposed architecture decisions for TaxPulse
 - [0013: Data Fetching Pattern for Server State and Navigation](ADR-0013-data-fetching.md)
 - [0014: Stage-Changed Event Fan-Out with SNS and SQS](ADR-0014-event-tool-decision.md)
 
+- [0022: Terraform Module Structure](ADR-0022-terraform-module-structure.md)
+- [0023: IaC Scanning Policy](ADR-0023-iac-scanning-policy.md)
+
 Add future ADRs to this index when they are proposed or accepted.

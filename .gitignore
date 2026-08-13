@@ -13,3 +13,10 @@ __pycache__/
 .venv/
 *.log
 local-deliverables/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+crash.log
