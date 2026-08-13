@@ -33,6 +33,10 @@ resource "aws_iam_role" "ecs_execution" {
     Name        = "${var.project_name}-ecs-execution"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [tags, tags_all]
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_execution_policy" {
@@ -49,6 +53,10 @@ resource "aws_iam_role" "ecs_task" {
   tags = {
     Name        = "${var.project_name}-ecs-task"
     Environment = var.environment
+  }
+
+  lifecycle {
+    ignore_changes = [tags, tags_all]
   }
 }
 
@@ -145,6 +153,10 @@ resource "aws_iam_role" "flow_log" {
   tags = {
     Name        = "${var.project_name}-vpc-flow-log"
     Environment = var.environment
+  }
+
+  lifecycle {
+    ignore_changes = [tags, tags_all]
   }
 }
 

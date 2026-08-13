@@ -40,5 +40,16 @@ Accepted or rejected — Accepted.
 
 Why — The dual scanner gate was verified to fail on seeded security violations, passed clean after remediation, emitted SARIF evidence mapping to NIST 800-53 RA-5/SI-2, and documented all justified suppressions in `docs/adr/0023-iac-scanning-policy.md`.
 
+## Entry 5
+
+Asked — Execute plan/apply discipline against floci: generate a reviewable `terraform plan` artifact, run `terraform apply` on floci, confirm 38 base resources are created and state is tracked in S3 with `use_lockfile = true`, and prove zero drift via a clean re-plan.
+
+Produced — Generated reviewed plan file `tfplan` showing 38 additions and 0 destructions, saved human-readable plan to `artifacts/tfplan.txt`, applied plan against floci deploying all 38 base resources to the S3-native locked backend, verified state tracking via `terraform state list`, re-ran `terraform plan` confirming zero drift (`No changes`), and documented evidence in `evidence/week-8-day-1-terraform-iac-scanning.md`.
+
+Accepted or rejected — Accepted.
+
+Why — The base infrastructure was deployed using plan/apply discipline, state was persisted in the S3-native locked backend, and a subsequent re-plan confirmed zero drift with zero changes needed.
+
+
 
 
