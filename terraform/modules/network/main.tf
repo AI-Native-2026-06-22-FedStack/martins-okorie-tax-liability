@@ -62,6 +62,10 @@ resource "aws_flow_log" "vpc" {
     Name        = "${var.project_name}-vpc-flow-log"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [iam_role_arn]
+  }
 }
 
 # ── Internet Gateway ────────────────────────────────────────────────────────
@@ -201,31 +205,34 @@ resource "aws_security_group" "alb" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "alb_https" {
-  security_group_id = aws_security_group.alb.id
-  description       = "HTTPS from the internet to the ALB only."
+resource "aws_security_group_rule" "alb_https" {
+  type              = "ingress"
   from_port         = 443
   to_port           = 443
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.alb.id
+  description       = "HTTPS from the internet to the ALB only."
 }
 
-resource "aws_vpc_security_group_egress_rule" "alb_to_api" {
-  security_group_id            = aws_security_group.alb.id
-  description                  = "Forward HTTPS listener traffic to API tasks."
-  from_port                    = 3000
-  to_port                      = 3000
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.task.id
+resource "aws_security_group_rule" "alb_to_api" {
+  type                     = "egress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.task.id
+  security_group_id        = aws_security_group.alb.id
+  description              = "Forward HTTPS listener traffic to API tasks."
 }
 
-resource "aws_vpc_security_group_egress_rule" "alb_to_compute" {
-  security_group_id            = aws_security_group.alb.id
-  description                  = "Forward internal Tax Engine traffic to compute tasks."
-  from_port                    = 8000
-  to_port                      = 8000
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.task.id
+resource "aws_security_group_rule" "alb_to_compute" {
+  type                     = "egress"
+  from_port                = 8000
+  to_port                  = 8000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.task.id
+  security_group_id        = aws_security_group.alb.id
+  description              = "Forward internal Tax Engine traffic to compute tasks."
 }
 
 # Task security group — private Fargate tasks
@@ -242,41 +249,45 @@ resource "aws_security_group" "task" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "task_from_alb_api" {
-  security_group_id            = aws_security_group.task.id
-  description                  = "Core Case Service from alb-sg only."
-  from_port                    = 3000
-  to_port                      = 3000
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.alb.id
+resource "aws_security_group_rule" "task_from_alb_api" {
+  type                     = "ingress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb.id
+  security_group_id        = aws_security_group.task.id
+  description              = "Core Case Service from alb-sg only."
 }
 
-resource "aws_vpc_security_group_ingress_rule" "task_from_alb_compute" {
-  security_group_id            = aws_security_group.task.id
-  description                  = "Tax Engine from alb-sg only."
-  from_port                    = 8000
-  to_port                      = 8000
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.alb.id
+resource "aws_security_group_rule" "task_from_alb_compute" {
+  type                     = "ingress"
+  from_port                = 8000
+  to_port                  = 8000
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb.id
+  security_group_id        = aws_security_group.task.id
+  description              = "Tax Engine from alb-sg only."
 }
 
-resource "aws_vpc_security_group_egress_rule" "task_to_db" {
-  security_group_id            = aws_security_group.task.id
-  description                  = "Database access from app tasks to Postgres only."
-  from_port                    = 5432
-  to_port                      = 5432
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.db.id
+resource "aws_security_group_rule" "task_to_db" {
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.db.id
+  security_group_id        = aws_security_group.task.id
+  description              = "Database access from app tasks to Postgres only."
 }
 
 # trivy:ignore:AVD-AWS-0104: tasks need outbound HTTPS for AWS API calls (SecretsManager, DynamoDB, SNS, SQS) — reviewed in ADR-0023
-resource "aws_vpc_security_group_egress_rule" "task_to_aws" {
-  security_group_id = aws_security_group.task.id
-  description       = "AWS API calls through VPC endpoints or floci."
+resource "aws_security_group_rule" "task_to_aws" {
+  type              = "egress"
   from_port         = 443
   to_port           = 443
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.task.id
+  description       = "AWS API calls through VPC endpoints or floci."
 }
 
 # Database security group — private Postgres
@@ -293,11 +304,12 @@ resource "aws_security_group" "db" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "db_from_task" {
-  security_group_id            = aws_security_group.db.id
-  description                  = "Postgres from task-sg only."
-  from_port                    = 5432
-  to_port                      = 5432
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.task.id
+resource "aws_security_group_rule" "db_from_task" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.task.id
+  security_group_id        = aws_security_group.db.id
+  description              = "Postgres from task-sg only."
 }
