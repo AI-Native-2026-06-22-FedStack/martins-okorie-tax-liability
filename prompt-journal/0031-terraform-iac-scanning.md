@@ -20,3 +20,14 @@ Accepted or rejected — Accepted.
 
 Why — The complete gated Terraform base configuration was successfully deployed to floci with 38 resources; static scanning passed without violations; verification proof of gate failure on seeded vulnerabilities was captured; and all compliance artifacts were written under the artifacts evidence directory.
 
+## Entry 3
+
+Asked — Initialize one Terraform root under `infra/terraform/` with remote state in S3 using S3-native locking (`use_lockfile = true`), separate network and IAM base modules without internal backends, pinned AWS provider (`~> 6.0`), and record ADR-0022.
+
+Produced — Configured `infra/terraform/backend.tf` with remote S3 backend and `use_lockfile = true`, authored `infra/terraform/modules/network` and `infra/terraform/modules/iam` as separate concern-based modules, composed both in `infra/terraform/main.tf`, exposed outputs for cross-module wiring, and documented the architecture in `docs/adr/0022-terraform-module-structure.md`.
+
+Accepted or rejected — Accepted.
+
+Why — The root module and base modules under `infra/terraform/` were successfully authored, verified with terraform init and plan against floci, and recorded in MADR format under `docs/adr/0022-terraform-module-structure.md`.
+
+
