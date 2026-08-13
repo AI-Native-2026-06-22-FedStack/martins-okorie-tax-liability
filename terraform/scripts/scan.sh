@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # scan.sh — Day-1 IaC scanning gate: Checkov + Trivy
 #
-# Runs both scanners against the Terraform directory and emits SARIF to
+# Runs both scanners against the infra/terraform directory and emits SARIF to
 # artifacts/security/ for audit evidence (RA-5, SI-2). Exits non-zero if
 # either scanner finds a policy violation (the gate).
 # ─────────────────────────────────────────────────────────────────────────────
@@ -10,7 +10,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-TF_DIR="${REPO_ROOT}/terraform"
+TF_DIR="${REPO_ROOT}/infra/terraform"
+
+if [ ! -d "${TF_DIR}" ]; then
+  TF_DIR="${REPO_ROOT}/terraform"
+fi
+
 EVIDENCE_DIR="${REPO_ROOT}/artifacts/security"
 
 mkdir -p "${EVIDENCE_DIR}"

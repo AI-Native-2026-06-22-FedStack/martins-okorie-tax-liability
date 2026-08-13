@@ -72,7 +72,7 @@
       "columnKind": "utf16CodeUnits",
       "originalUriBaseIds": {
         "ROOTPATH": {
-          "uri": "file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/terraform/"
+          "uri": "file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/infra/terraform/"
         }
       }
     }

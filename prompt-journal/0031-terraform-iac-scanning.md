@@ -30,4 +30,15 @@ Accepted or rejected — Accepted.
 
 Why — The root module and base modules under `infra/terraform/` were successfully authored, verified with terraform init and plan against floci, and recorded in MADR format under `docs/adr/0022-terraform-module-structure.md`.
 
+## Entry 4
+
+Asked — Wire the Checkov + Trivy config IaC scan gate, prove it fails on a seeded misconfiguration, generate SARIF evidence in `artifacts/security/`, and record ADR-0023 with a skip-justification matrix.
+
+Produced — Created `.github/workflows/iac-scan.yml`, updated `terraform/scripts/scan.sh` to target `infra/terraform/`, seeded an unencrypted public S3 bucket with a public ACL to prove scan failure on `CKV_AWS_20` and `AVD-AWS-0092`, cleaned up the seeded resource, generated SARIF compliance evidence in `artifacts/security/`, and recorded the policy and skip-justification matrix in `docs/adr/0023-iac-scanning-policy.md`.
+
+Accepted or rejected — Accepted.
+
+Why — The dual scanner gate was verified to fail on seeded security violations, passed clean after remediation, emitted SARIF evidence mapping to NIST 800-53 RA-5/SI-2, and documented all justified suppressions in `docs/adr/0023-iac-scanning-policy.md`.
+
+
 
