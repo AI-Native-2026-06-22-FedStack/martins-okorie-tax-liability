@@ -19,6 +19,9 @@ export const ApiEnvSchema = z.object({
   JWT_SECRET_ID: z.string().min(1),
   JWT_ISSUER: z.string().min(1).default("taxpulse-api"),
   JWT_AUDIENCE: z.string().min(1).default("taxpulse-clients"),
+  SPA_CLOUDFRONT_ORIGIN: z
+    .url()
+    .default("http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566"),
   SECRETS_REFRESH_MS: z.coerce
     .number()
     .int()

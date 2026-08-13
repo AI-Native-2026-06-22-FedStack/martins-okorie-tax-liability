@@ -59,6 +59,15 @@ interface PresentToClientForwarder {
 
 const logger = new Logger({ serviceName: "present-to-client" });
 const presentToClientForwarder = createPresentToClientForwarder();
+const spaCloudFrontOrigin =
+  process.env.SPA_CLOUDFRONT_ORIGIN ??
+  "http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566";
+const corsHeaders = {
+  "access-control-allow-headers": "Content-Type, Authorization, X-Correlation-Id",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-origin": spaCloudFrontOrigin,
+  "vary": "Origin"
+};
 
 function createPresentToClientForwarder(): PresentToClientForwarder {
   const apiBaseUrl = new URL(process.env.TAXPULSE_API_BASE_URL ?? "http://api:3000");
@@ -90,6 +99,14 @@ export async function handler(
     event.headers?.["x-request-id"] ??
     event.requestContext?.requestId ??
     context.awsRequestId;
+
+  if (event.requestContext?.http?.method === "OPTIONS") {
+    return {
+      body: "",
+      headers: corsHeaders,
+      statusCode: 204
+    };
+  }
 
   logger.setCorrelationId(correlationId);
   logger.info("present-to-client command received", {
@@ -167,6 +184,7 @@ export async function handler(
   return {
     body: responseBody || JSON.stringify({ accepted: upstreamResponse.ok }),
     headers: {
+      ...corsHeaders,
       "content-type": upstreamResponse.headers.get("content-type") ?? "application/json",
       "x-correlation-id": correlationId
     },
@@ -235,6 +253,7 @@ function jsonResponse(
   return {
     body: JSON.stringify(body),
     headers: {
+      ...corsHeaders,
       "content-type": "application/problem+json",
       "x-correlation-id": correlationId
     },

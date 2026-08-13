@@ -1,6 +1,11 @@
 {
   "name": "taxpulse-serverless-http-api",
   "protocolType": "HTTP",
+  "corsConfiguration": {
+    "allowOrigins": ["http://E8QHBU60URLFRL.cloudfront.localhost.localstack.cloud:4566"],
+    "allowMethods": ["POST", "OPTIONS"],
+    "allowHeaders": ["Content-Type", "Authorization", "X-Correlation-Id"]
+  },
   "routes": [
     {
       "routeKey": "POST /transitions/present-to-client",
