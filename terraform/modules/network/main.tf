@@ -40,6 +40,7 @@ resource "aws_default_security_group" "default" {
 }
 
 # CKV2_AWS_11: Enable VPC flow logging for network audit trail.
+# trivy:ignore:AVD-AWS-0017: default CloudWatch log group encryption is acceptable for development floci environment — reviewed in ADR-0023
 resource "aws_cloudwatch_log_group" "vpc_flow_log" {
   # checkov:skip=CKV_AWS_158: encryption using default log group encryption is acceptable for development floci environment — reviewed in ADR-0023
   name              = "/aws/vpc/${var.project_name}-${var.environment}/flow-logs"

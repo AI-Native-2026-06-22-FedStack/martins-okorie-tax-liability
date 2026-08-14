@@ -23,8 +23,8 @@
               },
               "helpUri": "https://avd.aquasec.com/misconfig/aws-0017",
               "help": {
-                "text": "Misconfiguration AWS-0017\nType: Terraform Security Check\nSeverity: LOW\nCheck: CloudWatch log groups should be encrypted using CMK\nMessage: Log group is not encrypted.\nLink: [AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)\nCloudWatch log groups are encrypted by default, however, to get the full benefit of controlling key rotation and other KMS aspects a KMS CMK should be used.\n",
-                "markdown": "**Misconfiguration AWS-0017**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|CloudWatch log groups should be encrypted using CMK|Log group is not encrypted.|[AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)|\n\nCloudWatch log groups are encrypted by default, however, to get the full benefit of controlling key rotation and other KMS aspects a KMS CMK should be used.\n"
+                "text": "Misconfiguration AWS-0017\nType: Terraform Plan Snapshot Security Check\nSeverity: LOW\nCheck: CloudWatch log groups should be encrypted using CMK\nMessage: Log group is not encrypted.\nLink: [AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)\nCloudWatch log groups are encrypted by default, however, to get the full benefit of controlling key rotation and other KMS aspects a KMS CMK should be used.\n",
+                "markdown": "**Misconfiguration AWS-0017**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Plan Snapshot Security Check|LOW|CloudWatch log groups should be encrypted using CMK|Log group is not encrypted.|[AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)|\n\nCloudWatch log groups are encrypted by default, however, to get the full benefit of controlling key rotation and other KMS aspects a KMS CMK should be used.\n"
               },
               "properties": {
                 "precision": "very-high",
@@ -46,7 +46,7 @@
           "ruleIndex": 0,
           "level": "note",
           "message": {
-            "text": "Artifact: modules/network/main.tf\nType: terraform\nVulnerability AWS-0017\nSeverity: LOW\nMessage: Log group is not encrypted.\nLink: [AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)"
+            "text": "Artifact: modules/network/main.tf\nType: terraformplan-snapshot\nVulnerability AWS-0017\nSeverity: LOW\nMessage: Log group is not encrypted.\nLink: [AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)"
           },
           "locations": [
             {

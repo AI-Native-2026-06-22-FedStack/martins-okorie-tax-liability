@@ -34,7 +34,7 @@ Scanning Rules & Evidence:
 | CKV_AWS_130 / AVD-AWS-0164 | Checkov + Trivy | `aws_subnet.public` | Public subnets host the internet-facing ALB tier by design (ADR-0020); `map_public_ip_on_launch = true` is required for ALB public ingress | 2026-08-13 | TaxPulse DevSecOps |
 | AVD-AWS-0104 | Trivy | `aws_vpc_security_group_egress_rule.task_to_aws` | Fargate tasks require outbound HTTPS (port 443) to reach AWS API endpoints (SecretsManager, DynamoDB, SNS, SQS) or local floci emulator | 2026-08-13 | TaxPulse DevSecOps |
 | CKV_AWS_111 / CKV_AWS_356 | Checkov | `aws_iam_role_policy.flow_log` | VPC flow log delivery role requires wildcard (`*`) resource permissions to dynamically create CloudWatch Log groups and streams | 2026-08-13 | TaxPulse DevSecOps |
-| CKV_AWS_158 | Checkov | `aws_cloudwatch_log_group.vpc_flow_log` | Default CloudWatch Log Group encryption is acceptable for dev/floci test environment; KMS CMK encryption is enforced in prod | 2026-08-13 | TaxPulse DevSecOps |
+| CKV_AWS_158 / AVD-AWS-0017 | Checkov + Trivy | `aws_cloudwatch_log_group.vpc_flow_log` | Default CloudWatch Log Group encryption is acceptable for dev/floci test environment; KMS CMK encryption is enforced in prod | 2026-08-13 | TaxPulse DevSecOps |
 
 ## Consequences
 - Un-remediated security misconfigurations fail PR builds and are blocked from merging.
