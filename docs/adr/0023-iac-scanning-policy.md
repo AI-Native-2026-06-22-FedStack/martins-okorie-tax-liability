@@ -35,6 +35,12 @@ Scanning Rules & Evidence:
 | AVD-AWS-0104 | Trivy | `aws_vpc_security_group_egress_rule.task_to_aws` | Fargate tasks require outbound HTTPS (port 443) to reach AWS API endpoints (SecretsManager, DynamoDB, SNS, SQS) or local floci emulator | 2026-08-13 | TaxPulse DevSecOps |
 | CKV_AWS_111 / CKV_AWS_356 | Checkov | `aws_iam_role_policy.flow_log` | VPC flow log delivery role requires wildcard (`*`) resource permissions to dynamically create CloudWatch Log groups and streams | 2026-08-13 | TaxPulse DevSecOps |
 | CKV_AWS_158 / AVD-AWS-0017 | Checkov + Trivy | `aws_cloudwatch_log_group.vpc_flow_log` | Default CloudWatch Log Group encryption is acceptable for dev/floci test environment; KMS CMK encryption is enforced in prod | 2026-08-13 | TaxPulse DevSecOps |
+| CKV_AWS_157 / AVD-AWS-0176 | Checkov + Trivy | `aws_db_instance.main` | Multi-AZ is disabled for local floci development environment | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_161 / AVD-AWS-0080 | Checkov + Trivy | `aws_db_instance.main` | IAM database authentication disabled for local floci postgres instance | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_2 / AVD-AWS-0054 | Checkov + Trivy | `aws_lb_listener.http` | HTTP listener is used for local floci emulator; TLS terminated at ALB in production | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_18 / AVD-AWS-0089 | Checkov + Trivy | `aws_s3_bucket.spa` | S3 access logging disabled for local floci SPA static assets bucket | 2026-08-14 | TaxPulse DevSecOps |
+| AVD-AWS-0132 | Trivy | `aws_s3_bucket_server_side_encryption_configuration.spa` | Default AES256 encryption used for SPA static assets bucket in local floci | 2026-08-14 | TaxPulse DevSecOps |
+| AVD-AWS-0136 | Trivy | `aws_sns_topic.stage_changed` | Default AWS managed key alias/aws/sns used for local floci development | 2026-08-14 | TaxPulse DevSecOps |
 
 ## Consequences
 - Un-remediated security misconfigurations fail PR builds and are blocked from merging.

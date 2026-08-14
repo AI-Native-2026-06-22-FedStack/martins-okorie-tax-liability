@@ -10,6 +10,141 @@
           "name": "Trivy",
           "rules": [
             {
+              "id": "AWS-0034",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "ECS clusters should have container insights enabled"
+              },
+              "fullDescription": {
+                "text": "Cloudwatch Container Insights provide more metrics and logs for container based applications and micro services.\n"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/aws-0034",
+              "help": {
+                "text": "Misconfiguration AWS-0034\nType: Terraform Security Check\nSeverity: LOW\nCheck: ECS clusters should have container insights enabled\nMessage: Cluster does not have container insights enabled.\nLink: [AWS-0034](https://avd.aquasec.com/misconfig/aws-0034)\nCloudwatch Container Insights provide more metrics and logs for container based applications and micro services.\n",
+                "markdown": "**Misconfiguration AWS-0034**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|ECS clusters should have container insights enabled|Cluster does not have container insights enabled.|[AWS-0034](https://avd.aquasec.com/misconfig/aws-0034)|\n\nCloudwatch Container Insights provide more metrics and logs for container based applications and micro services.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "AWS-0025",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "DynamoDB tables should use at rest encryption with a Customer Managed Key"
+              },
+              "fullDescription": {
+                "text": "Using AWS managed keys does not allow for fine grained control. DynamoDB tables are encrypted by default using AWS managed encryption keys. To increase control of the encryption and control the management of factors like key rotation, use a Customer Managed Key.\n"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/aws-0025",
+              "help": {
+                "text": "Misconfiguration AWS-0025\nType: Terraform Security Check\nSeverity: LOW\nCheck: DynamoDB tables should use at rest encryption with a Customer Managed Key\nMessage: Table encryption explicitly uses the default KMS key.\nLink: [AWS-0025](https://avd.aquasec.com/misconfig/aws-0025)\nUsing AWS managed keys does not allow for fine grained control. DynamoDB tables are encrypted by default using AWS managed encryption keys. To increase control of the encryption and control the management of factors like key rotation, use a Customer Managed Key.\n",
+                "markdown": "**Misconfiguration AWS-0025**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|DynamoDB tables should use at rest encryption with a Customer Managed Key|Table encryption explicitly uses the default KMS key.|[AWS-0025](https://avd.aquasec.com/misconfig/aws-0025)|\n\nUsing AWS managed keys does not allow for fine grained control. DynamoDB tables are encrypted by default using AWS managed encryption keys. To increase control of the encryption and control the management of factors like key rotation, use a Customer Managed Key.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "AWS-0050",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Redis cluster should have backup retention turned on"
+              },
+              "fullDescription": {
+                "text": "Redis clusters should have a snapshot retention time to ensure that they are backed up and can be restored if required.\n"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/aws-0050",
+              "help": {
+                "text": "Misconfiguration AWS-0050\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: Redis cluster should have backup retention turned on\nMessage: Cluster snapshot retention is not enabled.\nLink: [AWS-0050](https://avd.aquasec.com/misconfig/aws-0050)\nRedis clusters should have a snapshot retention time to ensure that they are backed up and can be restored if required.\n",
+                "markdown": "**Misconfiguration AWS-0050**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|Redis cluster should have backup retention turned on|Cluster snapshot retention is not enabled.|[AWS-0050](https://avd.aquasec.com/misconfig/aws-0050)|\n\nRedis clusters should have a snapshot retention time to ensure that they are backed up and can be restored if required.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "AWS-0098",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Secrets Manager should use customer managed keys"
+              },
+              "fullDescription": {
+                "text": "Secrets Manager encrypts secrets by default using a default key created by AWS. To ensure control and granularity of secret encryption, CMK's should be used explicitly.\n"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/aws-0098",
+              "help": {
+                "text": "Misconfiguration AWS-0098\nType: Terraform Security Check\nSeverity: LOW\nCheck: Secrets Manager should use customer managed keys\nMessage: Secret explicitly uses the default key.\nLink: [AWS-0098](https://avd.aquasec.com/misconfig/aws-0098)\nSecrets Manager encrypts secrets by default using a default key created by AWS. To ensure control and granularity of secret encryption, CMK's should be used explicitly.\n",
+                "markdown": "**Misconfiguration AWS-0098**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|Secrets Manager should use customer managed keys|Secret explicitly uses the default key.|[AWS-0098](https://avd.aquasec.com/misconfig/aws-0098)|\n\nSecrets Manager encrypts secrets by default using a default key created by AWS. To ensure control and granularity of secret encryption, CMK's should be used explicitly.\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
+              "id": "AWS-0133",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Enable Performance Insights to detect potential problems"
+              },
+              "fullDescription": {
+                "text": "Enabling Performance insights allows for greater depth in monitoring data.\nFor example, information about active sessions could help diagose a compromise or assist in the investigation\n"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/aws-0133",
+              "help": {
+                "text": "Misconfiguration AWS-0133\nType: Terraform Security Check\nSeverity: LOW\nCheck: Enable Performance Insights to detect potential problems\nMessage: Instance does not have performance insights enabled.\nLink: [AWS-0133](https://avd.aquasec.com/misconfig/aws-0133)\nEnabling Performance insights allows for greater depth in monitoring data.\nFor example, information about active sessions could help diagose a compromise or assist in the investigation\n",
+                "markdown": "**Misconfiguration AWS-0133**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|LOW|Enable Performance Insights to detect potential problems|Instance does not have performance insights enabled.|[AWS-0133](https://avd.aquasec.com/misconfig/aws-0133)|\n\nEnabling Performance insights allows for greater depth in monitoring data.\nFor example, information about active sessions could help diagose a compromise or assist in the investigation\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "2.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "LOW"
+                ]
+              }
+            },
+            {
               "id": "AWS-0017",
               "name": "Misconfiguration",
               "shortDescription": {
@@ -42,8 +177,170 @@
       },
       "results": [
         {
-          "ruleId": "AWS-0017",
+          "ruleId": "AWS-0034",
           "ruleIndex": 0,
+          "level": "note",
+          "message": {
+            "text": "Artifact: modules/app/main.tf\nType: terraform\nVulnerability AWS-0034\nSeverity: LOW\nMessage: Cluster does not have container insights enabled.\nLink: [AWS-0034](https://avd.aquasec.com/misconfig/aws-0034)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/app/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 129,
+                  "startColumn": 1,
+                  "endLine": 137,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/app/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0025",
+          "ruleIndex": 1,
+          "level": "note",
+          "message": {
+            "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0025\nSeverity: LOW\nMessage: Table encryption explicitly uses the default KMS key.\nLink: [AWS-0025](https://avd.aquasec.com/misconfig/aws-0025)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/data/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 108,
+                  "startColumn": 1,
+                  "endLine": 110,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/data/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0050",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0050\nSeverity: MEDIUM\nMessage: Cluster snapshot retention is not enabled.\nLink: [AWS-0050](https://avd.aquasec.com/misconfig/aws-0050)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/data/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 131,
+                  "startColumn": 1,
+                  "endLine": 151,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/data/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0098",
+          "ruleIndex": 3,
+          "level": "note",
+          "message": {
+            "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0098\nSeverity: LOW\nMessage: Secret explicitly uses the default key.\nLink: [AWS-0098](https://avd.aquasec.com/misconfig/aws-0098)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/data/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 225,
+                  "startColumn": 1,
+                  "endLine": 236,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/data/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0098",
+          "ruleIndex": 3,
+          "level": "note",
+          "message": {
+            "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0098\nSeverity: LOW\nMessage: Secret explicitly uses the default key.\nLink: [AWS-0098](https://avd.aquasec.com/misconfig/aws-0098)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/data/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 238,
+                  "startColumn": 1,
+                  "endLine": 249,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/data/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0133",
+          "ruleIndex": 4,
+          "level": "note",
+          "message": {
+            "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0133\nSeverity: LOW\nMessage: Instance does not have performance insights enabled.\nLink: [AWS-0133](https://avd.aquasec.com/misconfig/aws-0133)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules/data/main.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 65,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "modules/data/main.tf"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0017",
+          "ruleIndex": 5,
           "level": "note",
           "message": {
             "text": "Artifact: modules/network/main.tf\nType: terraformplan-snapshot\nVulnerability AWS-0017\nSeverity: LOW\nMessage: Log group is not encrypted.\nLink: [AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)"
