@@ -192,6 +192,10 @@ resource "aws_ecs_task_definition" "api" {
     Name        = "${var.project_name}-task-api"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
 }
 
 resource "aws_ecs_service" "api" {
@@ -211,6 +215,10 @@ resource "aws_ecs_service" "api" {
     target_group_arn = aws_lb_target_group.api.arn
     container_name   = "api"
     container_port   = 3000
+  }
+
+  lifecycle {
+    ignore_changes = [scheduling_strategy, task_definition]
   }
 
   tags = {
@@ -269,6 +277,10 @@ resource "aws_ecs_task_definition" "compute" {
     Name        = "${var.project_name}-task-compute"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
 }
 
 resource "aws_ecs_service" "compute" {
@@ -288,6 +300,10 @@ resource "aws_ecs_service" "compute" {
     target_group_arn = aws_lb_target_group.compute.arn
     container_name   = "compute"
     container_port   = 8000
+  }
+
+  lifecycle {
+    ignore_changes = [scheduling_strategy, task_definition]
   }
 
   tags = {

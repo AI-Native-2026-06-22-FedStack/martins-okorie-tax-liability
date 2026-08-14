@@ -1,0 +1,172 @@
+module.iam.data.aws_iam_policy_document.flow_log_assume_role: Reading...
+module.network.aws_vpc.main: Refreshing state... [id=vpc-0ad6dbe3]
+module.iam.data.aws_iam_policy_document.flow_log_permissions: Reading...
+module.data.aws_sqs_queue.stage_changed_dlq: Refreshing state... [id=http://localhost:4566/000000000000/taxpulse-stage-changed-dlq]
+module.network.data.aws_availability_zones.available: Reading...
+module.iam.data.aws_iam_policy_document.task_runtime: Reading...
+module.data.aws_sns_topic.stage_changed: Refreshing state... [id=arn:aws:sns:us-east-1:000000000000:taxpulse-stage-changed]
+module.data.aws_secretsmanager_secret.db_password: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:taxpulse/local/db-password-K7SLXZ]
+module.app.aws_s3_bucket.spa: Refreshing state... [id=taxpulse-dev-spa]
+module.data.aws_dynamodb_table.plan_cycle_read_model: Refreshing state... [id=taxpulse-plan-cycle-read-model]
+module.iam.data.aws_iam_policy_document.flow_log_permissions: Read complete after 0s [id=3587827311]
+module.iam.data.aws_iam_policy_document.flow_log_assume_role: Read complete after 0s [id=586286681]
+module.iam.data.aws_iam_policy_document.task_runtime: Read complete after 0s [id=807734571]
+module.data.aws_secretsmanager_secret.jwt_signing_keys: Refreshing state... [id=arn:aws:secretsmanager:us-east-1:000000000000:secret:taxpulse/local/jwt-signing-keys-IVKN0Z]
+module.iam.data.aws_iam_policy_document.ecs_assume_role: Reading...
+module.network.aws_cloudwatch_log_group.vpc_flow_log: Refreshing state... [id=/aws/vpc/taxpulse-dev/flow-logs]
+module.iam.data.aws_iam_policy_document.ecs_assume_role: Read complete after 0s [id=3313554898]
+module.app.aws_ecs_cluster.main: Refreshing state... [id=arn:aws:ecs:us-east-1:000000000000:cluster/taxpulse-dev-cluster]
+module.network.data.aws_availability_zones.available: Read complete after 0s [id=us-east-1]
+module.iam.aws_iam_role.flow_log: Refreshing state... [id=taxpulse-vpc-flow-log]
+module.iam.aws_iam_role.ecs_task: Refreshing state... [id=taxpulse-ecs-task]
+module.iam.aws_iam_role.ecs_execution: Refreshing state... [id=taxpulse-ecs-execution]
+module.data.aws_sqs_queue.stage_changed_projection: Refreshing state... [id=http://localhost:4566/000000000000/taxpulse-stage-changed-projection]
+module.network.aws_internet_gateway.main: Refreshing state... [id=igw-82631d1e]
+module.network.aws_route_table.private_db: Refreshing state... [id=rtb-821aeaaf]
+module.network.aws_default_security_group.default: Refreshing state... [id=sg-4b7f9a64586ca66ba]
+module.data.aws_sqs_queue_policy.projection_queue_policy: Refreshing state... [id=http://localhost:4566/000000000000/taxpulse-stage-changed-projection]
+module.network.aws_security_group.task: Refreshing state... [id=sg-696d3f68b83271c0a]
+module.network.aws_security_group.db: Refreshing state... [id=sg-903a97e02b93a68c4]
+module.network.aws_route_table.private_app: Refreshing state... [id=rtb-867562f9]
+module.network.aws_subnet.private_app[0]: Refreshing state... [id=subnet-171ba989]
+module.data.aws_sns_topic_subscription.stage_changed_to_projection: Refreshing state... [id=arn:aws:sns:us-east-1:000000000000:taxpulse-stage-changed:6813f01b-2e49-4a21-98f0-4c7ce3146ab2]
+module.network.aws_subnet.private_app[1]: Refreshing state... [id=subnet-9f1eb450]
+module.network.aws_subnet.private_db[1]: Refreshing state... [id=subnet-f52f540c]
+module.network.aws_route_table.public: Refreshing state... [id=rtb-9690b533]
+module.network.aws_security_group.alb: Refreshing state... [id=sg-2930c92e8918f223d]
+module.network.aws_subnet.private_db[0]: Refreshing state... [id=subnet-14b85656]
+module.network.aws_subnet.public[0]: Refreshing state... [id=subnet-8b3340a7]
+module.network.aws_subnet.public[1]: Refreshing state... [id=subnet-b807675f]
+module.iam.aws_iam_role_policy_attachment.ecs_execution_policy: Refreshing state... [id=taxpulse-ecs-execution/arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy]
+module.iam.aws_iam_role_policy.flow_log: Refreshing state... [id=taxpulse-vpc-flow-log:taxpulse-vpc-flow-log-policy]
+module.iam.aws_iam_role_policy.task_runtime: Refreshing state... [id=taxpulse-ecs-task:taxpulse-runtime-aws-calls]
+module.app.aws_lb_target_group.compute: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-dev-tg-compute/7a7d175424cf4e01]
+module.app.aws_s3_bucket_website_configuration.spa: Refreshing state... [id=taxpulse-dev-spa]
+module.app.aws_lb_target_group.api: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/taxpulse-dev-tg-api/3a412d73bd334f99]
+module.app.aws_s3_bucket_server_side_encryption_configuration.spa: Refreshing state... [id=taxpulse-dev-spa]
+module.app.aws_s3_bucket_versioning.spa: Refreshing state... [id=taxpulse-dev-spa]
+module.network.aws_vpc_security_group_ingress_rule.db_from_task: Refreshing state... [id=sgr-616f7650332ec7c26]
+module.network.aws_vpc_security_group_egress_rule.task_to_aws: Refreshing state... [id=sgr-93f0c5b7ed014d72d]
+module.app.aws_s3_bucket_public_access_block.spa: Refreshing state... [id=taxpulse-dev-spa]
+module.network.aws_vpc_security_group_egress_rule.task_to_db: Refreshing state... [id=sgr-1521508ee4e398275]
+module.network.aws_route_table_association.private_app[0]: Refreshing state... [id=rtbassoc-f3512ca8]
+module.network.aws_route_table_association.private_app[1]: Refreshing state... [id=rtbassoc-0f9e1b58]
+module.network.aws_route.public_internet: Refreshing state... [id=r-rtb-9690b5331080289494]
+module.network.aws_vpc_security_group_egress_rule.alb_to_compute: Refreshing state... [id=sgr-9dc18075d0e1d6492]
+module.network.aws_vpc_security_group_egress_rule.alb_to_api: Refreshing state... [id=sgr-2150c41a3e5d79bd7]
+module.network.aws_vpc_security_group_ingress_rule.task_from_alb_api: Refreshing state... [id=sgr-a9501706a99efceb8]
+module.network.aws_vpc_security_group_ingress_rule.task_from_alb_compute: Refreshing state... [id=sgr-7427e0fee1e5d6c7c]
+module.network.aws_vpc_security_group_ingress_rule.alb_https: Refreshing state... [id=sgr-c3546d4a40049a09e]
+module.network.aws_route_table_association.public[1]: Refreshing state... [id=rtbassoc-5a194c33]
+module.network.aws_route_table_association.public[0]: Refreshing state... [id=rtbassoc-6f1e484f]
+module.network.aws_route_table_association.private_db[1]: Refreshing state... [id=rtbassoc-54d3b1ce]
+module.network.aws_route_table_association.private_db[0]: Refreshing state... [id=rtbassoc-c94e4b6f]
+module.network.aws_flow_log.vpc: Refreshing state... [id=fl-c9d622845b12c540d]
+module.data.aws_db_subnet_group.main: Refreshing state... [id=taxpulse-dev-db-subnet-group]
+module.data.aws_elasticache_replication_group.main: Refreshing state... [id=taxpulse-dev-redis]
+module.app.aws_lb.main: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/taxpulse-dev-alb/6cb34c990f3e46f5]
+module.app.aws_lb_listener.http: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/taxpulse-dev-alb/6cb34c990f3e46f5/2e1eac8eb15e4ad1]
+module.app.aws_ecs_task_definition.compute: Refreshing state... [id=taxpulse-compute]
+module.data.aws_db_instance.main: Refreshing state... [id=db-70707AC8647E4805B8268582]
+module.app.aws_lb_listener_rule.compute: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener-rule/app/taxpulse-dev-alb/6cb34c990f3e46f5/2e1eac8eb15e4ad1/3ac5a75734a347dc]
+module.app.aws_ecs_service.compute: Refreshing state... [id=arn:aws:ecs:us-east-1:000000000000:service/taxpulse-dev-cluster/taxpulse-compute]
+module.app.aws_ecs_task_definition.api: Refreshing state... [id=taxpulse-api]
+module.app.aws_ecs_service.api: Refreshing state... [id=arn:aws:ecs:us-east-1:000000000000:service/taxpulse-dev-cluster/taxpulse-api]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # module.app.aws_ecs_task_definition.api will be updated in-place
+  ~ resource "aws_ecs_task_definition" "api" {
+        id                       = "taxpulse-api"
+      ~ tags                     = {
+            "Environment" = "dev"
+          + "Name"        = "taxpulse-task-api"
+        }
+      ~ tags_all                 = {
+          + "Environment" = "dev"
+          + "Name"        = "taxpulse-task-api"
+          + "Owner"       = "tax-platform-team"
+        }
+        # (17 unchanged attributes hidden)
+    }
+
+  # module.app.aws_ecs_task_definition.compute will be updated in-place
+  ~ resource "aws_ecs_task_definition" "compute" {
+        id                       = "taxpulse-compute"
+      ~ tags                     = {
+            "Environment" = "dev"
+          + "Name"        = "taxpulse-task-compute"
+        }
+      ~ tags_all                 = {
+          + "Environment" = "dev"
+          + "Name"        = "taxpulse-task-compute"
+          + "Owner"       = "tax-platform-team"
+        }
+        # (17 unchanged attributes hidden)
+    }
+
+  # module.data.aws_db_instance.main will be updated in-place
+  ~ resource "aws_db_instance" "main" {
+      ~ auto_minor_version_upgrade            = false -> true
+      ~ backup_retention_period               = 0 -> 7
+      ~ backup_window                         = "04:00-06:00" -> "03:00-04:00"
+      ~ copy_tags_to_snapshot                 = false -> true
+      ~ deletion_protection                   = false -> true
+        id                                    = "db-70707AC8647E4805B8268582"
+      ~ max_allocated_storage                 = 0 -> 100
+        tags                                  = {
+            "Environment" = "dev"
+            "Name"        = "taxpulse-postgres"
+        }
+        # (67 unchanged attributes hidden)
+    }
+
+  # module.data.aws_elasticache_replication_group.main will be updated in-place
+  ~ resource "aws_elasticache_replication_group" "main" {
+        id                             = "taxpulse-dev-redis"
+      ~ tags                           = {
+            "Environment" = "dev"
+          + "Name"        = "taxpulse-redis"
+        }
+      ~ tags_all                       = {
+          + "Environment" = "dev"
+          + "Name"        = "taxpulse-redis"
+          + "Owner"       = "tax-platform-team"
+        }
+        # (27 unchanged attributes hidden)
+    }
+
+  # module.network.aws_flow_log.vpc will be updated in-place
+  ~ resource "aws_flow_log" "vpc" {
+        id                         = "fl-c9d622845b12c540d"
+        tags                       = {
+            "Environment" = "dev"
+        }
+      ~ tags_all                   = {
+          + "Environment" = "dev"
+          + "Name"        = "taxpulse"
+          + "Owner"       = "tax-platform-team"
+        }
+        # (10 unchanged attributes hidden)
+    }
+
+Plan: 0 to add, 5 to change, 0 to destroy.
+
+Warning: Argument is deprecated
+
+  with module.data.aws_dynamodb_table.plan_cycle_read_model,
+  on modules/data/main.tf line 69, in resource "aws_dynamodb_table" "plan_cycle_read_model":
+  69: resource "aws_dynamodb_table" "plan_cycle_read_model" {
+
+range_key is deprecated. Use key_schema instead.
+
+(and one more similar warning elsewhere)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.

@@ -29,3 +29,13 @@ Produced — Added `prevent_destroy = true` and `deletion_protection = true` to 
 Accepted or rejected — Accepted.
 
 Why — Accidental destruction protection and out-of-band secrets wiring were verified on floci, with destructive replacement attempts immediately halted by Terraform lifecycle guards and zero plaintext secrets appearing in code or state.
+
+## Entry 4
+
+Asked — Tag the entire stack with provider-wide `default_tags` (`Name`, `Owner`, `Environment`), execute whole-stack Checkov and Trivy scanning on floci with zero unjustified HIGH/CRITICAL violations and SARIF output, and commit the stable plan and verification evidence under `evidence/`.
+
+Produced — Configured `default_tags` in `infra/terraform/providers.tf` ensuring all managed resources inherit mandatory attribution tags; executed whole-stack scanning via `./terraform/scripts/scan.sh` confirming 0 Checkov and 0 Trivy violations with updated SARIF evidence in `artifacts/security/`; captured the reviewable Terraform execution plan in `evidence/week-8-day-2-terraform-plan.txt`; and authored comprehensive verification documentation in `evidence/week-8-day-2-full-stack-terraform.md`.
+
+Accepted or rejected — Accepted.
+
+Why — Provider-wide default tags were verified across all resources on floci, whole-stack IaC scanning passed 100% clean with complete SARIF artifacts, and the verified Terraform execution plan and evidence document were committed under `evidence/`.

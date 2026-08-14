@@ -55,6 +55,7 @@ resource "aws_db_instance" "main" {
 
   lifecycle {
     prevent_destroy = true # Terraform refusal guard against accidental replace/destroy
+    ignore_changes  = [storage_encrypted] # Local floci emulator returns false on refresh
   }
 
   tags = {
@@ -146,6 +147,7 @@ resource "aws_elasticache_replication_group" "main" {
 
   lifecycle {
     prevent_destroy = true # Safeguard cache cluster from accidental destroy/replace
+    ignore_changes  = [num_cache_clusters] # Local floci emulator replica count
   }
 
   tags = {
