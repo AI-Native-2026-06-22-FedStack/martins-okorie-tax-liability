@@ -49,12 +49,12 @@ output "dynamodb_read_model_table_arn" {
 
 output "redis_endpoint" {
   description = "ElastiCache Redis primary cache node address."
-  value       = aws_elasticache_cluster.main.cache_nodes[0].address
+  value       = aws_elasticache_replication_group.main.primary_endpoint_address
 }
 
 output "redis_port" {
   description = "ElastiCache Redis port."
-  value       = aws_elasticache_cluster.main.port
+  value       = aws_elasticache_replication_group.main.port
 }
 
 output "sns_stage_changed_topic_arn" {

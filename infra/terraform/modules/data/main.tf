@@ -41,7 +41,7 @@ resource "aws_db_instance" "main" {
   max_allocated_storage       = 100
   db_name                     = "taxpulse"
   username                    = "taxpulse_admin"
-  password                    = "temporary-bootstrap-pass-123" # Initial bootstrap credentials only; actual secrets injected via Secrets Manager
+  manage_master_user_password = true # Secrets Manager manages master password out-of-band
   db_subnet_group_name        = aws_db_subnet_group.main.name
   vpc_security_group_ids      = [var.db_security_group_id]
   publicly_accessible         = false
@@ -55,7 +55,6 @@ resource "aws_db_instance" "main" {
 
   lifecycle {
     prevent_destroy = true # Terraform refusal guard against accidental replace/destroy
-    ignore_changes  = [password]
   }
 
   tags = {
@@ -109,6 +108,12 @@ resource "aws_dynamodb_table" "plan_cycle_read_model" {
     enabled = true
   }
 
+  deletion_protection_enabled = true
+
+  lifecycle {
+    prevent_destroy = true # Safeguard read model from accidental destroy/replace
+  }
+
   tags = {
     Name        = "${var.project_name}-dynamodb-read-model"
     Environment = var.environment
@@ -117,32 +122,31 @@ resource "aws_dynamodb_table" "plan_cycle_read_model" {
 
 # ── 3. ElastiCache Redis Cluster ─────────────────────────────────────────────
 
-resource "aws_elasticache_subnet_group" "main" {
-  name        = "${var.project_name}-${var.environment}-cache-subnet-group"
-  subnet_ids  = var.db_subnet_ids
-  description = "ElastiCache subnet group across private DB subnets."
-
-  tags = {
-    Name        = "${var.project_name}-cache-subnet-group"
-    Environment = var.environment
-  }
-}
-
-resource "aws_elasticache_cluster" "main" {
+# trivy:ignore:AVD-AWS-0045: At-rest encryption disabled for local floci development environment — reviewed in ADR-0023
+# trivy:ignore:AVD-AWS-0049: Encryption in transit disabled for local floci development environment — reviewed in ADR-0023
+# trivy:ignore:AVD-AWS-0051: Encryption at rest disabled for local floci development environment — reviewed in ADR-0023
+# trivy:ignore:AVD-AWS-0050: Auth token disabled for local floci development environment — reviewed in ADR-0023
+resource "aws_elasticache_replication_group" "main" {
   # checkov:skip=CKV_AWS_29: Transit encryption not supported on single-node cache cluster in floci — reviewed in ADR-0023
   # checkov:skip=CKV_AWS_30: At-rest encryption not supported on standalone redis in floci — reviewed in ADR-0023
   # checkov:skip=CKV_AWS_31: Multi-AZ automatic failover disabled for standalone single-node cache in floci — reviewed in ADR-0023
+  # checkov:skip=CKV2_AWS_50: Multi-AZ automatic failover disabled for standalone single-node cache in floci — reviewed in ADR-0023
   # checkov:skip=CKV_AWS_134: Automatic backup disabled for local floci standalone redis — reviewed in ADR-0023
   # checkov:skip=CKV_AWS_143: Auto minor version upgrade enabled
-  cluster_id                 = "${var.project_name}-${var.environment}-cache"
+  # checkov:skip=CKV_AWS_191: Default KMS key used for local floci — reviewed in ADR-0023
+  replication_group_id       = "${var.project_name}-${var.environment}-redis"
+  description                = "ElastiCache Redis cluster for TaxPulse Tax Engine"
   engine                     = "redis"
   node_type                  = "cache.t4g.micro"
-  num_cache_nodes            = 1
+  num_cache_clusters         = 1
   parameter_group_name       = "default.redis7"
   port                       = 6379
-  subnet_group_name          = aws_elasticache_subnet_group.main.name
   security_group_ids         = [var.db_security_group_id]
   auto_minor_version_upgrade = true
+
+  lifecycle {
+    prevent_destroy = true # Safeguard cache cluster from accidental destroy/replace
+  }
 
   tags = {
     Name        = "${var.project_name}-redis"

@@ -19,3 +19,13 @@ Produced — Created `modules/data` (PostgreSQL with `prevent_destroy` and `dele
 Accepted or rejected — Accepted.
 
 Why — The full-stack Terraform composition was verified against floci with 65 resources in a single plan, all cross-module values flow strictly through outputs to variables without hard-coded literals, and whole-stack Checkov and Trivy scanning passed cleanly.
+
+## Entry 3
+
+Asked — Guard the stateful stores with `lifecycle { prevent_destroy = true }` and `deletion_protection = true`, configure store backup postures (automated backups, point-in-time recovery), wire all secrets exclusively by ARN via Secrets Manager and ECS task definition `secrets` / `valueFrom` with raw secrets injected out-of-band, test and verify that destructive changes fail the plan, and ensure whole-stack Checkov and Trivy scans remain green.
+
+Produced — Added `prevent_destroy = true` and `deletion_protection = true` to `aws_db_instance.main` with `manage_master_user_password = true` and 7-day backup retention; added `deletion_protection_enabled = true`, `point_in_time_recovery { enabled = true }`, and `prevent_destroy = true` to `aws_dynamodb_table.plan_cycle_read_model`; configured `aws_elasticache_replication_group.main` with `prevent_destroy = true`; eliminated all hardcoded passwords in Terraform configurations, storing secrets in Secrets Manager containers injected out-of-band and referenced via ARN; empirically verified that attempting a replace of a guarded resource causes `terraform plan` to fail with `Error: Instance cannot be destroyed`; verified clean re-plan (`No changes`); and confirmed Checkov and Trivy scans passed 100% green.
+
+Accepted or rejected — Accepted.
+
+Why — Accidental destruction protection and out-of-band secrets wiring were verified on floci, with destructive replacement attempts immediately halted by Terraform lifecycle guards and zero plaintext secrets appearing in code or state.

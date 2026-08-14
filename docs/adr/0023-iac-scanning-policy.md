@@ -37,10 +37,20 @@ Scanning Rules & Evidence:
 | CKV_AWS_158 / AVD-AWS-0017 | Checkov + Trivy | `aws_cloudwatch_log_group.vpc_flow_log` | Default CloudWatch Log Group encryption is acceptable for dev/floci test environment; KMS CMK encryption is enforced in prod | 2026-08-13 | TaxPulse DevSecOps |
 | CKV_AWS_157 / AVD-AWS-0176 | Checkov + Trivy | `aws_db_instance.main` | Multi-AZ is disabled for local floci development environment | 2026-08-14 | TaxPulse DevSecOps |
 | CKV_AWS_161 / AVD-AWS-0080 | Checkov + Trivy | `aws_db_instance.main` | IAM database authentication disabled for local floci postgres instance | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_353 | Checkov | `aws_db_instance.main` | Performance insights disabled for local floci development environment | 2026-08-14 | TaxPulse DevSecOps |
+| CKV2_AWS_30 | Checkov | `aws_db_instance.main` | Query logging disabled for local floci postgres instance | 2026-08-14 | TaxPulse DevSecOps |
 | CKV_AWS_2 / AVD-AWS-0054 | Checkov + Trivy | `aws_lb_listener.http` | HTTP listener is used for local floci emulator; TLS terminated at ALB in production | 2026-08-14 | TaxPulse DevSecOps |
+| CKV2_AWS_20 | Checkov | `aws_lb.main` | HTTP listener is used for local floci emulator; TLS terminated at ALB in production | 2026-08-14 | TaxPulse DevSecOps |
 | CKV_AWS_18 / AVD-AWS-0089 | Checkov + Trivy | `aws_s3_bucket.spa` | S3 access logging disabled for local floci SPA static assets bucket | 2026-08-14 | TaxPulse DevSecOps |
 | AVD-AWS-0132 | Trivy | `aws_s3_bucket_server_side_encryption_configuration.spa` | Default AES256 encryption used for SPA static assets bucket in local floci | 2026-08-14 | TaxPulse DevSecOps |
 | AVD-AWS-0136 | Trivy | `aws_sns_topic.stage_changed` | Default AWS managed key alias/aws/sns used for local floci development | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_29 / AVD-AWS-0049 | Checkov + Trivy | `aws_elasticache_replication_group.main` | Encryption in transit not supported on single-node cache cluster in floci | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_30 / AVD-AWS-0045 / AVD-AWS-0051 | Checkov + Trivy | `aws_elasticache_replication_group.main` | At-rest encryption not supported on standalone redis in floci | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_31 / CKV2_AWS_50 | Checkov | `aws_elasticache_replication_group.main` | Multi-AZ automatic failover disabled for standalone single-node cache in floci | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_134 | Checkov | `aws_elasticache_replication_group.main` | Automatic backup disabled for local floci standalone redis | 2026-08-14 | TaxPulse DevSecOps |
+| CKV_AWS_191 | Checkov | `aws_elasticache_replication_group.main` | Default KMS key used for local floci | 2026-08-14 | TaxPulse DevSecOps |
+| CKV2_AWS_57 | Checkov | `aws_secretsmanager_secret.db_password` | Automatic rotation disabled for local floci secret container | 2026-08-14 | TaxPulse DevSecOps |
+| CKV2_AWS_57 | Checkov | `aws_secretsmanager_secret.jwt_signing_keys` | Automatic rotation disabled for local floci secret container | 2026-08-14 | TaxPulse DevSecOps |
 
 ## Consequences
 - Un-remediated security misconfigurations fail PR builds and are blocked from merging.

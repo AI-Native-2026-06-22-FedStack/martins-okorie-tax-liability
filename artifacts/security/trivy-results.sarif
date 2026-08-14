@@ -64,33 +64,6 @@
               }
             },
             {
-              "id": "AWS-0050",
-              "name": "Misconfiguration",
-              "shortDescription": {
-                "text": "Redis cluster should have backup retention turned on"
-              },
-              "fullDescription": {
-                "text": "Redis clusters should have a snapshot retention time to ensure that they are backed up and can be restored if required.\n"
-              },
-              "defaultConfiguration": {
-                "level": "warning"
-              },
-              "helpUri": "https://avd.aquasec.com/misconfig/aws-0050",
-              "help": {
-                "text": "Misconfiguration AWS-0050\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: Redis cluster should have backup retention turned on\nMessage: Cluster snapshot retention is not enabled.\nLink: [AWS-0050](https://avd.aquasec.com/misconfig/aws-0050)\nRedis clusters should have a snapshot retention time to ensure that they are backed up and can be restored if required.\n",
-                "markdown": "**Misconfiguration AWS-0050**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|Redis cluster should have backup retention turned on|Cluster snapshot retention is not enabled.|[AWS-0050](https://avd.aquasec.com/misconfig/aws-0050)|\n\nRedis clusters should have a snapshot retention time to ensure that they are backed up and can be restored if required.\n"
-              },
-              "properties": {
-                "precision": "very-high",
-                "security-severity": "5.5",
-                "tags": [
-                  "misconfiguration",
-                  "security",
-                  "MEDIUM"
-                ]
-              }
-            },
-            {
               "id": "AWS-0098",
               "name": "Misconfiguration",
               "shortDescription": {
@@ -218,9 +191,9 @@
                   "uriBaseId": "ROOTPATH"
                 },
                 "region": {
-                  "startLine": 108,
+                  "startLine": 107,
                   "startColumn": 1,
-                  "endLine": 110,
+                  "endLine": 109,
                   "endColumn": 1
                 }
               },
@@ -231,35 +204,8 @@
           ]
         },
         {
-          "ruleId": "AWS-0050",
+          "ruleId": "AWS-0098",
           "ruleIndex": 2,
-          "level": "warning",
-          "message": {
-            "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0050\nSeverity: MEDIUM\nMessage: Cluster snapshot retention is not enabled.\nLink: [AWS-0050](https://avd.aquasec.com/misconfig/aws-0050)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "modules/data/main.tf",
-                  "uriBaseId": "ROOTPATH"
-                },
-                "region": {
-                  "startLine": 131,
-                  "startColumn": 1,
-                  "endLine": 151,
-                  "endColumn": 1
-                }
-              },
-              "message": {
-                "text": "modules/data/main.tf"
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "AWS-0098",
-          "ruleIndex": 3,
           "level": "note",
           "message": {
             "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0098\nSeverity: LOW\nMessage: Secret explicitly uses the default key.\nLink: [AWS-0098](https://avd.aquasec.com/misconfig/aws-0098)"
@@ -272,9 +218,9 @@
                   "uriBaseId": "ROOTPATH"
                 },
                 "region": {
-                  "startLine": 225,
+                  "startLine": 229,
                   "startColumn": 1,
-                  "endLine": 236,
+                  "endLine": 240,
                   "endColumn": 1
                 }
               },
@@ -286,7 +232,7 @@
         },
         {
           "ruleId": "AWS-0098",
-          "ruleIndex": 3,
+          "ruleIndex": 2,
           "level": "note",
           "message": {
             "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0098\nSeverity: LOW\nMessage: Secret explicitly uses the default key.\nLink: [AWS-0098](https://avd.aquasec.com/misconfig/aws-0098)"
@@ -299,9 +245,9 @@
                   "uriBaseId": "ROOTPATH"
                 },
                 "region": {
-                  "startLine": 238,
+                  "startLine": 242,
                   "startColumn": 1,
-                  "endLine": 249,
+                  "endLine": 253,
                   "endColumn": 1
                 }
               },
@@ -313,7 +259,7 @@
         },
         {
           "ruleId": "AWS-0133",
-          "ruleIndex": 4,
+          "ruleIndex": 3,
           "level": "note",
           "message": {
             "text": "Artifact: modules/data/main.tf\nType: terraform\nVulnerability AWS-0133\nSeverity: LOW\nMessage: Instance does not have performance insights enabled.\nLink: [AWS-0133](https://avd.aquasec.com/misconfig/aws-0133)"
@@ -328,7 +274,7 @@
                 "region": {
                   "startLine": 24,
                   "startColumn": 1,
-                  "endLine": 65,
+                  "endLine": 64,
                   "endColumn": 1
                 }
               },
@@ -340,7 +286,7 @@
         },
         {
           "ruleId": "AWS-0017",
-          "ruleIndex": 5,
+          "ruleIndex": 4,
           "level": "note",
           "message": {
             "text": "Artifact: modules/network/main.tf\nType: terraformplan-snapshot\nVulnerability AWS-0017\nSeverity: LOW\nMessage: Log group is not encrypted.\nLink: [AWS-0017](https://avd.aquasec.com/misconfig/aws-0017)"
