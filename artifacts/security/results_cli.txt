@@ -569,15 +569,6 @@ Check: CKV2_AWS_35: "AWS NAT Gateways should be utilized for the default route"
 Check: CKV_AWS_20: "S3 Bucket has an ACL defined which allows public READ access."
 	PASSED for resource: module.app.aws_s3_bucket.spa
 	File: /modules/app/main.tf:318-332
-Check: CKV2_AWS_16: "Ensure that Auto Scaling is enabled on your DynamoDB tables"
-	PASSED for resource: module.data.aws_dynamodb_table.plan_cycle_read_model
-	File: /modules/data/main.tf:69-122
-Check: CKV2_AWS_11: "Ensure VPC flow logging is enabled in all VPCs"
-	PASSED for resource: module.network.aws_vpc.main
-	File: /modules/network/main.tf:19-28
-Check: CKV2_AWS_69: "Ensure AWS RDS database instance configured with encryption in transit"
-	PASSED for resource: module.data.aws_db_instance.main
-	File: /modules/data/main.tf:24-65
 Check: CKV2_AWS_40: "Ensure AWS IAM policy does not allow full IAM privileges"
 	PASSED for resource: module.iam.aws_iam_policy_document.ecs_assume_role
 	File: /modules/iam/main.tf:13-24
@@ -590,6 +581,15 @@ Check: CKV2_AWS_40: "Ensure AWS IAM policy does not allow full IAM privileges"
 Check: CKV2_AWS_40: "Ensure AWS IAM policy does not allow full IAM privileges"
 	PASSED for resource: module.iam.aws_iam_policy_document.flow_log_permissions
 	File: /modules/iam/main.tf:163-178
+Check: CKV2_AWS_16: "Ensure that Auto Scaling is enabled on your DynamoDB tables"
+	PASSED for resource: module.data.aws_dynamodb_table.plan_cycle_read_model
+	File: /modules/data/main.tf:69-122
+Check: CKV2_AWS_11: "Ensure VPC flow logging is enabled in all VPCs"
+	PASSED for resource: module.network.aws_vpc.main
+	File: /modules/network/main.tf:19-28
+Check: CKV2_AWS_69: "Ensure AWS RDS database instance configured with encryption in transit"
+	PASSED for resource: module.data.aws_db_instance.main
+	File: /modules/data/main.tf:24-65
 Check: CKV2_AWS_76: "Ensure AWS ALB attached WAFv2 WebACL is configured with AMR for Log4j Vulnerability"
 	PASSED for resource: module.app.aws_lb.main
 	File: /modules/app/main.tf:11-27
@@ -840,6 +840,10 @@ Check: CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
 	SKIPPED for resource: module.app.aws_s3_bucket.spa
 	Suppress comment:  S3 access logging disabled for local floci SPA bucket — reviewed in ADR-0023
 	File: /modules/app/main.tf:318-332
+Check: CKV_AWS_144: "Ensure that S3 bucket has cross-region replication enabled"
+	SKIPPED for resource: module.app.aws_s3_bucket.spa
+	Suppress comment:  S3 cross-region replication not required for local floci — reviewed in ADR-0023
+	File: /modules/app/main.tf:318-332
 Check: CKV2_AWS_57: "Ensure Secrets Manager secrets should have automatic rotation enabled"
 	SKIPPED for resource: module.data.aws_secretsmanager_secret.db_password
 	Suppress comment:  Automatic secret rotation disabled for local floci containers — reviewed in ADR-0023
@@ -848,10 +852,6 @@ Check: CKV2_AWS_57: "Ensure Secrets Manager secrets should have automatic rotati
 	SKIPPED for resource: module.data.aws_secretsmanager_secret.jwt_signing_keys
 	Suppress comment:  Automatic secret rotation disabled for local floci containers — reviewed in ADR-0023
 	File: /modules/data/main.tf:244-255
-Check: CKV_AWS_144: "Ensure that S3 bucket has cross-region replication enabled"
-	SKIPPED for resource: module.app.aws_s3_bucket.spa
-	Suppress comment:  S3 cross-region replication not required for local floci — reviewed in ADR-0023
-	File: /modules/app/main.tf:318-332
 Check: CKV_AWS_103: "Ensure that load balancer is using at least TLS 1.2"
 	SKIPPED for resource: module.app.aws_lb_listener.http
 	Suppress comment:  TLS 1.2 not applicable for plaintext HTTP listener in local floci — reviewed in ADR-0023
