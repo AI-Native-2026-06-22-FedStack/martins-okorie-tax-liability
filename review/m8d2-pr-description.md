@@ -26,8 +26,86 @@ Key changes:
 5. **ADRs & Documentation**:
    - Extended `ADR-0022: Full-Stack Terraform Module Structure & Layered Composition` in `docs/adr/0022-terraform-module-structure.md`.
    - Updated the skip-justification matrix in `ADR-0023: IaC Scanning Policy` in `docs/adr/0023-iac-scanning-policy.md`.
-   - Recorded all prompt interactions in `prompt-journal/0032-full-stack-terraform.md` (Entries 1–4).
+   - Recorded all prompt interactions in `prompt-journal/0032-full-stack-terraform.md` (Entries 1–5).
    - Committed stable execution plan in `evidence/week-8-day-2-terraform-plan.txt` and full evidence in `evidence/week-8-day-2-full-stack-terraform.md`.
+
+## Reviewer-requested security gate evidence
+
+Terraform plan source: `artifacts/tfplan.txt`
+
+```text
+Terraform used the selected providers to generate the following execution plan.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+```
+
+Whole-stack planned resources:
+
+```text
+- module.iam.aws_iam_role.ecs_execution
+- module.iam.aws_iam_role.ecs_task
+- module.iam.aws_iam_role.flow_log
+- module.iam.aws_iam_role_policy.flow_log
+- module.iam.aws_iam_role_policy.task_runtime
+- module.iam.aws_iam_role_policy_attachment.ecs_execution_policy
+- module.network.aws_cloudwatch_log_group.vpc_flow_log
+- module.network.aws_default_security_group.default
+- module.network.aws_flow_log.vpc
+- module.network.aws_internet_gateway.main
+- module.network.aws_route.public_internet
+- module.network.aws_route_table.private_app
+- module.network.aws_route_table.private_db
+- module.network.aws_route_table.public
+- module.network.aws_route_table_association.private_app[0]
+- module.network.aws_route_table_association.private_app[1]
+- module.network.aws_route_table_association.private_db[0]
+- module.network.aws_route_table_association.private_db[1]
+- module.network.aws_route_table_association.public[0]
+- module.network.aws_route_table_association.public[1]
+- module.network.aws_security_group.alb
+- module.network.aws_security_group.db
+- module.network.aws_security_group.task
+- module.network.aws_subnet.private_app[0]
+- module.network.aws_subnet.private_app[1]
+- module.network.aws_subnet.private_db[0]
+- module.network.aws_subnet.private_db[1]
+- module.network.aws_subnet.public[0]
+- module.network.aws_subnet.public[1]
+- module.network.aws_vpc.main
+- module.network.aws_vpc_security_group_egress_rule.alb_to_api
+- module.network.aws_vpc_security_group_egress_rule.alb_to_compute
+- module.network.aws_vpc_security_group_egress_rule.task_to_aws
+- module.network.aws_vpc_security_group_egress_rule.task_to_db
+- module.network.aws_vpc_security_group_ingress_rule.alb_https
+- module.network.aws_vpc_security_group_ingress_rule.db_from_task
+- module.network.aws_vpc_security_group_ingress_rule.task_from_alb_api
+- module.network.aws_vpc_security_group_ingress_rule.task_from_alb_compute
+
+Plan: 38 to add, 0 to change, 0 to destroy.
+```
+
+Checkov source: `artifacts/security/results_cli.txt`
+
+```text
+terraform scan results:
+
+Passed checks: 159, Failed checks: 0, Skipped checks: 58
+```
+
+Trivy source: `artifacts/security/trivy-results.sarif`
+
+SARIF summary: 1 run, 6 LOW/note-level results and no HIGH or CRITICAL results.
+
+| Rule | SARIF level | Location | Message |
+| --- | --- | --- | --- |
+| AWS-0034 | note | modules/app/main.tf | Cluster does not have container insights enabled. |
+| AWS-0025 | note | modules/data/main.tf | Table encryption explicitly uses the default KMS key. |
+| AWS-0098 | note | modules/data/main.tf | Secret explicitly uses the default key. |
+| AWS-0098 | note | modules/data/main.tf | Secret explicitly uses the default key. |
+| AWS-0133 | note | modules/data/main.tf | Instance does not have performance insights enabled. |
+| AWS-0017 | note | modules/network/main.tf | Log group is not encrypted. |
 
 ## Related ADR
 
@@ -56,7 +134,7 @@ Key changes:
      ```bash
      $ aws --endpoint-url http://localhost:4566 secretsmanager put-secret-value \
          --secret-id "taxpulse/local/db-password" \
-         --secret-string "taxpulse-floci-secure-password"
+         --secret-string "<redacted out-of-band value>"
      ```
    - Confirmed task definitions use `valueFrom: var.db_password_secret_arn` with zero plaintext passwords in state.
 5. **Whole-Stack IaC Scanning**:

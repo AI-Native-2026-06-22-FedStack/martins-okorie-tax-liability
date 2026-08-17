@@ -79,11 +79,11 @@ The raw values are populated out-of-band via AWS CLI:
 ```bash
 $ aws --endpoint-url http://localhost:4566 secretsmanager put-secret-value \
     --secret-id "taxpulse/local/db-password" \
-    --secret-string "taxpulse-floci-secure-password"
+    --secret-string "<redacted out-of-band value>"
 
 $ aws --endpoint-url http://localhost:4566 secretsmanager put-secret-value \
     --secret-id "taxpulse/local/jwt-signing-keys" \
-    --secret-string '{"privateKey":"test-priv-key","publicKey":"test-pub-key"}'
+    --secret-string "<redacted out-of-band value>"
 ```
 
 ECS Task Definitions reference secrets exclusively by ARN via `valueFrom`:
