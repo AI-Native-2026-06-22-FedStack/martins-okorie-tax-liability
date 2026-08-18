@@ -9,11 +9,67 @@ permissions:
 
 jobs:
   # ============================================================================
+  # Build Gate Job (Required Status Check)
+  # Compiles TypeScript and validates workspace build integrity
+  # ============================================================================
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and build workspace
+        run: npm run typecheck
+
+  # ============================================================================
+  # Test Gate Job (Required Status Check)
+  # Runs unit and integration test suites
+  # ============================================================================
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv and Python dependencies
+        run: |
+          pip install uv
+          uv sync --extra dev
+
+      - name: Run Python unit tests
+        run: uv run pytest services/compute/tests -v
+
+  # ============================================================================
   # OIDC Authentication Job
   # Proves identity to AWS STS using short-lived credentials; no stored keys.
   # ============================================================================
   oidc-auth:
-    name: AWS OIDC Token Exchange
+    name: oidc-auth
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -31,11 +87,11 @@ jobs:
           aws sts get-caller-identity
 
   # ============================================================================
-  # SAST Scanner Job
+  # SAST Scanner Job (Required Status Check)
   # Runs Semgrep (cross-language + custom rules), ESLint-security (Node), and Bandit (Python)
   # ============================================================================
   sast:
-    name: SAST (Semgrep, ESLint-Security, Bandit)
+    name: sast
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -85,11 +141,11 @@ jobs:
           path: artifacts/security/*
 
   # ============================================================================
-  # SCA Scanner Job
+  # SCA Scanner Job (Required Status Check)
   # Runs OSV-Scanner against dependencies across npm and Python ecosystems
   # ============================================================================
   sca:
-    name: SCA (OSV-Scanner)
+    name: sca
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -120,11 +176,11 @@ jobs:
           path: artifacts/security/osv-scanner-results.json
 
   # ============================================================================
-  # Secret Scanner Job
+  # Secret Scanner Job (Required Status Check)
   # Runs Gitleaks over FULL git history (fetch-depth: 0) and local configurations
   # ============================================================================
   secrets:
-    name: Secret Scanning (Gitleaks Full History)
+    name: secrets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full repository history

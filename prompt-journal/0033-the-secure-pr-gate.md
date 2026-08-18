@@ -30,4 +30,15 @@ Accepted or rejected — Accepted.
 
 Why — The complete scanning suite was verified locally and integrated into the PR workflow, the Semgrep custom rule precision was confirmed against test snippets, the Gitleaks blocking-and-rotation lifecycle was empirically proven, and all findings were triaged in the disposition log.
 
+## Entry 4
+
+Asked — Make the secure-PR scanners non-bypassable required status checks on main (build, tests, SAST, SCA, secrets), ensure every scanner report is retained under artifacts/security/ as downloadable workflow evidence, and write ADR-0024 (docs/adr/0024-secure-pr-gate-matrix.md) recording the block-versus-warn gate matrix and justification policy.
+
+Produced — Authored `docs/adr/0024-secure-pr-gate-matrix.md` in MADR format detailing the exact policy posture for each status check (`oidc-auth`, `build`, `tests`, `sast`, `sca`, `secrets`), failure thresholds, artifact evidence mappings, and the zero-bare-suppression policy; structured `.github/workflows/secure-pr.yml` with discrete parallel jobs aligned with branch protection required checks; and wired SARIF and JSON artifact retention via `actions/upload-artifact@v4`.
+
+Accepted or rejected — Accepted.
+
+Why — The mechanical branch protection matrix and federal evidence retention rules were codified in ADR-0024 and aligned with the GitHub Actions workflow jobs.
+
+
 
