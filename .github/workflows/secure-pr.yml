@@ -1,0 +1,45 @@
+name: secure-pr
+
+on:
+  pull_request: # Triggers on every pull request for branch protection required checks
+
+# Baseline permissions set tightly: id-token:write allows GitHub to mint an OIDC JWT token,
+# and contents:read allows checkout of the PR head commit. No AWS write permissions are granted here.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # ============================================================================
+  # OIDC Authentication Job
+  # Proves identity to AWS without standing keys. Exchanges a short-lived OIDC token
+  # minted by GitHub for temporary AWS STS credentials assuming an unprivileged role.
+  #
+  # Security Guarantees & Trust Policy Scoping:
+  # 1. No long-lived AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is stored in repo secrets.
+  # 2. AWS_ROLE_ARN is configured as a repository VARIABLE (vars.AWS_ROLE_ARN), not a secret,
+  #    because an ARN identifies a resource rather than authenticating to it.
+  # 3. The IAM role's trust policy conditions on immutable numeric claims:
+  #    - token.actions.githubusercontent.com:aud = sts.amazonaws.com
+  #    - token.actions.githubusercontent.com:repository_owner_id = <org_id>
+  #    - token.actions.githubusercontent.com:repository_id = <repo_id>
+  #    Scoping repository_id prevents other repositories (including peers in the same AWS account)
+  #    from assuming this role, while avoiding brittle sub-claim format changes.
+  # ============================================================================
+  oidc-auth:
+    name: AWS OIDC Token Exchange
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Verify assumed identity (proves keyless token exchange)
+        run: |
+          echo "Verifying AWS STS Caller Identity via OIDC Assumed Role..."
+          aws sts get-caller-identity
