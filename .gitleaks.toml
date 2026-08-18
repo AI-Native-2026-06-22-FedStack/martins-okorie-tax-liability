@@ -1,0 +1,17 @@
+title = "TaxPulse Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for synthetic test fixtures and markdown evidence documentation"
+paths = [
+  '''evidence/''',
+  '''review/''',
+  '''tests?/fixtures/''',
+  '''apps/api/test/'''
+]
+regexes = [
+  '''US6XJ552V3R4T75W''',
+  '''0123456789abcdef'''
+]

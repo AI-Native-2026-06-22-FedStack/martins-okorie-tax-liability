@@ -1,0 +1,17 @@
+rules:
+  - id: no-taxpayer-id-in-logs
+    languages:
+      - typescript
+      - javascript
+    severity: ERROR
+    message: "Do not log taxpayer ID or PII — federal disclosure compliance prohibits logging taxpayerId in plaintext."
+    patterns:
+      - pattern-either:
+          - pattern: "console.$METHOD(..., $X.taxpayerId, ...)"
+          - pattern: "console.$METHOD(..., { ..., taxpayerId: $VAL, ... }, ...)"
+          - pattern: "logger.$METHOD(..., $X.taxpayerId, ...)"
+          - pattern: "logger.$METHOD(..., { ..., taxpayerId: $VAL, ... }, ...)"
+          - pattern: "$LOG.info(..., $X.taxpayerId, ...)"
+          - pattern: "$LOG.error(..., $X.taxpayerId, ...)"
+          - pattern: "$LOG.warn(..., $X.taxpayerId, ...)"
+          - pattern: "$LOG.debug(..., $X.taxpayerId, ...)"

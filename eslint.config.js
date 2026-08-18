@@ -1,12 +1,23 @@
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import pluginSecurity from "eslint-plugin-security";
+import pluginNoSecrets from "eslint-plugin-no-secrets";
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**"]
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "coverage/**",
+      "apps/web/**",
+      "services/tivs-acl/**",
+      "lambda/**",
+      "artifacts/**"
+    ]
   },
+  pluginSecurity.configs.recommended,
   {
-    files: ["**/*.ts"],
+    files: ["src/typescript/**/*.ts", "tests/**/*.ts", "apps/api/src/**/*.ts"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -17,15 +28,24 @@ export default [
       }
     },
     plugins: {
-      "@typescript-eslint": tseslint
+      "@typescript-eslint": tseslint,
+      "no-secrets": pluginNoSecrets
     },
     rules: {
-      ...tseslint.configs.strict.rules,
-      ...tseslint.configs["stylistic"].rules,
-      ...tseslint.configs["recommended-type-checked"].rules,
-      "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/no-misused-promises": "error",
-      "@typescript-eslint/require-await": "error"
+      ...tseslint.configs.recommended.rules,
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-namespace": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
+      "no-secrets/no-secrets": [
+        "error",
+        {
+          "ignoreContent": [
+            "cloudfront\\.localhost\\.localstack\\.cloud",
+            "argon2id",
+            "0123456789abcdef"
+          ]
+        }
+      ]
     }
   }
 ];

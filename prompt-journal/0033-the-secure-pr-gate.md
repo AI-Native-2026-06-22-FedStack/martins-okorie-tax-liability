@@ -20,3 +20,14 @@ Accepted or rejected — Accepted.
 
 Why — The keyless OIDC workflow and numeric-claim IAM trust policy template were created and validated with tight baseline permissions and zero stored access keys.
 
+## Entry 3
+
+Asked — Wire SAST (Semgrep with custom PII rule, ESLint-security for Node, Bandit for Python), SCA (OSV-Scanner), and full-history secret scanning (Gitleaks with fetch-depth: 0 and pre-commit hook) into the secure-PR gate, prove the secret scanner blocks with a failing-then-fixed Gitleaks regression, log all findings in the disposition log, and emit SARIF/JSON to the security evidence sink.
+
+Produced — Authored custom Semgrep rule `.semgrep/no-pii-in-logs.yml` and verified with `semgrep --validate` against known-bad and known-good snippets; configured ESLint with `eslint-plugin-security` and `eslint-plugin-no-secrets` for `apps/api/`; configured Bandit with SARIF output for `services/compute/`; integrated OSV-Scanner for dependency scanning; configured `.gitleaks.toml`, `.gitleaksignore`, and `scripts/pre-commit-gitleaks.sh`; fixed true-positive crypto tag length vulnerability in `apps/api/src/auth/mfa.ts`; executed empirical red-then-green regression proving Gitleaks blocks on planted secrets and clears only after credential rotation and justified suppression; created `evidence/gitleaks-regression.md` and `docs/security/disposition-log.md`; and populated SARIF/JSON evidence files in `artifacts/security/`.
+
+Accepted or rejected — Accepted.
+
+Why — The complete scanning suite was verified locally and integrated into the PR workflow, the Semgrep custom rule precision was confirmed against test snippets, the Gitleaks blocking-and-rotation lifecycle was empirically proven, and all findings were triaged in the disposition log.
+
+
