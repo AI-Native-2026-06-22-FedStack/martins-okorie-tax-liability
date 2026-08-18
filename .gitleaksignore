@@ -4,3 +4,4 @@
 
 # Synthetic GitHub PAT used to verify Gitleaks gate blocking behavior during M8D3 Secure-PR gate testing
 apps/api/src/config/secret-regression-test.ts:github-pat:2
+docs/security/disposition-log.md:github-pat:23
