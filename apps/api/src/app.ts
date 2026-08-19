@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth.routes.js";
 import passport from "passport";
 import { initializePassport } from "./auth/verifier.js";
 import { correlationMiddleware } from "./logging/correlation.js";
+import { xrayTracingMiddleware } from "./tracing.js";
 import { costHeaderMiddleware } from "./middleware/cost-header.js";
 import { v1Router } from "./routes/v1/index.js";
 import { createCorsMiddleware, loadCorsConfig } from "./config/cors.js";
@@ -37,9 +38,11 @@ app.use((_req, res, next) => {
 
 app.use(express.json());
 app.use(createCorsMiddleware(loadCorsConfig()));
+app.use(xrayTracingMiddleware);
 app.use(correlationMiddleware);
 app.use(costHeaderMiddleware);
 app.use(passport.initialize());
+
 
 app.use("/auth", authRouter);
 

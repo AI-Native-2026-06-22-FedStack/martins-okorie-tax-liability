@@ -1,0 +1,28 @@
+{
+    "MetricAlarms": [
+        {
+            "AlarmName": "taxpulse-dev-core-case-5xx-errors",
+            "AlarmArn": "arn:aws:cloudwatch:us-east-1:000000000000:alarm:taxpulse-dev-core-case-5xx-errors",
+            "AlarmDescription": "High 5XX error count on Core Case Service across 3 consecutive evaluation periods. Release-health breach detected. Runbook: docs/runbook-rollback.md",
+            "ActionsEnabled": true,
+            "OKActions": [
+                "arn:aws:sns:us-east-1:000000000000:taxpulse-dev-release-health-alerts"
+            ],
+            "AlarmActions": [
+                "arn:aws:sns:us-east-1:000000000000:taxpulse-dev-release-health-alerts"
+            ],
+            "InsufficientDataActions": [],
+            "StateValue": "ALARM",
+            "StateReason": "High 5XX error rate threshold breached across 3 evaluation periods",
+            "StateUpdatedTimestamp": "2026-08-19T10:33:25-04:00",
+            "MetricName": "HTTPCode_Target_5XX_Count",
+            "Namespace": "AWS/ApplicationELB",
+            "Statistic": "Sum",
+            "Dimensions": [],
+            "Period": 60,
+            "EvaluationPeriods": 3,
+            "Threshold": 1.0,
+            "ComparisonOperator": "GreaterThanThreshold"
+        }
+    ]
+}

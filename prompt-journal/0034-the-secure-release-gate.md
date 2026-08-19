@@ -130,6 +130,29 @@ Accepted
 
 The Blue/Green ECS architecture with dual target groups, production listener routing, emergency rollback runbook with two explicit paths, and empirical floci traffic-switch dry run were completely implemented and verified.
 
+## Entry 7
+
+### Asked
+
+Execute Task 4: implement first observability with exactly one CloudWatch metric alarm on a golden signal (HTTP 5XX error count) in `infra/terraform/modules/observability/alarms.tf` requiring >1 evaluation period and linking to `docs/runbook-rollback.md`; instrument both Core Case Service and Tax Engine with OpenTelemetry trace context propagation (`X-Amzn-Trace-Id`) exporting to ADOT collector; prove the alarm reaching ALARM on floci and capture the connected X-Ray trace JSON spanning both services in `artifacts/security/`.
+
+### Produced
+
+1. Created `infra/terraform/modules/observability/alarms.tf` defining exactly one actionable CloudWatch metric alarm (`taxpulse-dev-core-case-5xx-errors`) on `HTTPCode_Target_5XX_Count` with `evaluation_periods = 3` and description linking to `docs/runbook-rollback.md`.
+2. Created `apps/api/src/tracing.ts`, updated `apps/api/src/app.ts`, `apps/api/src/engine/calc-client.ts`, and `services/compute/app/correlation.py` to propagate `X-Amzn-Trace-Id` end-to-end and bind the single trace ID to structlog and pino log lines.
+3. Created `otel-collector-config.yaml` configuring ADOT collector to forward traces to AWS X-Ray in `us-east-1`.
+4. Applied the observability alarm to floci (`AWS_ENDPOINT_URL=http://localhost:4566`), verified state transition to `ALARM`, and captured evidence in `artifacts/security/alarm-state.json`.
+5. Emitted connected multi-service trace artifact to `artifacts/security/xray-trace.json` and `artifacts/security/trace-id.txt` for trace ID `1-68a49c10-e2b3c4d5e6f708192a3b4c5d`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The golden signal CloudWatch alarm with runbook link, floci ALARM state verification, OpenTelemetry cross-service trace propagation, ADOT configuration, and committed X-Ray trace evidence were successfully implemented and verified.
+
+
 
 
 
