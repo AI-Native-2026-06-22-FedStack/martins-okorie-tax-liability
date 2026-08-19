@@ -40,5 +40,16 @@ Accepted or rejected — Accepted.
 
 Why — The mechanical branch protection matrix and federal evidence retention rules were codified in ADR-0024 and aligned with the GitHub Actions workflow jobs.
 
+## Entry 5
+
+Asked — Document the branch-protection platform limitation on private repositories under the GitHub Free plan per reviewer feedback before merging.
+
+Produced — Updated `docs/adr/0024-secure-pr-gate-matrix.md` and `review/m8d3-pr-description.md` with a dedicated "Platform Limitation Note: GitHub Free Plan Branch Protection API" section documenting the exact `gh api repos/:owner/:repo/branches/main/protection` HTTP 403 Forbidden response (`Upgrade to GitHub Pro or make this repository public to enable branch protection rules`) and the two remediation options (make repository public or upgrade organization account) to ensure reviewers and auditors do not mistake workflow gate configuration for live native API enforcement.
+
+Accepted or rejected — Accepted.
+
+Why — The GitHub platform plan limitation and its exact API error response and remediation paths were explicitly documented in ADR-0024 and the PR description to provide clear audit transparency.
+
+
 
 
