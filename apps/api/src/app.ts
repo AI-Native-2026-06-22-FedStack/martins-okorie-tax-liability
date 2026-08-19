@@ -15,6 +15,26 @@ import { createCorsMiddleware, loadCorsConfig } from "./config/cors.js";
 export const app = express();
 initializePassport();
 
+app.disable("x-powered-by");
+
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+  );
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+
 app.use(express.json());
 app.use(createCorsMiddleware(loadCorsConfig()));
 app.use(correlationMiddleware);
@@ -23,7 +43,7 @@ app.use(passport.initialize());
 
 app.use("/auth", authRouter);
 
-app.get("/health", (_req: Request, res: Response) => {
+app.get(["/health", "/healthz"], (_req: Request, res: Response) => {
   res.json({
     service: "taxpulse-api",
     status: "ok"

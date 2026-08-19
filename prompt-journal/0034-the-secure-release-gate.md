@@ -86,4 +86,29 @@ Accepted
 
 The supply-chain provenance stage chain, Trivy severity gate, Syft CycloneDX SBOM generation, Cosign keyless signing/verification controls, ADR-0025 policy, and disposition logs were successfully implemented and empirically verified against the M7 Core Case Service container image.
 
+## Entry 5
+
+### Asked
+
+Execute Task 2: deploy the Core Case Service on floci, configure an `assert-target` liveness gate between deploy and DAST, run a passive OWASP ZAP baseline scan against the live endpoint gating on 0 Medium-or-above alerts with `.zap/rules.tsv`, route reports to `artifacts/security/`, triage alerts in the disposition log, and document the DAST policy in `docs/adr/0026-dast-policy.md`.
+
+### Produced
+
+1. Deployed and verified the Core Case Service on the local floci stack at `http://localhost:3000/health`.
+2. Created `.github/workflows/zap-baseline.yml` and integrated it with `.github/workflows/release.yml`, adding a loud `assert-target` stage that curls the live target and halts the release on non-200 responses to prevent false-green passes on dead targets.
+3. Created `.zap/rules.tsv` configuring strict `FAIL` thresholds on all real security header rules (`10020`, `10021`, `10035`, `10037`, `10038`) while documenting technical justifications for informational alerts (`10049`, `10096`, `90004`).
+4. Hardened `apps/api/src/app.ts` with comprehensive web security headers (`Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control`, `x-powered-by` disabled, and `/healthz` route).
+5. Executed the OWASP ZAP baseline scan against the deployed app, achieving a clean 0 Medium / 0 High pass with 66 rules passed and 1 documented ignore.
+6. Emitted `artifacts/security/zap-report.html`, `artifacts/security/zap-report.json`, `artifacts/security/zap-report.md`, and `artifacts/security/staging-health-response.txt`.
+7. Created `docs/adr/0026-dast-policy.md` in MADR format and logged `DISP-0008` and `DISP-0009` in `docs/security/disposition-log.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The live DAST baseline scan, loud target assertion stage, OWASP ZAP rules tuning, web security header hardening, ADR-0026 documentation, and disposition logs were successfully implemented and verified against the running Core Case Service on floci.
+
+
 

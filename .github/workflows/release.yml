@@ -177,14 +177,30 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Probe Staging Service Health
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Probe Staging Service Health (Loud Target Liveness Gate)
         run: |
           mkdir -p artifacts/security
           TARGET_URL="${{ vars.STAGING_APP_URL || 'http://localhost:3000' }}/health"
           echo "Asserting target reachability at ${TARGET_URL}..."
           
-          # In local / staging run: emit response proof into artifacts/security/
-          echo "200" > artifacts/security/staging-health-response.txt
+          # Curl the live endpoint; fail immediately if it returns non-200 or connection refused
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET_URL}" || echo "000")
+          echo "Received HTTP status code: ${HTTP_STATUS}"
+          echo "${HTTP_STATUS}" > artifacts/security/staging-health-response.txt
+
+          if [ "${HTTP_STATUS}" -ne 200 ]; then
+            echo "::error::Target assertion failed! Endpoint ${TARGET_URL} answered with ${HTTP_STATUS} (expected 200). Halting release to prevent silent ZAP false-green."
+            exit 1
+          fi
+
+      - name: Upload Target Proof Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-liveness-proof
+          path: artifacts/security/staging-health-response.txt
 
   # ============================================================================
   # Stage 7: Dynamic Application Security Testing (DAST - OWASP ZAP Baseline)
@@ -192,11 +208,8 @@ jobs:
   dast:
     name: dast
     needs: assert-target
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    uses: ./.github/workflows/zap-baseline.yml
+    with:
+      target: "http://localhost:3000/health"
+      rules_file_name: ".zap/rules.tsv"
 
-      - name: Execute OWASP ZAP Baseline DAST
-        run: |
-          echo "Executing OWASP ZAP baseline scan against verified live staging endpoint..."

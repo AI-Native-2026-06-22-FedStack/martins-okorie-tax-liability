@@ -1,0 +1,75 @@
+env:
+  contexts:
+  - excludePaths: []
+    name: baseline
+    urls:
+    - http://host.docker.internal:3000/health
+    - http://host.docker.internal:3000/
+  parameters:
+    failOnError: true
+    progressToStdout: false
+jobs:
+- parameters:
+    enableTags: false
+    maxAlertsPerRule: 10
+  type: passiveScan-config
+- parameters:
+    maxDuration: 1
+    url: http://host.docker.internal:3000/
+  type: spider
+- parameters:
+    maxDuration: 0
+  type: passiveScan-wait
+- parameters:
+    format: Long
+    summaryFile: /home/zap/zap_out.json
+  rules:
+  - action: FAIL
+    customMessage: ''
+    id: 10020
+  - action: FAIL
+    customMessage: ''
+    id: 10021
+  - action: FAIL
+    customMessage: ''
+    id: 10035
+  - action: FAIL
+    customMessage: ''
+    id: 10037
+  - action: FAIL
+    customMessage: ''
+    id: 10038
+  - action: IGNORE
+    customMessage: ''
+    id: 10049
+  - action: IGNORE
+    customMessage: ''
+    id: 10096
+  - action: IGNORE
+    customMessage: ''
+    id: 10027
+  - action: IGNORE
+    customMessage: ''
+    id: 90004
+  type: outputSummary
+- parameters:
+    reportDescription: ''
+    reportDir: /zap/wrk/
+    reportFile: zap-report.html
+    reportTitle: ZAP Scanning Report
+    template: traditional-html
+  type: report
+- parameters:
+    reportDescription: ''
+    reportDir: /zap/wrk/
+    reportFile: zap-report.md
+    reportTitle: ZAP Scanning Report
+    template: traditional-md
+  type: report
+- parameters:
+    reportDescription: ''
+    reportDir: /zap/wrk/
+    reportFile: zap-report.json
+    reportTitle: ZAP Scanning Report
+    template: traditional-json
+  type: report

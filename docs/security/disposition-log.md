@@ -62,3 +62,20 @@ Under the TaxPulse security policy, no HIGH/ERROR finding may merge unaddressed;
 - **Rationale**: Upstream Debian 13 base library finding in OpenSSL QUIC server protocol implementation with `fix_deferred` status. The Core Case Service runs behind an AWS Application Load Balancer terminating standard TLS 1.3 / HTTP/1.1 and does not bind or process raw UDP/QUIC traffic.
 - **Remediation**: Documented in ADR-0025. Accepted base exception adhering to 0 CRITICAL and <=2 HIGH container gate policy; to be retired once patched distroless base digest is released.
 
+### DISP-0008: Missing Web Security Headers Flagged by DAST Baseline
+- **Tool**: OWASP ZAP Baseline (`10020`, `10021`, `10037`, `10038`)
+- **Location**: `apps/api/src/app.ts`
+- **Severity**: MEDIUM
+- **Disposition**: **Fixed (True Positive)**
+- **Rationale**: DAST baseline scan against unhardened Express API detected missing Content-Security-Policy (`10038`), missing X-Content-Type-Options (`10021`), and server framework disclosure via X-Powered-By (`10037`).
+- **Remediation**: Hardened `apps/api/src/app.ts` by disabling `x-powered-by` and adding comprehensive security headers middleware enforcing `Content-Security-Policy: default-src 'self'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, and `Permissions-Policy`. ZAP re-scan confirmed 0 Medium/High alerts with all security rules passing.
+
+### DISP-0009: Informational DAST Findings Tuned via Rules Configuration
+- **Tool**: OWASP ZAP Baseline (`10049`, `10096`, `90004`)
+- **Location**: `.zap/rules.tsv`
+- **Severity**: LOW / INFORMATIONAL
+- **Disposition**: **Documented False Positive / Tuned (ADR-0026)**
+- **Rationale**: ZAP flagged non-storable cache headers on health probe endpoints (`10049`), Unix timestamps in OpenAPI JSON metadata schemas (`10096`), and CORP headers (`90004`). These behaviors are intentional and standard for REST API services.
+- **Remediation**: Tuned in `.zap/rules.tsv` with documented justifications under ADR-0026 policy, preserving strict FAIL posture on all Medium+ security rules.
+
+
