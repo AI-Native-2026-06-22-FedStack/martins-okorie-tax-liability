@@ -6,3 +6,9 @@ CVE-2026-11940
 CVE-2026-15308
 CVE-2026-7210
 CVE-2026-53615
+
+# ADR-0025 accepted base-image exceptions for gcr.io/distroless/nodejs24-debian13:nonroot
+# Accepted risk owner: TaxPulse module engineer for the Week 8 Day 4 secure-release deliverable.
+# Scope: distroless Node.js Debian 13.6 base packages only; remove when a fixed base digest is available.
+CVE-2026-14456
+

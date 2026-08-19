@@ -41,3 +41,49 @@ Accepted
 
 All required container scanning, SBOM generation, image signing, and deployment tooling were verified and installed to satisfy the Week 8 Day 4 secure-release prerequisites.
 
+## Entry 3
+
+### Asked
+
+Execute the bootstrap smoke test verifying Trivy, Syft, Cosign, AWS CLI targeting floci on port 4566, non-mock ECS mode, codebase presence, evidence sink, and required directory creation (`.zap`, `docs/adr`, `infra/terraform/modules/observability`).
+
+### Produced
+
+1. Executed and confirmed Trivy v0.73.0, Syft v1.51.0, Cosign v3.1.3, and AWS CLI v2.35.9.
+2. Started local floci emulator container and verified STS reachability (`http://localhost:4566`).
+3. Confirmed `FLOCI_SERVICES_ECS_MOCK` is false.
+4. Verified presence of `apps/api`, `services/compute`, and `artifacts/security`.
+5. Created target directories `.zap`, `docs/adr`, and `infra/terraform/modules/observability`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The full bootstrap smoke test succeeded with all local release toolchains, emulator endpoints, and repository directory structures verified.
+
+## Entry 4
+
+### Asked
+
+Implement supply-chain provenance for Task 1: add the three provenance artifacts (Trivy container scan with severity gating, Syft CycloneDX SBOM enumeration, and Cosign keyless OIDC signing and pre-deploy verification) to the release pipeline, document the container-scanning policy in ADR-0025, triage findings in the disposition log, and emit evidence into `artifacts/security/`.
+
+### Produced
+
+1. Created `.github/workflows/release.yml` with a sequential gated chain (`build` → `scan` → `sbom` → `sign` → `deploy` → `assert-target` → `dast`).
+2. Updated `.github/workflows/cosign-sign.yml` to enforce keyless OIDC signing and verification pinning both OIDC issuer and workflow identity on `main`.
+3. Created `docs/adr/0025-container-scanning-policy.md` in MADR format defining the 0 CRITICAL / <=2 HIGH policy, `libssl3t64` base library justification, and Rekor public transparency log permanence implications.
+4. Added `DISP-0007` to `docs/security/disposition-log.md` and updated `.trivyignore` with the documented exception.
+5. Generated CycloneDX SBOM (`artifacts/security/sbom.cdx.json`), Trivy SARIF (`artifacts/security/trivy.sarif`), and Trivy JSON (`artifacts/security/trivy.json`) for `taxpulse/core-case-service:v1.0.0.0`.
+6. Verified that `trivy image --severity CRITICAL,HIGH --exit-code 1` halts on unaddressed findings and exits clean once ADR-justified, and verified that Cosign rejects unsigned or mismatched images.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The supply-chain provenance stage chain, Trivy severity gate, Syft CycloneDX SBOM generation, Cosign keyless signing/verification controls, ADR-0025 policy, and disposition logs were successfully implemented and empirically verified against the M7 Core Case Service container image.
+
+

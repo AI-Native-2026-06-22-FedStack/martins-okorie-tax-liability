@@ -53,3 +53,12 @@ Under the TaxPulse security policy, no HIGH/ERROR finding may merge unaddressed;
 - **Severity**: LOW
 - **Disposition**: **Tracked**
 - **Rationale**: Fallback token decoding attempt gracefully catches decoding failures and returns boolean validation status without crashing the process. No HIGH findings reported across Python services.
+
+### DISP-0007: Distroless Base OpenSSL QUIC DoS in Container Scan
+- **Tool**: Trivy (`CVE-2026-14456`)
+- **Location**: `libssl3t64:3.5.6-1~deb13u2` in `taxpulse/core-case-service:v1.0.0.0`
+- **Severity**: HIGH
+- **Disposition**: **Documented False Positive / Accepted Risk (ADR-0025)**
+- **Rationale**: Upstream Debian 13 base library finding in OpenSSL QUIC server protocol implementation with `fix_deferred` status. The Core Case Service runs behind an AWS Application Load Balancer terminating standard TLS 1.3 / HTTP/1.1 and does not bind or process raw UDP/QUIC traffic.
+- **Remediation**: Documented in ADR-0025. Accepted base exception adhering to 0 CRITICAL and <=2 HIGH container gate policy; to be retired once patched distroless base digest is released.
+
