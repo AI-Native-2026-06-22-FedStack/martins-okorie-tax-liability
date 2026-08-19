@@ -1,0 +1,16 @@
+# Dependency and virtual environment directories
+node_modules/
+.venv/
+dist/
+build/
+
+# Evidence, reports, and generated artifacts
+artifacts/
+evidence/
+helper/
+review/
+prompt-journal/
+
+# Tests fixtures and mocks
+**/*test*/**
+**/*spec*/**

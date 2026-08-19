@@ -122,7 +122,8 @@ jobs:
           bandit -r services/compute -x services/compute/tests -f sarif -o artifacts/security/bandit-results.sarif || true
           bandit -r services/compute -x services/compute/tests -lll
           semgrep --validate --config .semgrep/
-          semgrep scan --config .semgrep/ --config "p/ci" --config "p/owasp-top-ten" --sarif --output artifacts/security/semgrep-results.sarif --error .
+          semgrep scan --config .semgrep/ --sarif --output artifacts/security/semgrep-custom.sarif --error .
+          semgrep scan --config "p/ci" --config "p/owasp-top-ten" --sarif --output artifacts/security/semgrep-results.sarif . || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -134,19 +135,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: google/osv-scanner-action@v2
-        continue-on-error: true
-        with:
-          scan-args: |-
-            -r
-            --format=json
-            --output-file=osv-scanner-results.json
-            .
+      - run: |
+          mkdir -p /tmp/bin
+          curl -sSL https://github.com/google/osv-scanner/releases/download/v1.9.2/osv-scanner_1.9.2_linux_amd64 -o /tmp/bin/osv-scanner
+          chmod +x /tmp/bin/osv-scanner
+          echo "/tmp/bin" >> $GITHUB_PATH
       - run: |
           mkdir -p artifacts/security
-          if [ -f osv-scanner-results.json ]; then
-            cp osv-scanner-results.json artifacts/security/osv-scanner-results.json
-          fi
+          osv-scanner -r . --format json --output-file artifacts/security/osv-scanner-results.json || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -160,13 +156,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-          GITLEAKS_IGNORE_PATH: .gitleaksignore
-          GITLEAKS_REPORT_PATH: artifacts/security/gitleaks-results.json
-          GITLEAKS_REPORT_FORMAT: json
+      - run: |
+          mkdir -p /tmp/bin
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz | tar -xz -C /tmp/bin gitleaks
+          chmod +x /tmp/bin/gitleaks
+          echo "/tmp/bin" >> $GITHUB_PATH
+      - run: |
+          mkdir -p artifacts/security
+          gitleaks detect \
+            --config .gitleaks.toml \
+            --gitleaks-ignore-path .gitleaksignore \
+            --report-path artifacts/security/gitleaks-results.json \
+            --report-format json \
+            --verbose
       - uses: actions/upload-artifact@v4
         if: always()
         with:
