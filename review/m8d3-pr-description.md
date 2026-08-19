@@ -59,7 +59,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run typecheck
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - uses: actions/setup-python@v5
@@ -79,7 +79,7 @@ jobs:
           python-version: "3.13"
       - run: |
           pip install uv
-          uv sync --extra dev
+          uv sync --all-packages
           uv run pytest services/compute/tests -v
 
   oidc-auth:
@@ -87,6 +87,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validate AWS_ROLE_ARN configuration
+        run: |
+          if [ -z "${{ vars.AWS_ROLE_ARN }}" ]; then
+            echo "::error::Repository variable AWS_ROLE_ARN is unset. Please configure AWS_ROLE_ARN in GitHub: Settings -> Secrets and variables -> Actions -> Variables."
+            exit 1
+          fi
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
@@ -100,7 +106,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: |
