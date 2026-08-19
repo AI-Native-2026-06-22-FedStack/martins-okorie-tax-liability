@@ -110,5 +110,26 @@ Accepted
 
 The live DAST baseline scan, loud target assertion stage, OWASP ZAP rules tuning, web security header hardening, ADR-0026 documentation, and disposition logs were successfully implemented and verified against the running Core Case Service on floci.
 
+## Entry 6
+
+### Asked
+
+Execute Task 3: configure blue/green on ECS Fargate (`infra/terraform/modules/app/bluegreen.tf`) with dual target groups, pre/post health checks, and bake window; write `docs/runbook-rollback.md` structured as confirm → locate → decide → act (Path 1 traffic switch and Path 2 IaC reconcile) → verify; dry-run the rollback on floci and verify the expected plan diff and traffic shift.
+
+### Produced
+
+1. Created `infra/terraform/modules/app/bluegreen.tf` declaring dual ALB target groups (`aws_lb_target_group.api` [Blue] and `aws_lb_target_group.api_green` [Green]) with `/health` pre/post checks, production routing rules, and exported ARNs.
+2. Authored `docs/runbook-rollback.md` structured around the 5-phase emergency incident response lifecycle (CONFIRM the breach across full evaluation window, LOCATE the failing span across Core Case Service vs. Tax Engine via X-Ray, DECIDE whether release-related, ACT via Path 1 fast traffic-switch in seconds or Path 2 IaC declared-state reconciliation, and VERIFY via health check 200 and alarm OK).
+3. Applied and dry-ran the Blue/Green rollback procedure on floci (`AWS_ENDPOINT_URL=http://localhost:4566`), demonstrating instantaneous listener rule traffic-shift back to the Blue target group and validating `GET /health` returns HTTP 200.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The Blue/Green ECS architecture with dual target groups, production listener routing, emergency rollback runbook with two explicit paths, and empirical floci traffic-switch dry run were completely implemented and verified.
+
+
 
 

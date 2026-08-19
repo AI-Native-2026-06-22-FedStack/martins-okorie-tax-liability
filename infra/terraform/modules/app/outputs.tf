@@ -51,3 +51,19 @@ output "spa_bucket_arn" {
   description = "ARN of the S3 SPA delivery bucket."
   value       = aws_s3_bucket.spa.arn
 }
+
+output "api_target_group_blue_arn" {
+  description = "ARN of the primary (blue) target group for Core Case Service."
+  value       = aws_lb_target_group.api.arn
+}
+
+output "api_target_group_green_arn" {
+  description = "ARN of the alternate (green) target group for Core Case Service."
+  value       = aws_lb_target_group.api_green.arn
+}
+
+output "api_production_listener_rule_arn" {
+  description = "ARN of the production listener rule managing blue/green traffic cutover."
+  value       = aws_lb_listener_rule.api_production.arn
+}
+
