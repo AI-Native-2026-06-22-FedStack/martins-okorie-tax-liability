@@ -189,7 +189,31 @@ Required status checks matrix (ADR-0024):
 
 ---
 
+## Platform Limitation Note: GitHub Free Plan Branch Protection API
+
+> [!IMPORTANT]
+> **Audit & Reviewer Notice on Branch Protection Live Status**:
+> While all workflow gates, check matrices, and CI enforcement jobs in `.github/workflows/secure-pr.yml` are fully configured and functional, native branch protection on `main` is currently subject to a platform limitation on private repositories on the GitHub Free plan.
+>
+> Executing `gh api repos/:owner/:repo/branches/main/protection` returns:
+> ```json
+> {
+>   "message": "Upgrade to GitHub Pro or make this repository public to enable branch protection rules",
+>   "documentation_url": "https://docs.github.com/rest/branches/branch-protection"
+> }
+> ```
+> (HTTP 403 Forbidden).
+>
+> **Remediation Paths to Close the Gap**:
+> 1. **Make Repository Public**: GitHub Free allows full native branch protection rules on public repositories.
+> 2. **Upgrade Organization**: Upgrading the organization account to GitHub Team or GitHub Enterprise enables branch protection rules on private repositories.
+>
+> This distinction ensures reviewers and compliance auditors do not mistake "workflow gates are correct and functional" for "native branch protection API is actively enforcing on this private repository tier."
+
+---
+
 ## Related ADR
+
 
 - [`docs/adr/0024-secure-pr-gate-matrix.md`](file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/docs/adr/0024-secure-pr-gate-matrix.md)
 - [`docs/security/disposition-log.md`](file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/docs/security/disposition-log.md)

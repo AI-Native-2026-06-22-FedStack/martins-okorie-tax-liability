@@ -38,7 +38,29 @@ The mechanical enforcement of this gate was proven through the failing-then-fixe
 - **Red State**: A planted test credential caused Gitleaks to exit with code 1, halting PR merge.
 - **Green State**: Once the credential was rotated, removed from active code, and its fingerprint documented in `.gitleaksignore` and `docs/security/disposition-log.md`, the gate returned code 0 and allowed merge.
 
+## Platform Limitation Note: GitHub Free Plan Branch Protection API
+
+> [!IMPORTANT]
+> **Audit & Reviewer Notice on Branch Protection Live Status**:
+> While all workflow gates, check matrices, and CI enforcement jobs in `.github/workflows/secure-pr.yml` are fully configured and functional, native branch protection on `main` is currently subject to a platform limitation on private repositories on the GitHub Free plan.
+>
+> Executing `gh api repos/:owner/:repo/branches/main/protection` returns:
+> ```json
+> {
+>   "message": "Upgrade to GitHub Pro or make this repository public to enable branch protection rules",
+>   "documentation_url": "https://docs.github.com/rest/branches/branch-protection"
+> }
+> ```
+> (HTTP 403 Forbidden).
+>
+> **Remediation Paths to Close the Gap**:
+> 1. **Make Repository Public**: GitHub Free allows full native branch protection rules on public repositories.
+> 2. **Upgrade Organization**: Upgrading the organization account to GitHub Team or GitHub Enterprise enables branch protection rules on private repositories.
+>
+> This distinction ensures reviewers and compliance auditors do not mistake "workflow gates are correct and functional" for "native branch protection API is actively enforcing on this private repository tier."
+
 ## Consequences
-- PR merges are mechanically gated by branch protection rules on `main`.
+- PR merges are mechanically gated by workflow status checks on `main`.
 - All scanner outputs are archived in `artifacts/security/` as downloadable federal compliance evidence.
 - Full auditability is maintained across all security tool findings and justifications.
+
