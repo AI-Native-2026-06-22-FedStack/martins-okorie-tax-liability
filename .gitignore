@@ -20,3 +20,10 @@ local-deliverables/
 *.tfstate.backup
 *.tfplan
 crash.log
+
+# Generated data (Week 9 Python Data Tooling)
+data/exports/
+data/warehouse/
+*.parquet
+.ipynb_checkpoints/
+
