@@ -83,3 +83,19 @@ Defined in `services/pipeline/schema.py`:
 1. **Speed Axis (10.3x faster)**: Polars multi-threaded query engine executes the 2M-row group aggregation in **0.503s** compared to Pandas' **5.180s**.
 2. **Memory Footprint Axis (~25,500x lower peak memory)**: Polars' lazy query planner performs projection pushdown and streaming aggregation without materializing the full 510 MB DataFrame into RAM.
 3. **SQL & Parquet Ergonomics**: Polars seamlessly interfaces with Arrow IPC, Parquet staging on floci S3, and DuckDB SQL queries via zero-copy Arrow integration.
+
+### Lazy Query Plan (Showing Pushdown)
+
+```text
+AGGREGATE[maintain_order: false]
+  [col("amount_cents").sum().alias("gross_income_cents"), ((col("amount_cents").strict_cast(Float64) * col("effective_rate").strict_cast(Float64))).round().strict_cast(Int64).sum().alias("total_tax_cents"), len().alias("event_count")] BY [col("tenant_id"), col("cycle_id"), col("client_id"), col("planning_period"), col("tax_year")]
+  FROM
+  SELECT [col("tenant_id"), col("cycle_id"), col("client_id"), col("planning_period"), col("planning_period").str.slice([dyn int: 0, dyn int: 4]).strict_cast(Int32).alias("tax_year"), col("amount_cents"), col("effective_rate")]
+    Csv SCAN [data/exports/income_events.csv.gz]
+    PROJECT 6/12 COLUMNS
+    ESTIMATED ROWS: 1158119
+```
+
+- **Projection Pushdown**: Exactly 6 out of 12 columns are read from disk (`PROJECT 6/12 COLUMNS`), pruning unreferenced string and notes columns at scan time.
+- **Streaming Aggregation**: Group-by and expressions execute directly on chunked stream without full in-memory materialization.
+
