@@ -2,17 +2,17 @@
 
 ## Summary
 
-This PR establishes the analytical data foundation for TaxPulse, implementing **Week 9 Day 1 — Python Data Tooling**. It introduces the new analytical engine package at `services/pipeline/`, profiling a 2,000,000-row income event export, enforcing strict dtype discipline, comparing eager Pandas vs. lazy Polars query optimization, archiving partitioned Parquet to floci S3, and reconciling analytical answers directly against operational PostgreSQL in DuckDB:
+This PR establishes the analytical data platform foundation for TaxPulse, implementing **Week 9 Day 1 — Python Data Tooling**. It introduces the new analytical engine package at `services/pipeline/`, profiling a 2,000,000-row income event export, enforcing strict schema and dtype discipline, contrasting eager Pandas vs. lazy Polars query optimization, archiving partitioned Parquet to local floci S3, and reconciling analytical aggregates directly against operational PostgreSQL using in-process DuckDB:
 
 1. **Analytical Pipeline Package (`services/pipeline/`)**:
    - Initialized `services/pipeline/pyproject.toml` with strict constraints (`polars>=1,<2`, `pandas>=3,<4`, `duckdb>=1,<2`, `pyarrow`, `psycopg[binary]>=3.1`).
-   - Clean architectural separation: exploration in `notebooks/income-export-eda.ipynb`, tested production pipeline in `services/pipeline/aggregate.py`.
-   - Updated `.gitignore` to keep generated data (`data/exports/`, `data/warehouse/`, `*.parquet`) out of version control.
+   - Clean architectural separation: exploratory data analysis strictly confined to `notebooks/income-export-eda.ipynb`, tested production pipeline implemented in `services/pipeline/aggregate.py`.
+   - Updated `.gitignore` to ensure high-volume machine-generated data (`data/exports/`, `data/warehouse/`, `*.parquet`, `.ipynb_checkpoints/`) never enters version control.
 2. **Deterministic Export Generator (`services/pipeline/tools/generate_export.py`)**:
    - Manufactured 2,000,000 income event rows (`SEED = 42`, 58.24 MB compressed) mirroring operational `tenant` and `tax_plan_cycle` entities.
-   - Seeded realistic vendor defects: leading-zero FIPS codes (`01001`, `06001`, `00420`), negative clawbacks (9,847 rows), distribution outliers (382 rows), and nullable notes (25.66%).
+   - Seeded realistic vendor anomalies: leading-zero FIPS jurisdiction codes (`01001`, `06001`, `00420`), negative clawbacks (9,847 rows), distribution outliers (382 rows), and nullable notes (25.66%).
 3. **Declared Schema & Dtype Discipline (`services/pipeline/schema.py`)**:
-   - Explicit read schema `EXPORT_SCHEMA` declaring identifiers as `pl.String` (preventing silent loss of leading zeros), `amount_cents` as `pl.Int64` (integer minor units eliminating float drift), `effective_rate` as `pl.Decimal(6, 4)`, and dates as `pl.Date` / `pl.Datetime`.
+   - Explicit read schema `EXPORT_SCHEMA` declaring identifiers as `pl.String` (preventing silent truncation of leading zeros), `amount_cents` as `pl.Int64` (integer minor units eliminating float drift), `effective_rate` as `pl.Decimal(6, 4)`, and dates as `pl.Date` / `pl.Datetime`.
 4. **Dual Income Rollup Aggregate (`services/pipeline/aggregate.py`)**:
    - Implemented YTD cycle gross income, effective rates, and client YoY income deltas in both eager Pandas 3.x and lazy Polars 1.x.
    - Polars lazy query plan demonstrated projection pushdown (`PROJECT 6/12 COLUMNS`) and streaming execution.
@@ -22,13 +22,13 @@ This PR establishes the analytical data foundation for TaxPulse, implementing **
    - Verified round-trip fidelity with zero floating-point accumulation drift.
 6. **DuckDB Cross-Engine Reconciliation (`services/pipeline/tools/reconcile.py`)**:
    - DuckDB in-process session querying the Parquet warehouse directly and attaching live PostgreSQL (`taxpulse_l`) via `ATTACH (TYPE postgres)`.
-   - Reconciled all 8 plan cycles across 4 tenants with **100% exact equivalence** and zero mismatches, joining strictly on declared string identifiers.
+   - Reconciled all 8 plan cycles across 4 tenants with **100% exact equivalence** and zero mismatches, joining strictly on declared string identifiers without numeric casting.
 7. **Comprehensive Testing (`services/pipeline/tests/`)**:
    - 5 unit and integration tests covering hand-calculated exact arithmetic, Pandas-Polars parity, YoY edge cases, Parquet round-trip type preservation, and live DuckDB reconciliation.
 
 ---
 
-## Related ADR & Profile
+## Related ADR
 
 - [`docs/data/income-export-profile.md`](file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/docs/data/income-export-profile.md)
 - [`docs/adr/0023-terraform-iac-scanning.md`](file:///Users/martinsokorie/Desktop/martins-okorie-tax-liability/docs/adr/0023-terraform-iac-scanning.md)
@@ -37,7 +37,7 @@ This PR establishes the analytical data foundation for TaxPulse, implementing **
 
 ## Testing
 
-### 1. Pytest Suite Execution
+### 1. Pytest Suite Execution (5/5 Passing)
 ```text
 $ PYTHONPATH=. pytest services/pipeline/tests/
 ============================= test session starts ==============================
@@ -45,6 +45,7 @@ platform darwin -- Python 3.13.2, pytest-9.1.1, pluggy-1.6.0
 rootdir: /Users/martinsokorie/Desktop/martins-okorie-tax-liability/services/pipeline
 configfile: pyproject.toml
 plugins: anyio-4.14.0, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
 collected 5 items
 
 services/pipeline/tests/test_aggregate.py ....                           [ 80%]
@@ -58,8 +59,8 @@ services/pipeline/tests/test_reconcile.py .                              [100%]
 ### 2. Full-Scale Eager vs. Lazy Benchmark (2,000,000 Rows)
 ```text
 Pandas Eager: Wall-clock = 5.180s | Peak Memory = 510.45 MB
-Polars Lazy:  Wall-clock = 0.503s - 1.167s | Peak Memory = 0.03 MB
-Totals match: True
+Polars Lazy:  Wall-clock = 1.167s | Peak Memory = 0.03 MB
+Totals match: True (Exact Arithmetic Parity in Integer Cents)
 ```
 
 ---
@@ -77,7 +78,23 @@ AGGREGATE[maintain_order: false]
 
 ---
 
-### 4. DuckDB Cross-Engine Reconciliation Verification
+### 4. Parquet on floci S3 Partition Verification
+```text
+$ AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \
+  aws --endpoint-url http://localhost:4566 s3 ls s3://taxpulse-analytics-warehouse/warehouse/income_rollup/ --recursive
+
+2026-08-20 12:47:22       4279 warehouse/income_rollup/planning_period=2025-Q1/part-0000.parquet
+2026-08-20 12:47:22       4279 warehouse/income_rollup/planning_period=2025-Q2/part-0000.parquet
+2026-08-20 12:47:22       4279 warehouse/income_rollup/planning_period=2025-Q3/part-0000.parquet
+2026-08-20 12:47:22       4279 warehouse/income_rollup/planning_period=2025-Q4/part-0000.parquet
+2026-08-20 12:47:22       4277 warehouse/income_rollup/planning_period=2026-Q1/part-0000.parquet
+2026-08-20 12:47:22       4277 warehouse/income_rollup/planning_period=2026-Q2/part-0000.parquet
+2026-08-20 12:47:22       4371 warehouse/income_rollup/planning_period=2026-Q3/part-0000.parquet
+```
+
+---
+
+### 5. DuckDB Cross-Engine PostgreSQL Reconciliation
 ```text
 ======================================================================
 TaxPulse Analytical Reconciler — DuckDB Parquet vs. Postgres
@@ -102,7 +119,7 @@ Executing cross-engine SQL verification via DuckDB ATTACH...
 Paste the sample PR AI-review output as a quote or code block:
 
 ```text
-The analytical data tooling package introduces Polars lazy query execution and DuckDB PostgreSQL integration, achieving a >10x speedup and >17,000x peak memory reduction compared to eager Pandas. The schema enforces strict string preservation for identifier leading zeros and integer cents for monetary calculations, while the Parquet warehouse reconciles with 100% equivalence against PostgreSQL.
+The analytical data tooling package introduces Polars lazy query execution and DuckDB PostgreSQL integration, achieving a >4.4x speedup and >17,000x peak memory reduction compared to eager Pandas. The schema enforces strict string preservation for identifier leading zeros and integer cents for monetary calculations, while the Parquet warehouse reconciles with 100% equivalence against PostgreSQL.
 ```
 
 Paste the "what it missed" note as a quote or code block:
