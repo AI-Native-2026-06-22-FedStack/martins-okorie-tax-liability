@@ -9,6 +9,9 @@
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "alarms_kms" {
+  # checkov:skip=CKV_AWS_109: KMS key policy requires resource * because key policy is attached directly to the key itself — reviewed in ADR-0023
+  # checkov:skip=CKV_AWS_111: KMS key policy requires resource * because key policy is attached directly to the key itself — reviewed in ADR-0023
+  # checkov:skip=CKV_AWS_356: KMS key policy requires resource * because key policy is attached directly to the key itself — reviewed in ADR-0023
   statement {
     sid       = "EnableRootPermissions"
     effect    = "Allow"
