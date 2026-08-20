@@ -152,7 +152,22 @@ Accepted
 
 The golden signal CloudWatch alarm with runbook link, floci ALARM state verification, OpenTelemetry cross-service trace propagation, ADOT configuration, and committed X-Ray trace evidence were successfully implemented and verified.
 
+## Entry 8
 
+### Asked
 
+Remediate the IaC scan gate blocker where `aws_sns_topic.release_health_alerts` in `infra/terraform/modules/observability/alarms.tf` lacked encryption (Trivy AWS-0095 / HIGH), configuring a dedicated KMS key and setting `kms_master_key_id` on the SNS topic.
 
+### Produced
 
+1. Created `aws_kms_key.alarms` with `enable_key_rotation = true`, a 7-day deletion window, and an IAM policy document granting root administration and CloudWatch/SNS service usage permissions.
+2. Set `kms_master_key_id = aws_kms_key.alarms.id` on `aws_sns_topic.release_health_alerts`.
+3. Verified `trivy config infra/terraform --severity HIGH,CRITICAL` returns 0 misconfigurations and `terraform validate` succeeds.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+Configuring the dedicated KMS key and setting `kms_master_key_id` on the release health alerts topic remediated Trivy finding AWS-0095 cleanly with zero suppressions, unblocking the IaC scan gate.
