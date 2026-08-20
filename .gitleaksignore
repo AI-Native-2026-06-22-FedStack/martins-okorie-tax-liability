@@ -1,0 +1,7 @@
+# Gitleaks Ignore File
+# Every entry requires a documented rationale and must be logged in docs/security/disposition-log.md.
+# Removing a commit from git history does not un-leak a credential; real leaked credentials must be ROTATED at source.
+
+# Synthetic GitHub PAT used to verify Gitleaks gate blocking behavior during M8D3 Secure-PR gate testing
+apps/api/src/config/secret-regression-test.ts:github-pat:2
+docs/security/disposition-log.md:github-pat:23
