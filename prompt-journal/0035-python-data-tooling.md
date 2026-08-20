@@ -94,3 +94,26 @@ Accepted
 
 The dual eager/lazy aggregate implementations, Polars query plan pushdown proof, partitioned Parquet archival on floci S3, and automated pytest suite were completely implemented and empirically verified.
 
+## Entry 5
+
+### Asked
+
+Execute Task 3: author the cross-engine reconciler in `services/pipeline/tools/reconcile.py` using DuckDB to query the Parquet warehouse directly and, via `ATTACH`, query live PostgreSQL `tax_plan_cycle` in the same session; assert strict bidirectional set equivalence and equal cycle counts per tenant and period joining on declared string identifiers without numeric casts; and verify via automated tests.
+
+### Produced
+
+1. Authored `services/pipeline/tools/reconcile.py` executing DuckDB cross-engine queries over `data/warehouse/income_rollup/**/*.parquet` and attached PostgreSQL operational database (`taxpulse_l`).
+2. Enforced strict string joins across `tenant_id`, `cycle_id`, `client_id`, and `planning_period` without numeric coercions.
+3. Successfully reconciled all 8 cycles across 4 tenants and 7 planning periods with 0 missing cycles and 0 count mismatches.
+4. Created automated integration test in `services/pipeline/tests/test_reconcile.py` (5/5 tests passing across entire suite).
+5. Documented cross-engine reconciliation results and verification evidence in `docs/data/income-export-profile.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The DuckDB in-process cross-engine reconciliation between the analytical Parquet archive and live operational PostgreSQL was completely implemented, verified with 100% equivalence, and covered by automated tests.
+
+

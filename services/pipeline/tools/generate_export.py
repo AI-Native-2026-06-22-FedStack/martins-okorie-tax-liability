@@ -25,14 +25,14 @@ SEED_TENANTS = [
 
 SEED_CYCLES = [
     # (cycle_id, tenant_id, client_id, planning_period)
-    ("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "11111111-1111-4111-8111-111111111111", "CLI-00101", "2026-Q3"),
-    ("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "22222222-2222-4222-8222-222222222222", "CLI-00202", "2026-Q3"),
-    ("cccccccc-cccc-4ccc-8ccc-cccccccccccc", "11111111-1111-4111-8111-111111111111", "CLI-00305", "2025-Q1"),
-    ("dddddddd-dddd-4ddd-8ddd-dddddddddddd", "11111111-1111-4111-8111-111111111111", "CLI-00412", "2025-Q2"),
-    ("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", "22222222-2222-4222-8222-222222222222", "CLI-00523", "2025-Q3"),
-    ("ffffffff-ffff-4fff-8fff-ffffffffffff", "22222222-2222-4222-8222-222222222222", "CLI-00634", "2025-Q4"),
-    ("12121212-1212-4212-8212-121212121212", "33333333-3333-4333-8333-333333333333", "CLI-00745", "2026-Q1"),
-    ("34343434-3434-4434-8434-343434343434", "44444444-4444-4444-8444-444444444444", "CLI-00856", "2026-Q2"),
+    ("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "11111111-1111-4111-8111-111111111111", "client-local-001", "2026-Q3"),
+    ("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "22222222-2222-4222-8222-222222222222", "client-local-002", "2026-Q3"),
+    ("cccccccc-cccc-4ccc-8ccc-cccccccccccc", "11111111-1111-4111-8111-111111111111", "client-local-003", "2025-Q1"),
+    ("dddddddd-dddd-4ddd-8ddd-dddddddddddd", "11111111-1111-4111-8111-111111111111", "client-local-004", "2025-Q2"),
+    ("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", "22222222-2222-4222-8222-222222222222", "client-local-005", "2025-Q3"),
+    ("ffffffff-ffff-4fff-8fff-ffffffffffff", "22222222-2222-4222-8222-222222222222", "client-local-006", "2025-Q4"),
+    ("12121212-1212-4212-8212-121212121212", "33333333-3333-4333-8333-333333333333", "client-local-007", "2026-Q1"),
+    ("34343434-3434-4434-8434-343434343434", "44444444-4444-4444-8444-444444444444", "client-local-008", "2026-Q2"),
 ]
 
 INCOME_SOURCES = [

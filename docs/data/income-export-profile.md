@@ -99,3 +99,20 @@ AGGREGATE[maintain_order: false]
 - **Projection Pushdown**: Exactly 6 out of 12 columns are read from disk (`PROJECT 6/12 COLUMNS`), pruning unreferenced string and notes columns at scan time.
 - **Streaming Aggregation**: Group-by and expressions execute directly on chunked stream without full in-memory materialization.
 
+---
+
+## Cross-Engine Reconciliation (DuckDB vs. PostgreSQL)
+
+Executed via `services/pipeline/tools/reconcile.py` using DuckDB's in-process engine with direct Parquet scanning and live PostgreSQL ATTACH:
+
+- **Parquet Source**: `data/warehouse/income_rollup/**/*.parquet`
+- **PostgreSQL Target**: `postgresql://taxpulse_app@localhost:55433/taxpulse_l` (`tax_plan_cycle` table)
+- **Equivalence Result**: **100% Exact Match**
+  - Parquet Warehouse Cycles: `8`
+  - PostgreSQL System of Record Cycles: `8`
+  - Missing in PostgreSQL: `0`
+  - Missing in Parquet: `0`
+  - Per-tenant / per-period count mismatches: `0`
+  - Identifiers joined on strict declared string types without numeric casting.
+
+
