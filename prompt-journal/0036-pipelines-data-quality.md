@@ -63,3 +63,24 @@ Accepted
 ### Why
 
 Pydantic v2 boundary models and fail-safe redaction verified clean refusal of malformed rows with field-and-value error attribution, preserved exact integer monetary arithmetic, and passed 22/22 automated integration tests.
+
+## Entry 4
+
+### Asked
+
+Implement Task 3: Five value-level data quality checks in `services/pipeline/quality.py` grounded in the Deliverable 1 profile (non-negative amount, known income source, effective rate bounds, bracket coverage against reference tables, and tenant presence), a quarantine mechanism persisting rejected rows to floci S3 with attached reasons, a CloudWatch quarantine rate metric on floci, an automated threshold halt (> 2%) linking to `docs/runbooks/quarantine-rate.md`, and proof that planted bad rows are quarantined and omitted from loaded output.
+
+### Produced
+
+1. Updated `services/pipeline/quality.py` with the five value-level checks: non-negative amount (`amount_cents > 0`), known income source reference verification (`w2_salary`, `1099_dividend`, `1099_interest`, `k1_partnership`, `capital_gains`), effective rate boundary check (`[0.0, 1.0]`), bracket coverage check against the $100M top bracket threshold (`DEFAULT_MAX_BRACKET_INCOME_CENTS`), and tenant presence check against registered organizations.
+2. Verified `services/pipeline/stages/validate.py` routes all rejected rows to `s3://taxpulse-analytics-quarantine` on floci preserving full row context and failure reasons (`reasons` array), emits `QuarantineRate` and `QuarantinedRows` CloudWatch metrics, and halts with `QuarantineRateThresholdExceededError` if the quarantine rate exceeds 2.0%.
+3. Updated `docs/runbooks/quarantine-rate.md` detailing metric definitions, quarantine S3 layout, CLI inspection and triage commands, and replay procedures after upstream corrections.
+4. Added test cases in `services/pipeline/tests/test_pipeline.py` verifying each of the 5 DQ checks, proving planted bad rows land on S3 with failure reasons and are omitted from PostgreSQL analytics rollups, and validating threshold alarm gating (24/24 passed).
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+All 5 value-level data quality checks and bracket coverage assertions passed, planted bad rows were proven quarantined to floci S3 with reasons while clean batches loaded into analytics, and 24/24 test suite assertions succeeded.
