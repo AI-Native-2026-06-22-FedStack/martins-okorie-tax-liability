@@ -1,0 +1,21 @@
+[project]
+name = "pipeline"
+version = "0.1.0"
+description = "TaxPulse data pipeline and analytical processing engine"
+requires-python = ">=3.13"
+dependencies = [
+  "polars>=1,<2",
+  "pandas>=3,<4",
+  "duckdb>=1,<2",
+  "pyarrow",
+  "psycopg[binary]>=3.1",
+]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "jupyter",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
