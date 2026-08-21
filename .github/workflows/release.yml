@@ -70,15 +70,15 @@ jobs:
         run: docker load -i /tmp/docker-images/core-case-service.tar
 
       - name: Install Trivy Security Scanner
-        uses: aquasecurity/setup-trivy@v0.2.2
+        uses: aquasecurity/setup-trivy@v0.3.0
         with:
-          version: v0.73.0
+          version: v0.84.1
 
       - name: Run Trivy Scan with Severity Gate (--exit-code 1)
         run: |
           mkdir -p artifacts/security
           echo "Executing Trivy container image scan against ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}..."
-          
+
           # Generate audit evidence files (SARIF and JSON)
           trivy image \
             --severity CRITICAL,HIGH \
@@ -185,7 +185,7 @@ jobs:
           mkdir -p artifacts/security
           TARGET_URL="${{ vars.STAGING_APP_URL || 'http://localhost:3000' }}/health"
           echo "Asserting target reachability at ${TARGET_URL}..."
-          
+
           # Curl the live endpoint; fail immediately if it returns non-200 or connection refused
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET_URL}" || echo "000")
           echo "Received HTTP status code: ${HTTP_STATUS}"
@@ -212,4 +212,3 @@ jobs:
     with:
       target: "http://localhost:3000/health"
       rules_file_name: ".zap/rules.tsv"
-
