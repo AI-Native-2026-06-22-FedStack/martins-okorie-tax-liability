@@ -2,15 +2,21 @@
 TaxPulse Analytical Pipeline — Integration & Quality Tests
 
 Tests:
-1. Pydantic v2 boundary enforcement (model_validate, field_validator)
+1. Pydantic v2 boundary enforcement:
+   - Valid event validation
+   - Missing required field refusal naming field and value
+   - Wrong type refusal naming field and value
+   - Negative income amount refusal naming field and value
+   - Load boundary model enforcement (IncomeRollupRecord)
 2. Five value-level data quality checks (amount range, uniqueness, referential, freshness, batch size)
 3. Row conservation invariants (count_out + count_bad == count_in)
 4. Stage leak localization (deliberate lossy stage failure)
 5. Planted bad rows quarantined with attached failure reasons
 6. Quarantine rate threshold alarm gate (> 2% fails, <= 2% passes)
-7. Operational database table immutability (public schema untouched)
-8. Module 6 event fabric verification (SNS publish arrives on subscribed SQS queue)
-9. Boundary redaction verification (sensitive credentials censored before validation)
+7. Boundary redaction verification (Module 3 fail-safe, censored downstream & in quarantine)
+8. Operational database table immutability (public schema untouched)
+9. Module 6 event fabric verification (SNS publish arrives on subscribed SQS queue)
+10. End-to-end 5-stage pipeline execution
 """
 
 from datetime import date, datetime, timedelta
@@ -20,6 +26,11 @@ import boto3
 import psycopg
 import pytest
 from pydantic import ValidationError
+
+os.environ.setdefault("AWS_ENDPOINT_URL", "http://localhost:4566")
+os.environ.setdefault("AWS_ACCESS_KEY_ID", "test")
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "test")
+os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 
 from services.pipeline.metrics import ConservationViolationError, StageMetrics
 from services.pipeline.models import IncomeEvent, IncomeRollupRecord, validate_boundary_rows
@@ -62,7 +73,7 @@ def create_sample_event(
 
 
 # ==============================================================================
-# 1. Pydantic v2 Boundary Validation Tests
+# 1. Pydantic v2 Boundary Validation Tests (Task 2)
 # ==============================================================================
 
 def test_pydantic_v2_valid_event():
@@ -74,15 +85,43 @@ def test_pydantic_v2_valid_event():
     assert event.event_date == date(2026, 6, 15)
 
 
-def test_pydantic_v2_rejects_negative_amount():
-    raw = create_sample_event(amount_cents=-500)
+def test_pydantic_v2_refuses_missing_required_field():
+    raw = create_sample_event()
+    del raw["planning_period"]  # Missing required field
+
     with pytest.raises(ValidationError) as exc:
         IncomeEvent.model_validate(raw)
+
     errors = exc.value.errors()
-    assert any(e["loc"] == ("amount_cents",) for e in errors)
+    field_errors = [e["loc"] for e in errors]
+    assert ("planning_period",) in field_errors
 
 
-def test_pydantic_v2_rejects_invalid_jurisdiction_format():
+def test_pydantic_v2_refuses_wrong_type():
+    raw = create_sample_event(amount_cents="not_a_valid_integer_cents")
+
+    with pytest.raises(ValidationError) as exc:
+        IncomeEvent.model_validate(raw)
+
+    errors = exc.value.errors()
+    assert any(e["loc"] == ("amount_cents",) and "int" in e["type"] for e in errors)
+
+
+def test_pydantic_v2_refuses_negative_amount_naming_field_and_value():
+    negative_val = -500_00
+    raw = create_sample_event(amount_cents=negative_val)
+
+    with pytest.raises(ValidationError) as exc:
+        IncomeEvent.model_validate(raw)
+
+    errors = exc.value.errors()
+    amount_err = next(e for e in errors if e["loc"] == ("amount_cents",))
+    assert amount_err["input"] == negative_val
+    assert "non-negative" in amount_err["msg"]
+    assert str(negative_val) in amount_err["msg"]
+
+
+def test_pydantic_v2_refuses_invalid_jurisdiction_format():
     # Less than 5 digits (leading zero stripped) or non-digits
     raw = create_sample_event(jurisdiction_code="6001")
     with pytest.raises(ValidationError) as exc:
@@ -91,13 +130,13 @@ def test_pydantic_v2_rejects_invalid_jurisdiction_format():
     assert any(e["loc"] == ("jurisdiction_code",) for e in errors)
 
 
-def test_pydantic_v2_rejects_invalid_planning_period():
+def test_pydantic_v2_refuses_invalid_planning_period():
     raw = create_sample_event(planning_period="2026-Q5")
     with pytest.raises(ValidationError):
         IncomeEvent.model_validate(raw)
 
 
-def test_boundary_validation_preserves_field_errors():
+def test_boundary_validation_preserves_field_errors_and_offending_values():
     valid_raw = create_sample_event(event_id="good-1")
     invalid_raw = create_sample_event(event_id="bad-1", amount_cents=-100)
 
@@ -106,6 +145,36 @@ def test_boundary_validation_preserves_field_errors():
     assert len(bad) == 1
     assert bad[0]["row"]["event_id"] == "bad-1"
     assert "errors" in bad[0]
+    assert bad[0]["errors"][0]["field"] == "amount_cents"
+    assert bad[0]["errors"][0]["input"] == -100
+
+
+def test_load_boundary_model_enforcement():
+    # Valid rollup record
+    valid_rollup = {
+        "tenant_id": "11111111-1111-4111-8111-111111111111",
+        "cycle_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "client_id": "CLI-001",
+        "planning_period": "2026-Q3",
+        "tax_year": 2026,
+        "gross_income_cents": 250_000_00,
+        "total_tax_cents": 50_000_00,
+        "effective_rate_bps": 2000,
+        "event_count": 10,
+        "yoy_income_delta_cents": 25_000_00,
+    }
+    rec = IncomeRollupRecord.model_validate(valid_rollup)
+    assert rec.effective_rate_bps == 2000
+
+    # Invalid: negative gross income
+    with pytest.raises(ValidationError) as exc:
+        IncomeRollupRecord.model_validate({**valid_rollup, "gross_income_cents": -100})
+    assert any(e["loc"] == ("gross_income_cents",) for e in exc.value.errors())
+
+    # Invalid: effective rate bps > 10,000 (over 100%)
+    with pytest.raises(ValidationError) as exc:
+        IncomeRollupRecord.model_validate({**valid_rollup, "effective_rate_bps": 12000})
+    assert any(e["loc"] == ("effective_rate_bps",) for e in exc.value.errors())
 
 
 # ==============================================================================
@@ -175,7 +244,6 @@ def test_leak_localization_detects_failing_stage():
     """
     Demonstrates that a deliberately broken/lossy stage is immediately localized by row counts.
     """
-    # Simulate a lossy transform stage that dropped 5 rows without rejection record
     in_count = 50
     leaked_out_count = 45  # 5 rows dropped silently
 
@@ -229,16 +297,31 @@ def test_quarantine_rate_exceeded_raises_and_alerts():
 # 5. Boundary Redaction Tests (Module 3 Fail-Safe)
 # ==============================================================================
 
-def test_extract_redacts_sensitive_fields():
+def test_extract_redacts_sensitive_fields_before_validation_and_downstream():
     raw_sensitive = create_sample_event(
         notes="Client authorization token is bearer-xyz and password is secret123",
     )
     raw_sensitive["token"] = "super-secret-token"
+    raw_sensitive["mfa_secret"] = "otp-secret-key"
 
-    redacted = redact_record_failsafe(raw_sensitive)
+    redacted_records, metrics = extract([raw_sensitive])
+    assert len(redacted_records) == 1
+    redacted = redacted_records[0]
+
+    # Sensitive keys censored at extract
     assert redacted["token"] == "[REDACTED]"
+    assert redacted["mfa_secret"] == "[REDACTED]"
     assert "[REDACTED]" in redacted["notes"]
     assert "secret123" not in redacted["notes"]
+    assert "bearer-xyz" not in redacted["notes"]
+
+    # Redacted version travels to quarantine if invalid
+    bad_raw = dict(redacted)
+    bad_raw["amount_cents"] = -100  # Trigger quarantine
+    good, bad, val_metrics = validate([bad_raw], rate_threshold=1.0)
+    assert len(bad) == 1
+    assert bad[0]["row"]["token"] == "[REDACTED]"
+    assert "secret123" not in bad[0]["row"]["notes"]
 
 
 # ==============================================================================
@@ -309,9 +392,7 @@ def test_sns_refresh_event_arrives_on_sqs_queue():
     messages = resp.get("Messages", [])
     assert len(messages) > 0
 
-    # Inspect message body
     body = json.loads(messages[0]["Body"])
-    # If raw message delivery was false, body contains 'Message'; if true, body is the cloud event
     event_data = json.loads(body.get("Message", json.dumps(body))) if "Message" in body else body
     assert event_data.get("type") == "taxpulse.pipeline.corpus_refreshed"
     assert event_data.get("data", {}).get("schema") == "analytics"

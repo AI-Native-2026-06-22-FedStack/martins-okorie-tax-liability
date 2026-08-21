@@ -43,3 +43,23 @@ Accepted
 ### Why
 
 All 15 pipeline integration and data quality tests passed, row conservation was enforced at every stage, and the analytics schema was verified in PostgreSQL without modifying operational planning tables.
+
+## Entry 3
+
+### Asked
+
+Implement Task 2: Pydantic v2 models at both extract and load boundaries with exact integer minor units, informative field-level errors naming fields and offending input values (refusing missing required fields, wrong types, and negative amounts), and fail-safe Module 3 boundary redaction in extract before validation, transformation, or quarantine touches the data.
+
+### Produced
+
+1. Updated `services/pipeline/models.py` with pure Pydantic v2 models (`IncomeEvent` at extract boundary, `IncomeRollupRecord` at load boundary, `format_validation_errors`, and `validate_boundary_rows`), strictly enforcing integer minor units (`amount_cents`, `gross_income_cents`, `total_tax_cents`), non-negative amounts, 5-digit zero-padded FIPS codes, and field-level error formatting.
+2. Verified `services/pipeline/stages/extract.py` executes fail-safe Module 3 boundary redaction (`redact_record_failsafe`) over each record immediately upon ingestion, ensuring sensitive tokens (`token`, `password`, `mfa_secret`, `authorization`, `income` in unstructured text) are censored before validation and never reach validation errors or quarantine sinks unredacted.
+3. Enhanced `services/pipeline/tests/test_pipeline.py` with explicit unit tests for missing fields, wrong types, negative amounts naming field and value, load boundary rollup validation, and downstream quarantine redaction (22/22 passed).
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+Pydantic v2 boundary models and fail-safe redaction verified clean refusal of malformed rows with field-and-value error attribution, preserved exact integer monetary arithmetic, and passed 22/22 automated integration tests.
