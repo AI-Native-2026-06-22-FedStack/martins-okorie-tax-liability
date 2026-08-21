@@ -394,6 +394,32 @@ def test_extract_redacts_sensitive_fields_before_validation_and_downstream():
     assert "secret123" not in bad[0]["row"]["notes"]
 
 
+def test_extract_handles_redaction_failure_gracefully_per_row(monkeypatch):
+    """
+    Guarantees that a redaction failure on a single row does not crash the entire
+    extract batch, dropping only the offending row and recording count_bad=1.
+    """
+    valid_raw_1 = create_sample_event(event_id="evt-good-1")
+    valid_raw_2 = create_sample_event(event_id="evt-good-2")
+    failing_raw = create_sample_event(event_id="evt-failing-redact")
+
+    orig_redact = redact_record_failsafe
+
+    def faulty_redact(rec):
+        if rec.get("event_id") == "evt-failing-redact":
+            raise RuntimeError("Simulated redaction failure on corrupted record")
+        return orig_redact(rec)
+
+    monkeypatch.setattr("services.pipeline.stages.extract.redact_record_failsafe", faulty_redact)
+
+    redacted_records, metrics = extract([valid_raw_1, failing_raw, valid_raw_2])
+    assert len(redacted_records) == 2
+    assert metrics.count_in == 3
+    assert metrics.count_out == 2
+    assert metrics.count_bad == 1
+    assert [r["event_id"] for r in redacted_records] == ["evt-good-1", "evt-good-2"]
+
+
 # ==============================================================================
 # 6. Operational Database Immutability & Event Fabric Verification
 # ==============================================================================

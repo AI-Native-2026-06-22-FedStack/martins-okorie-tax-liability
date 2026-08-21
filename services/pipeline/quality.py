@@ -1,7 +1,8 @@
 """
 TaxPulse Analytical Pipeline — Data Quality Suite (Task 3)
 
-Asserts five value-level expectations over incoming rows beyond structural Pydantic types:
+Asserts five value-level expectations over incoming rows beyond structural Pydantic types,
+plus batch-level operational bounds checking via check_batch_size():
 1. Non-negative amount check: amount_cents > 0 (strictly positive; flags negative/zero clawbacks)
 2. Known income source check: verifies income_source is in declared reference categories
 3. Rate bounds check: verifies effective_rate is strictly between 0.0 and 1.0
@@ -12,12 +13,15 @@ Every failed row is quarantined with an attached failure reason and identity.
 """
 
 from datetime import date
+import logging
 import os
 from typing import Any, Optional
 
 import psycopg
 
 from services.pipeline.models import IncomeEvent
+
+logger = logging.getLogger("taxpulse.pipeline.quality")
 
 # Declared reference income sources from calculation contract & D1 profile
 KNOWN_INCOME_SOURCES = {
@@ -104,6 +108,11 @@ def check_quality(
     valid_sources = allowed_sources or KNOWN_INCOME_SOURCES
     valid_tenants = allowed_tenants or DEFAULT_REGISTERED_TENANTS
     seen_event_ids: set[str] = set()
+
+    # Perform operational batch size check
+    batch_issues = check_batch_size(events, min_size=0)
+    if batch_issues:
+        logger.warning("Batch size verification warning: %s", batch_issues)
 
     good: list[IncomeEvent] = []
     bad: list[dict[str, Any]] = []

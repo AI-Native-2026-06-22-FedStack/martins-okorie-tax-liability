@@ -91,17 +91,28 @@ def extract(
 
     # Apply fail-safe boundary redactor before anything else touches it
     redacted_records: list[dict[str, Any]] = []
+    bad_count = 0
     for row in raw_records:
-        redacted = redact_record_failsafe(row)
-        redacted_records.append(redacted)
+        try:
+            redacted = redact_record_failsafe(row)
+            redacted_records.append(redacted)
+        except Exception as exc:
+            bad_count += 1
+            event_id = row.get("event_id", "unknown") if isinstance(row, dict) else "unknown"
+            logger.warning(
+                "Failsafe redaction failed on record %s: %s; dropping row to prevent sensitive data leakage",
+                event_id,
+                exc,
+            )
 
     metrics = StageMetrics(
         stage_name="extract",
         count_in=len(raw_records),
         count_out=len(redacted_records),
-        count_bad=0,
+        count_bad=bad_count,
         run_id=run_id,
     )
     metrics.log()
 
     return redacted_records, metrics
+

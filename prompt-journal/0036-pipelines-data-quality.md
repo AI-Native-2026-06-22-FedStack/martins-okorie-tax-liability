@@ -84,3 +84,28 @@ Accepted
 ### Why
 
 All 5 value-level data quality checks and bracket coverage assertions passed, planted bad rows were proven quarantined to floci S3 with reasons while clean batches loaded into analytics, and 24/24 test suite assertions succeeded.
+
+## Entry 5
+
+### Asked
+
+Address non-blocking reviewer feedback on branch `m9d2-implementation`:
+1. `check_batch_size()` in `quality.py` was defined but never called — either wire it in or update the docstring.
+2. The redaction loop in `extract()` lacked a try/except around `redact_record_failsafe()`, which would crash the entire batch extract on a single-row error rather than failing per-row.
+3. `boto3` was used across several pipeline files but not declared explicitly in `services/pipeline/pyproject.toml`.
+
+### Produced
+
+1. Explicitly declared `"boto3>=1.34"` under `dependencies` in `services/pipeline/pyproject.toml`.
+2. Wired `check_batch_size()` into `check_quality()` in `services/pipeline/quality.py` and updated module docstrings to clearly document the value-level and batch bounds checks.
+3. Wrapped `redact_record_failsafe(row)` in a `try/except` inside `services/pipeline/stages/extract.py`, dropping failing records to prevent unredacted data leakage while tracking `count_bad` to maintain exact stage row conservation (`count_in == count_out + count_bad`).
+4. Added `test_extract_handles_redaction_failure_gracefully_per_row` in `services/pipeline/tests/test_pipeline.py` verifying per-row redaction failure isolation and metric conservation (25/25 passed).
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+All 3 reviewer items were resolved cleanly, row-level redaction failure handling and batch sanity checks were wired with exact row conservation, and all 25 automated pipeline test suite assertions passed.
+
