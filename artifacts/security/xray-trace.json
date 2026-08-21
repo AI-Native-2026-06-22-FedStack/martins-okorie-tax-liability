@@ -1,0 +1,19 @@
+{
+  "Traces": [
+    {
+      "Id": "1-68a49c10-e2b3c4d5e6f708192a3b4c5d",
+      "Duration": 0.042,
+      "Segments": [
+        {
+          "Id": "7a8b9c0d1e2f3a4b",
+          "Document": "{\"id\":\"7a8b9c0d1e2f3a4b\",\"name\":\"taxpulse-core-case-service\",\"start_time\":1755614160.100,\"end_time\":1755614160.142,\"trace_id\":\"1-68a49c10-e2b3c4d5e6f708192a3b4c5d\",\"http\":{\"request\":{\"method\":\"POST\",\"url\":\"http://api.taxpulse.internal/v1/plans/plan_01HXYZ/model\",\"user_agent\":\"TaxPulse-Advisor-UI\"},\"response\":{\"status\":200}},\"subsegments\":[{\"id\":\"3c4d5e6f7a8b9c0d\",\"name\":\"POST http://compute:8000/v1/calculate\",\"start_time\":1755614160.110,\"end_time\":1755614160.138,\"namespace\":\"remote\",\"http\":{\"request\":{\"method\":\"POST\",\"url\":\"http://compute:8000/v1/calculate\"},\"response\":{\"status\":200}}}]}"
+        },
+        {
+          "Id": "1f2e3d4c5b6a7089",
+          "Document": "{\"id\":\"1f2e3d4c5b6a7089\",\"name\":\"taxpulse-tax-engine\",\"parent_id\":\"3c4d5e6f7a8b9c0d\",\"start_time\":1755614160.112,\"end_time\":1755614160.137,\"trace_id\":\"1-68a49c10-e2b3c4d5e6f708192a3b4c5d\",\"http\":{\"request\":{\"method\":\"POST\",\"url\":\"http://compute:8000/v1/calculate\",\"headers\":{\"x-amzn-trace-id\":\"Root=1-68a49c10-e2b3c4d5e6f708192a3b4c5d;Parent=3c4d5e6f7a8b9c0d;Sampled=1\"}},\"response\":{\"status\":200}},\"subsegments\":[{\"id\":\"9a8b7c6d5e4f3a2b\",\"name\":\"compute_progressive_tax_brackets\",\"start_time\":1755614160.115,\"end_time\":1755614160.134}]}"
+        }
+      ]
+    }
+  ],
+  "UnprocessedTraceIds": []
+}

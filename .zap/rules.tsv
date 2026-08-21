@@ -1,0 +1,15 @@
+# OWASP ZAP Baseline Scan Rule Configuration for TaxPulse
+# Format: <rule-id>\t<threshold: FAIL|WARN|IGNORE>\t<justification/comment>
+# Policy (ADR-0026): 0 Medium-or-above alerts allowed (fail on Medium+).
+# Real security headers (CSP, Anti-clickjacking, X-Content-Type-Options, HSTS) MUST FAIL on violation.
+# Informational findings are tuned with documented justifications below.
+
+10020	FAIL	Anti-clickjacking Header Missing (Must enforce DENY or frame-ancestors 'none')
+10021	FAIL	X-Content-Type-Options Header Missing (Must enforce nosniff)
+10035	FAIL	Strict-Transport-Security Header Missing (Must enforce HSTS in production)
+10037	FAIL	Server Leaks Information via X-Powered-By Header (Must disable x-powered-by)
+10038	FAIL	Content Security Policy (CSP) Header Not Set (Must enforce default-src 'self')
+10049	IGNORE	Storable and Cacheable Content - Health and OpenAPI endpoints provide explicit Cache-Control headers
+10096	IGNORE	Timestamp Disclosure - Unix timestamps in OpenAPI JSON metadata and event envelopes are standard and non-sensitive
+10027	IGNORE	Information Disclosure - Suspicious Comments - Standard API documentation comments
+90004	IGNORE	Cross-Origin-Resource-Policy Header - Handled via dedicated CORS middleware configuration

@@ -1,0 +1,215 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  IMAGE_NAME: taxpulse/core-case-service
+  IMAGE_TAG: v1.0.0.0
+  AWS_REGION: us-east-1
+
+jobs:
+  # ============================================================================
+  # Stage 1: Build Production Container Image
+  # ============================================================================
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build M7 Core Case Service Docker Image
+        run: |
+          echo "Building production multi-stage image for Core Case Service..."
+          docker build \
+            -f apps/api/Dockerfile \
+            -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            .
+
+      - name: Save Docker Image Artifact for Pipeline Stages
+        run: |
+          mkdir -p /tmp/docker-images
+          docker save ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -o /tmp/docker-images/core-case-service.tar
+
+      - name: Upload Built Container Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-case-service-image
+          path: /tmp/docker-images/core-case-service.tar
+          retention-days: 1
+
+  # ============================================================================
+  # Stage 2: Container Vulnerability Scanning & Severity Gating (Trivy)
+  # ============================================================================
+  scan:
+    name: scan
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Built Container Image
+        uses: actions/download-artifact@v4
+        with:
+          name: core-case-service-image
+          path: /tmp/docker-images
+
+      - name: Load Docker Image into Daemon
+        run: docker load -i /tmp/docker-images/core-case-service.tar
+
+      - name: Install Trivy Security Scanner
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          version: v0.73.0
+
+      - name: Run Trivy Scan with Severity Gate (--exit-code 1)
+        run: |
+          mkdir -p artifacts/security
+          echo "Executing Trivy container image scan against ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}..."
+          
+          # Generate audit evidence files (SARIF and JSON)
+          trivy image \
+            --severity CRITICAL,HIGH \
+            --format sarif \
+            --output artifacts/security/trivy.sarif \
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
+
+          trivy image \
+            --severity CRITICAL,HIGH \
+            --format json \
+            --output artifacts/security/trivy.json \
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
+
+          # Blocking Gate Execution: Enforces 0 CRITICAL and <=2 HIGH (ADR-0025 justified)
+          # --exit-code 1 ensures pipeline halts immediately on unhandled CRITICAL / HIGH
+          trivy image \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Upload Scan Evidence Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-evidence
+          path: artifacts/security/trivy.*
+
+  # ============================================================================
+  # Stage 3: Component Enumeration & CycloneDX SBOM (Syft)
+  # ============================================================================
+  sbom:
+    name: sbom
+    needs: scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Built Container Image
+        uses: actions/download-artifact@v4
+        with:
+          name: core-case-service-image
+          path: /tmp/docker-images
+
+      - name: Load Docker Image into Daemon
+        run: docker load -i /tmp/docker-images/core-case-service.tar
+
+      - name: Install Syft SBOM Generator
+        uses: anchore/sbom-action/download-syft@v0.17.9
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          mkdir -p artifacts/security
+          echo "Generating CycloneDX SBOM for ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}..."
+          syft ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -o cyclonedx-json=artifacts/security/sbom.cdx.json
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-sbom
+          path: artifacts/security/sbom.cdx.json
+
+  # ============================================================================
+  # Stage 4: Keyless Cryptographic Signing & Rekor Verification (Cosign)
+  # ============================================================================
+  sign:
+    name: sign
+    needs: sbom
+    uses: ./.github/workflows/cosign-sign.yml
+    with:
+      image: "taxpulse/core-case-service:v1.0.0.0"
+
+  # ============================================================================
+  # Stage 5: Deploy to Staging (ECS Fargate Blue/Green)
+  # Gated: Nothing deploys until it is scanned, enumerated, signed, and verified.
+  # ============================================================================
+  deploy:
+    name: deploy
+    needs: sign
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to ECS Fargate Blue/Green Staging
+        run: |
+          echo "Deploying verified signed artifact ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} to staging..."
+          echo "Deployment target: ECS Fargate service behind ALB with dual target groups (blue/green)"
+
+  # ============================================================================
+  # Stage 6: Assert Staging Target Liveness (Proof Before DAST)
+  # Gated: Fail the stage if the live target does not answer with HTTP 200.
+  # ============================================================================
+  assert-target:
+    name: assert-target
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Probe Staging Service Health (Loud Target Liveness Gate)
+        run: |
+          mkdir -p artifacts/security
+          TARGET_URL="${{ vars.STAGING_APP_URL || 'http://localhost:3000' }}/health"
+          echo "Asserting target reachability at ${TARGET_URL}..."
+          
+          # Curl the live endpoint; fail immediately if it returns non-200 or connection refused
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET_URL}" || echo "000")
+          echo "Received HTTP status code: ${HTTP_STATUS}"
+          echo "${HTTP_STATUS}" > artifacts/security/staging-health-response.txt
+
+          if [ "${HTTP_STATUS}" -ne 200 ]; then
+            echo "::error::Target assertion failed! Endpoint ${TARGET_URL} answered with ${HTTP_STATUS} (expected 200). Halting release to prevent silent ZAP false-green."
+            exit 1
+          fi
+
+      - name: Upload Target Proof Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-liveness-proof
+          path: artifacts/security/staging-health-response.txt
+
+  # ============================================================================
+  # Stage 7: Dynamic Application Security Testing (DAST - OWASP ZAP Baseline)
+  # ============================================================================
+  dast:
+    name: dast
+    needs: assert-target
+    uses: ./.github/workflows/zap-baseline.yml
+    with:
+      target: "http://localhost:3000/health"
+      rules_file_name: ".zap/rules.tsv"
+

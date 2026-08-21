@@ -1,0 +1,45 @@
+name: zap-baseline
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "Target URL to run OWASP ZAP baseline scan against"
+        required: true
+        type: string
+      rules_file_name:
+        description: "Path to ZAP rules TSV configuration file"
+        required: false
+        default: ".zap/rules.tsv"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  dast-baseline:
+    name: dast-baseline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Execute OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: "ghcr.io/zaproxy/zaproxy:stable"
+          target: ${{ inputs.target }}
+          rules_file_name: ${{ inputs.rules_file_name }}
+          cmd_options: "-a"
+          fail_action: true
+
+      - name: Preserve ZAP Evidence Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-dast-evidence
+          path: |
+            artifacts/security/zap-report.html
+            artifacts/security/zap-report.json
+            artifacts/security/zap-report.md

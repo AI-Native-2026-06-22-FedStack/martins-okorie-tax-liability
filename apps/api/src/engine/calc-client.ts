@@ -66,10 +66,23 @@ export class TaxEngineClient {
 
   async calculateTaxLiability(
     payload: CalculationRequestPayload,
-    authToken: string
+    authToken: string,
+    traceContext?: { traceId?: string; correlationId?: string }
   ): Promise<CalculationResponsePayload> {
     let lastError: Error | null = null;
     let lastStatusCode = 503;
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${authToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    if (traceContext?.traceId) {
+      headers['X-Amzn-Trace-Id'] = `Root=${traceContext.traceId};Sampled=1`;
+    }
+    if (traceContext?.correlationId) {
+      headers['x-correlation-id'] = traceContext.correlationId;
+    }
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       const controller = new AbortController();
@@ -78,10 +91,7 @@ export class TaxEngineClient {
       try {
         const response = await fetch(`${this.baseUrl}/v1/calculate`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
