@@ -5,13 +5,19 @@ Tests:
 1. Pydantic v2 boundary enforcement (model_validate, field_validator)
 2. Five value-level data quality checks (amount range, uniqueness, referential, freshness, batch size)
 3. Row conservation invariants (count_out + count_bad == count_in)
-4. Planted bad rows quarantined with attached failure reasons
-5. Quarantine rate threshold alarm gate (> 2% fails, <= 2% passes)
-6. End-to-end 5-stage pipeline execution with analytics schema isolation and SNS event publication
+4. Stage leak localization (deliberate lossy stage failure)
+5. Planted bad rows quarantined with attached failure reasons
+6. Quarantine rate threshold alarm gate (> 2% fails, <= 2% passes)
+7. Operational database table immutability (public schema untouched)
+8. Module 6 event fabric verification (SNS publish arrives on subscribed SQS queue)
+9. Boundary redaction verification (sensitive credentials censored before validation)
 """
 
 from datetime import date, datetime, timedelta
+import json
 import os
+import boto3
+import psycopg
 import pytest
 from pydantic import ValidationError
 
@@ -19,7 +25,7 @@ from services.pipeline.metrics import ConservationViolationError, StageMetrics
 from services.pipeline.models import IncomeEvent, IncomeRollupRecord, validate_boundary_rows
 from services.pipeline.quality import check_batch_size, check_quality
 from services.pipeline.run import run
-from services.pipeline.stages.extract import extract
+from services.pipeline.stages.extract import extract, redact_record_failsafe
 from services.pipeline.stages.load import load
 from services.pipeline.stages.publish import publish
 from services.pipeline.stages.transform import transform
@@ -151,7 +157,7 @@ def test_dq_batch_size_check():
 
 
 # ==============================================================================
-# 3. Row Conservation Invariant Tests
+# 3. Row Conservation & Leak Localization Tests
 # ==============================================================================
 
 def test_row_conservation_valid():
@@ -163,6 +169,27 @@ def test_row_conservation_violation_raises():
     with pytest.raises(ConservationViolationError):
         # 95 + 4 != 100 -> leaked row
         StageMetrics(stage_name="validate", count_in=100, count_out=95, count_bad=4)
+
+
+def test_leak_localization_detects_failing_stage():
+    """
+    Demonstrates that a deliberately broken/lossy stage is immediately localized by row counts.
+    """
+    # Simulate a lossy transform stage that dropped 5 rows without rejection record
+    in_count = 50
+    leaked_out_count = 45  # 5 rows dropped silently
+
+    with pytest.raises(ConservationViolationError) as exc_info:
+        StageMetrics(
+            stage_name="transform_leaky_simulation",
+            count_in=in_count,
+            count_out=leaked_out_count,
+            count_bad=0,
+        )
+
+    # Verification: error message explicitly names the leaking stage and exact count disparity
+    assert "transform_leaky_simulation" in str(exc_info.value)
+    assert "count_in (50) != count_out (45) + count_bad (0)" in str(exc_info.value)
 
 
 # ==============================================================================
@@ -199,7 +226,99 @@ def test_quarantine_rate_exceeded_raises_and_alerts():
 
 
 # ==============================================================================
-# 5. End-to-End 5-Stage Pipeline Execution Test
+# 5. Boundary Redaction Tests (Module 3 Fail-Safe)
+# ==============================================================================
+
+def test_extract_redacts_sensitive_fields():
+    raw_sensitive = create_sample_event(
+        notes="Client authorization token is bearer-xyz and password is secret123",
+    )
+    raw_sensitive["token"] = "super-secret-token"
+
+    redacted = redact_record_failsafe(raw_sensitive)
+    assert redacted["token"] == "[REDACTED]"
+    assert "[REDACTED]" in redacted["notes"]
+    assert "secret123" not in redacted["notes"]
+
+
+# ==============================================================================
+# 6. Operational Database Immutability & Event Fabric Verification
+# ==============================================================================
+
+def test_operational_database_remains_untouched():
+    """
+    Guarantees that executing the pipeline leaves operational tables in 'public' untouched.
+    """
+    db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/taxpulse")
+
+    with psycopg.connect(db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM public.tax_plan_cycle;")
+            initial_cycle_count = cur.fetchone()[0]
+
+            cur.execute("SELECT COUNT(*) FROM public.tenants;")
+            initial_tenant_count = cur.fetchone()[0]
+
+    # Run pipeline with valid test events
+    events = [create_sample_event(event_id=f"imm-evt-{i}") for i in range(10)]
+    run(source=events)
+
+    # Verify counts in public tables are 100% unchanged
+    with psycopg.connect(db_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM public.tax_plan_cycle;")
+            post_cycle_count = cur.fetchone()[0]
+
+            cur.execute("SELECT COUNT(*) FROM public.tenants;")
+            post_tenant_count = cur.fetchone()[0]
+
+            # Verify rows wrote to analytics.income_rollup instead
+            cur.execute("SELECT COUNT(*) FROM analytics.income_rollup;")
+            analytics_count = cur.fetchone()[0]
+
+    assert post_cycle_count == initial_cycle_count
+    assert post_tenant_count == initial_tenant_count
+    assert analytics_count >= 1
+
+
+def test_sns_refresh_event_arrives_on_sqs_queue():
+    """
+    Verifies that the publish stage emits a domain event that arrives on the subscribed SQS queue.
+    """
+    endpoint_url = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")
+    os.environ["AWS_ACCESS_KEY_ID"] = "test"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "test"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+
+    topic_arn = "arn:aws:sns:us-east-1:000000000000:taxpulse-stage-changed"
+    queue_url = "http://floci:4566/000000000000/taxpulse-stage-changed-projection"
+
+    # Publish refresh event
+    msg_id, metrics = publish(topic_arn=topic_arn, loaded_cycles_count=5, run_id="test-run-evt")
+    assert msg_id != ""
+    assert metrics.count_out == 1
+
+    # Receive from SQS queue on floci
+    sqs = boto3.client("sqs", endpoint_url=endpoint_url, aws_access_key_id="test", aws_secret_access_key="test", region_name="us-east-1")
+    resp = sqs.receive_message(
+        QueueUrl=queue_url,
+        MaxNumberOfMessages=10,
+        WaitTimeSeconds=2,
+    )
+
+    messages = resp.get("Messages", [])
+    assert len(messages) > 0
+
+    # Inspect message body
+    body = json.loads(messages[0]["Body"])
+    # If raw message delivery was false, body contains 'Message'; if true, body is the cloud event
+    event_data = json.loads(body.get("Message", json.dumps(body))) if "Message" in body else body
+    assert event_data.get("type") == "taxpulse.pipeline.corpus_refreshed"
+    assert event_data.get("data", {}).get("schema") == "analytics"
+
+
+# ==============================================================================
+# 7. End-to-End 5-Stage Pipeline Execution Test
 # ==============================================================================
 
 def test_end_to_end_pipeline_execution():

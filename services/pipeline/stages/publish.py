@@ -73,11 +73,11 @@ def publish(
 
     try:
         msg_id = publish_event(topic_arn, payload)
-        metrics = StageMetrics(stage_name="publish", count_in=1, count_out=1, count_bad=0)
+        metrics = StageMetrics(stage_name="publish", count_in=1, count_out=1, count_bad=0, run_id=run_id)
     except Exception as exc:
         logger.warning(f"Failed to publish domain event: {exc}")
         msg_id = ""
-        metrics = StageMetrics(stage_name="publish", count_in=1, count_out=0, count_bad=1)
+        metrics = StageMetrics(stage_name="publish", count_in=1, count_out=0, count_bad=1, run_id=run_id)
 
     metrics.log()
     return msg_id, metrics

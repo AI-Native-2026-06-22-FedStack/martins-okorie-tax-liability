@@ -7,20 +7,23 @@ Transforms validated IncomeEvent records into cycle-level analytical rollups:
 - Validates transformed records against the IncomeRollupRecord load boundary model
 """
 
-from typing import Any
+from typing import Any, Optional
 import polars as pl
 
 from services.pipeline.metrics import StageMetrics
 from services.pipeline.models import IncomeEvent, IncomeRollupRecord
 
 
-def transform(events: list[IncomeEvent]) -> tuple[list[IncomeRollupRecord], StageMetrics]:
+def transform(
+    events: list[IncomeEvent],
+    run_id: Optional[str] = None,
+) -> tuple[list[IncomeRollupRecord], StageMetrics]:
     """
     Transforms validated income events into analytical rollups using Polars engine.
     """
     count_in = len(events)
     if count_in == 0:
-        metrics = StageMetrics(stage_name="transform", count_in=0, count_out=0, count_bad=0)
+        metrics = StageMetrics(stage_name="transform", count_in=0, count_out=0, count_bad=0, run_id=run_id)
         return [], metrics
 
     # Build Polars DataFrame from typed events
@@ -104,6 +107,7 @@ def transform(events: list[IncomeEvent]) -> tuple[list[IncomeRollupRecord], Stag
         count_in=count_in,
         count_out=count_in,
         count_bad=0,
+        run_id=run_id,
     )
     metrics.log(extra={"cycles_count": len(rollup_models)})
 

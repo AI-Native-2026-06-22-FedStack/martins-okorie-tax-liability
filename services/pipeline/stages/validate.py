@@ -117,6 +117,7 @@ def validate(
         count_in=count_in,
         count_out=count_out,
         count_bad=count_bad,
+        run_id=run_id,
     )
     metrics.log()
 

@@ -22,11 +22,19 @@ class ConservationViolationError(Exception):
 class StageMetrics:
     """Tracks and validates row conservation for a specific pipeline stage."""
 
-    def __init__(self, stage_name: str, count_in: int, count_out: int, count_bad: int = 0):
+    def __init__(
+        self,
+        stage_name: str,
+        count_in: int,
+        count_out: int,
+        count_bad: int = 0,
+        run_id: Optional[str] = None,
+    ):
         self.stage_name = stage_name
         self.count_in = count_in
         self.count_out = count_out
         self.count_bad = count_bad
+        self.run_id = run_id
         self.validate_conservation()
 
     def validate_conservation(self) -> None:
@@ -36,15 +44,25 @@ class StageMetrics:
                 f"count_in ({self.count_in}) != count_out ({self.count_out}) + count_bad ({self.count_bad})"
             )
 
-    def log(self, extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    @property
+    def quarantine_rate(self) -> float:
+        return self.count_bad / max(self.count_in, 1)
+
+    def to_record(self, extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         payload = {
+            "run_id": self.run_id,
             "stage": self.stage_name,
             "count_in": self.count_in,
             "count_out": self.count_out,
             "count_bad": self.count_bad,
+            "quarantine_rate": self.quarantine_rate,
         }
         if extra:
             payload.update(extra)
+        return payload
+
+    def log(self, extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+        payload = self.to_record(extra)
         logger.info(f"Stage '{self.stage_name}' completed", extra=payload)
         return payload
 

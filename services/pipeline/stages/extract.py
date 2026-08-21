@@ -1,22 +1,64 @@
 """
 TaxPulse Analytical Pipeline — Stage 1: Extract & Redact
 
-Reads source records from compressed exports (JSONL / CSV / Parquet) or raw collections,
-applies the Module 3 security boundary redactor to unstructured metadata, and emits counts.
+Reads source records with the D1 declared schema (schema.py), then applies the Module 3
+security boundary redactor over every row BEFORE anything else touches it.
+
+Fail-safe: if redaction cannot run, the row does not proceed. Unredacted sensitive values
+must never reach validation errors, the quarantine, or the archive.
 """
 
 import gzip
 import json
+import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
+
+import polars as pl
 
 from services.compute.app.logging_config import REDACT_KEYS, redact_processor
 from services.pipeline.metrics import StageMetrics
+from services.pipeline.schema import EXPORT_SCHEMA
+
+logger = logging.getLogger("taxpulse.pipeline")
 
 
-def extract(source: str | Path | list[dict[str, Any]]) -> tuple[list[dict[str, Any]], StageMetrics]:
+def redact_record_failsafe(record: dict[str, Any]) -> dict[str, Any]:
     """
-    Extracts raw records from source path or memory list, applying boundary redaction.
+    Applies Module 3 boundary redaction to a raw dictionary record.
+    Recursively scans keys and values, censoring any sensitive fields declared in REDACT_KEYS.
+    If redaction cannot run or fails, raises an error so unredacted data never proceeds.
+    """
+    try:
+        # Use structlog redact_processor logic to sanitize dict
+        sanitized = redact_processor(None, None, dict(record))
+
+        # Additional inspection on string fields (like notes or custom properties)
+        for k, v in list(sanitized.items()):
+            if isinstance(v, str):
+                v_lower = v.lower()
+                for sensitive_key in REDACT_KEYS:
+                    if sensitive_key in v_lower:
+                        sanitized[k] = "[REDACTED]"
+                        break
+            elif isinstance(v, dict):
+                sanitized[k] = redact_record_failsafe(v)
+            elif isinstance(v, list):
+                sanitized[k] = [
+                    redact_record_failsafe(item) if isinstance(item, dict) else item
+                    for item in v
+                ]
+        return sanitized
+    except Exception as exc:
+        raise RuntimeError(f"Failsafe redaction failed on record {record.get('event_id', 'unknown')}: {exc}") from exc
+
+
+def extract(
+    source: str | Path | list[dict[str, Any]],
+    run_id: Optional[str] = None,
+) -> tuple[list[dict[str, Any]], StageMetrics]:
+    """
+    Extracts raw records from source using declared read schema, then applies Module 3 boundary redactor.
     """
     raw_records: list[dict[str, Any]] = []
 
@@ -27,59 +69,38 @@ def extract(source: str | Path | list[dict[str, Any]]) -> tuple[list[dict[str, A
         if not path.exists():
             raise FileNotFoundError(f"Source file not found: {path}")
 
-        if path.suffix == ".gz" and ".jsonl" in path.name:
-            with gzip.open(path, "rt", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip():
-                        raw_records.append(json.loads(line))
-        elif path.suffix == ".jsonl":
-            with open(path, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip():
-                        raw_records.append(json.loads(line))
-        elif path.suffix in (".csv", ".gz"):
-            # If CSV, parse using standard CSV reader
-            import csv
-            opener = gzip.open(path, "rt", encoding="utf-8") if path.suffix == ".gz" else open(path, "r", encoding="utf-8")
+        path_str = str(path)
+        if path_str.endswith((".jsonl", ".jsonl.gz")):
+            opener = gzip.open(path, "rt", encoding="utf-8") if path_str.endswith(".gz") else open(path, "r", encoding="utf-8")
             with opener as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    # Convert typed numeric strings if present
-                    parsed_row: dict[str, Any] = dict(row)
-                    if "amount_cents" in parsed_row and parsed_row["amount_cents"] != "":
-                        try:
-                            parsed_row["amount_cents"] = int(parsed_row["amount_cents"])
-                        except ValueError:
-                            pass
-                    if "effective_rate" in parsed_row and parsed_row["effective_rate"] != "":
-                        try:
-                            parsed_row["effective_rate"] = float(parsed_row["effective_rate"])
-                        except ValueError:
-                            pass
-                    raw_records.append(parsed_row)
+                for line in f:
+                    line_str = line.strip()
+                    if line_str:
+                        raw_records.append(json.loads(line_str))
+        elif path_str.endswith((".csv", ".csv.gz")):
+            # Read using Polars with declared D1 EXPORT_SCHEMA overrides
+            df = pl.read_csv(path_str, schema_overrides=EXPORT_SCHEMA)
+            raw_records = df.to_dicts()
+        elif path_str.endswith((".parquet", ".pq")):
+            df = pl.read_parquet(path_str)
+            raw_records = df.to_dicts()
         else:
-            # Try raw json
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 raw_records = data if isinstance(data, list) else [data]
 
-    # Apply Module 3 boundary redaction on unstructured note/metadata fields
+    # Apply fail-safe boundary redactor before anything else touches it
     redacted_records: list[dict[str, Any]] = []
-    for r in raw_records:
-        rec_copy = dict(r)
-        if "notes" in rec_copy and isinstance(rec_copy["notes"], str):
-            # Check for sensitive tokens inside note text
-            for key in REDACT_KEYS:
-                if key in rec_copy["notes"].lower():
-                    rec_copy["notes"] = "[REDACTED]"
-                    break
-        redacted_records.append(rec_copy)
+    for row in raw_records:
+        redacted = redact_record_failsafe(row)
+        redacted_records.append(redacted)
 
     metrics = StageMetrics(
         stage_name="extract",
         count_in=len(raw_records),
         count_out=len(redacted_records),
         count_bad=0,
+        run_id=run_id,
     )
     metrics.log()
 

@@ -131,10 +131,10 @@ def run(
     logger.info(f"Starting pipeline run '{current_run_id}' on source '{resolved_source}'")
 
     try:
-        # Stage 1: Extract & Redact
-        raw_rows, extract_metrics = extract(resolved_source)
+        # Stage 1: Extract (read + boundary redact)
+        raw_rows, extract_metrics = extract(resolved_source, run_id=current_run_id)
 
-        # Stage 2: Validate & Quarantine
+        # Stage 2: Validate (pydantic v2 + 5 DQ checks + S3 quarantine + rate threshold gate)
         good_events, bad_records, validate_metrics = validate(
             raw_rows=raw_rows,
             rate_threshold=rate_threshold,
@@ -142,17 +142,25 @@ def run(
             run_id=current_run_id,
         )
 
-        # Stage 3: Transform (Rollup calculation)
-        rollup_records, transform_metrics = transform(good_events)
+        # Explicit conservation assertion: everything that came in either went out or was rejected
+        if validate_metrics.count_in != (validate_metrics.count_out + validate_metrics.count_bad):
+            raise AssertionError(
+                f"Conservation invariant breached in validate stage: "
+                f"count_in ({validate_metrics.count_in}) != count_out ({validate_metrics.count_out}) + count_bad ({validate_metrics.count_bad})"
+            )
 
-        # Stage 4: Load to Analytics Schema
+        # Stage 3: Transform (YTD & YoY Polars rollup)
+        rollup_records, transform_metrics = transform(good_events, run_id=current_run_id)
+
+        # Stage 4: Load to Analytics Schema (isolated from operational tables)
         loaded_count, load_metrics = load(
             records=rollup_records,
             schema_name=target_schema,
             database_url=database_url,
+            run_id=current_run_id,
         )
 
-        # Stage 5: Publish Domain Event
+        # Stage 5: Publish Domain Refresh Event
         msg_id, publish_metrics = publish(
             topic_arn=topic_arn,
             loaded_cycles_count=loaded_count,
@@ -174,11 +182,11 @@ def run(
             "run_id": current_run_id,
             "status": "COMPLETED",
             "stages": {
-                "extract": extract_metrics.log(),
-                "validate": validate_metrics.log(),
-                "transform": transform_metrics.log(),
-                "load": load_metrics.log(),
-                "publish": publish_metrics.log(),
+                "extract": extract_metrics.to_record(),
+                "validate": validate_metrics.to_record(),
+                "transform": transform_metrics.to_record(),
+                "load": load_metrics.to_record(),
+                "publish": publish_metrics.to_record(),
             },
             "loaded_cycles": loaded_count,
             "quarantined_records": len(bad_records),

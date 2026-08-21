@@ -21,13 +21,14 @@ def load(
     records: list[IncomeRollupRecord],
     schema_name: str = "analytics",
     database_url: Optional[str] = None,
+    run_id: Optional[str] = None,
 ) -> tuple[int, StageMetrics]:
     """
     Loads transformed rollup records into the specified analytics schema.
     """
     count_in = len(records)
     if count_in == 0:
-        metrics = StageMetrics(stage_name="load", count_in=0, count_out=0, count_bad=0)
+        metrics = StageMetrics(stage_name="load", count_in=0, count_out=0, count_bad=0, run_id=run_id)
         return 0, metrics
 
     db_url = database_url or os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/taxpulse")
@@ -87,6 +88,7 @@ def load(
         count_in=count_in,
         count_out=inserted_count,
         count_bad=0,
+        run_id=run_id,
     )
     metrics.log()
 
