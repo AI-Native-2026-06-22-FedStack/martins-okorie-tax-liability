@@ -1,0 +1,16 @@
+# path: services/pipeline/pipeline.toml
+# Thresholds and destinations for the TaxPulse Analytical Pipeline
+
+[source]
+export_glob = "data/exports/*.jsonl.gz"
+
+[quarantine]
+bucket = "taxpulse-analytics-quarantine"
+# The share of rejected rows that fails the run (2% defense threshold)
+rate_threshold = 0.02
+
+[load]
+schema = "analytics"
+
+[publish]
+topic_arn = "arn:aws:sns:us-east-1:000000000000:taxpulse-stage-changed"
