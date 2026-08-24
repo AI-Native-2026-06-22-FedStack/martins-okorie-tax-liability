@@ -189,3 +189,29 @@ Accepted
 ### Why
 
 Hybrid retrieval now runs both tenant-scoped legs against the same Postgres chunk table, fuses by RRF ranks rather than raw scores, returns provenance with every result, and passes exact-ID, paraphrase, and tenant-isolation verification.
+
+## Entry 9
+
+### Asked
+
+Complete Task 4: create a 12-question seed set, record before and after top-10 rankings, rerank in one model call per question with caching and resolved model id attribution, freeze and judge pools, implement precision-at-5 scoring, and write ADR-0028.
+
+### Produced
+
+1. Added `services/retrieval/eval/seed_pairs.jsonl` with 12 advisor questions covering exact identifier, colloquial paraphrase, multi-chunk, and near-duplicate cases.
+2. Implemented `services/retrieval/rerank.py` to record fused baseline top-10 rankings, rerank each question in one batched `gpt-4o-mini` call, cache by question/candidates/content hashes/resolved model id/prompt version/config, and write `rankings.jsonl` plus `pool.jsonl`.
+3. Captured resolved rerank model id `gpt-4o-mini-2024-07-18`.
+4. Implemented `services/retrieval/eval/precision_at_5.py` for the chosen JSONL shape.
+5. Generated `services/retrieval/eval/rankings.jsonl` and `services/retrieval/eval/pool.jsonl`, each with 12 rows.
+6. Measured mean precision@5 before rerank at `0.417` and after rerank at `0.483`.
+7. Verified a cached rerank rerun makes `0` rerank API calls.
+8. Added `docs/adr/0028-chunking-and-retrieval.md` documenting chunking, hybrid retrieval, RRF, reranking, measured p@5, resolved model id, deferred query transformation, and the frozen-pool caveat.
+9. Recorded verification in `evidence/week-9-day-3-rerank-eval-task-4.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+Reranking now has frozen before/after rankings, judged pools, reproducible p@5 measurement, zero-call cache reuse, and ADR coverage tying the measured improvement to the resolved model id.

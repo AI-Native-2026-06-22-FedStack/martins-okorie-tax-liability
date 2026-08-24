@@ -170,12 +170,14 @@ def retrieve(
     *,
     database_url: str | None = None,
     config_path: Path = CONFIG_PATH,
+    candidates: int | None = None,
+    top_k: int | None = None,
 ) -> list[RetrievedResult]:
     config = load_config(config_path)
     database_url = database_url or os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
-    candidates = int(config["retrieval"]["candidates"])
+    candidates = candidates or int(config["retrieval"]["candidates"])
     rrf_k = int(config["retrieval"]["rrf_k"])
-    top_k = int(config["retrieval"]["top_k"])
+    top_k = top_k or int(config["retrieval"]["top_k"])
     model = config["embedding"]["model"]
     dimensions = int(config["embedding"]["dimensions"])
 
@@ -191,6 +193,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tenant", required=True, dest="tenant_scope")
     parser.add_argument("--database-url", default=os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL))
     parser.add_argument("--config", type=Path, default=CONFIG_PATH)
+    parser.add_argument("--top-k", type=int)
+    parser.add_argument("--candidates", type=int)
     return parser.parse_args()
 
 
@@ -201,6 +205,8 @@ def main() -> int:
         args.tenant_scope,
         database_url=args.database_url,
         config_path=args.config,
+        candidates=args.candidates,
+        top_k=args.top_k,
     )
     for index, result in enumerate(results, start=1):
         print(
