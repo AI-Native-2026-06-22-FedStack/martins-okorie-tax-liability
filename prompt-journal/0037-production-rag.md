@@ -115,3 +115,28 @@ Accepted
 ### Why
 
 The exact retrieval bootstrap prerequisites now pass when ignored local env files are loaded into the verification shell, without exposing or committing the OpenAI key.
+
+## Entry 6
+
+### Asked
+
+Complete Task 1 for the production RAG deliverable: generate the synthetic planning corpus against the supplied spec and implement the `services/retrieval/corpus_check.py` acceptance check so it proves the required properties hold.
+
+### Produced
+
+1. Completed `data/corpus/CORPUS-SPEC.md` with the fictional issuer, tenant metadata choices, synthetic identifier scheme, document list, threshold-table section IDs, near-duplicate pairs, and superseded/replacement effective dates.
+2. Generated 10 synthetic markdown corpus documents under `data/corpus/`, split into 6 rule provisions and 4 advisory playbooks.
+3. Labelled every document as synthetic training material from the Fictional TaxPulse Planning Board and stated that rates and limits are invented.
+4. Added tenant metadata to every document front matter.
+5. Added stable synthetic section identifiers on every H2/H3 section using `TPX-RP-###-X` and `TPX-PB-###-X`.
+6. Included numeric threshold tables, 3 near-duplicate provision groups, and a superseded provision alongside its replacement.
+7. Implemented `services/retrieval/corpus_check.py` to verify document count, section IDs, corpus-wide uniqueness, tenant metadata, synthetic labels, threshold tables, near duplicates, and superseded/replacement markers.
+8. Recorded acceptance evidence in `evidence/week-9-day-3-corpus-task-1.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The generated corpus passes `python services/retrieval/corpus_check.py`, and the checker compiles cleanly while enforcing the required retrieval-corpus properties.
