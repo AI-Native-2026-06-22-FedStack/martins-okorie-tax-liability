@@ -140,3 +140,28 @@ Accepted
 ### Why
 
 The generated corpus passes `python services/retrieval/corpus_check.py`, and the checker compiles cleanly while enforcing the required retrieval-corpus properties.
+
+## Entry 7
+
+### Asked
+
+Complete Task 2: chunk the corpus with provenance, embed chunks with `text-embedding-3-small`, cache embeddings by content/model/dimensions, load chunks idempotently into Postgres with both `tsvector` and `vector(1536)` columns, and prove the chunking and load invariants.
+
+### Produced
+
+1. Added `services/retrieval/retrieval.toml` with hierarchical chunking config (`max_chars = 1800`, no overlap), embedding settings, retrieval settings, and rerank cache settings.
+2. Implemented `services/retrieval/chunker.py` to split on corpus H2/H3 headings and emit chunks carrying `chunk_id`, `tenant_scope`, `source`, `section`, `offset`, `content`, and `content_hash`.
+3. Added `services/retrieval/tests/test_chunker.py` covering max chunk length, no orphaned headings, and complete provenance on every chunk.
+4. Implemented `services/retrieval/embed.py` to embed uncached chunks with `text-embedding-3-small`, cache by content hash/model/dimensions, and upsert rows into `retrieval.corpus_chunk`.
+5. Added and applied `apps/api/db/migrations/0004_corpus_chunk.sql`, creating `retrieval.corpus_chunk` with text, tenant scope, provenance, `tsvector`, and `vector(1536)` columns plus idempotency/search indexes.
+6. Verified first load wrote 31 chunks with 31 new embeddings in 1 API call, and second load kept the chunk count unchanged with 0 new embeddings and 0 API calls.
+7. Spot-checked `TPX-RP-001-B-001` in Postgres to confirm tenant scope, source, section, offset, content, populated `tsvector`, and 1536-dimensional embedding.
+8. Recorded evidence in `evidence/week-9-day-3-chunk-embed-load-task-2.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+Chunker tests passed, the migration loaded into Postgres, both search columns were populated, provenance survived into the table, and a second loader run proved idempotency and cache reuse.

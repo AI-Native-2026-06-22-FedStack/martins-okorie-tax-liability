@@ -1,0 +1,23 @@
+[corpus]
+dir = "data/corpus"
+doc_count_min = 10
+
+[chunking]
+max_chars = 1800
+strategy = "hierarchical"
+overlap = 0
+
+[embedding]
+model = "text-embedding-3-small"
+dimensions = 1536
+cache_dir = ".cache/embeddings"
+
+[retrieval]
+candidates = 20
+rrf_k = 60
+top_k = 5
+
+[rerank]
+model = "gpt-4o-mini"
+prompt_version = "v1"
+cache_dir = ".cache/rerank"
