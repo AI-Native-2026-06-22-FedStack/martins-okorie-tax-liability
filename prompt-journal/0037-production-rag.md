@@ -215,3 +215,26 @@ Accepted
 ### Why
 
 Reranking now has frozen before/after rankings, judged pools, reproducible p@5 measurement, zero-call cache reuse, and ADR coverage tying the measured improvement to the resolved model id.
+
+## Entry 10
+
+### Asked
+
+Verify Section 5 grading rubric for the Week 9 Day 3 production RAG deliverable.
+
+### Produced
+
+1. Re-ran the corpus acceptance check and confirmed it passed.
+2. Re-ran retrieval chunker and hybrid retrieval tests and confirmed 7/7 passed.
+3. Re-ran DB verification that all 31 chunks have populated `tsvector` and 1536-dimensional embedding columns.
+4. Re-ran precision-at-5 scoring and confirmed before `0.417`, after `0.483`.
+5. Re-ran cached rerank evaluation and confirmed `api_calls=0` with resolved model id `gpt-4o-mini-2024-07-18`.
+6. Added `evidence/week-9-day-3-section-5-evaluation.md` mapping each rubric criterion to concrete proof.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+Every Section 5 rubric pass signal is backed by fresh commands, generated evidence files, database spot checks, and ADR-0028.
