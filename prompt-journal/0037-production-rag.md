@@ -165,3 +165,27 @@ Accepted
 ### Why
 
 Chunker tests passed, the migration loaded into Postgres, both search columns were populated, provenance survived into the table, and a second loader run proved idempotency and cache reuse.
+
+## Entry 8
+
+### Asked
+
+Complete Task 3: implement hybrid retrieval over one chunk table with a tenant-scoped keyword leg, a tenant-scoped dense pgvector leg, Reciprocal Rank Fusion at `k=60`, provenance-bearing results, exact/prose query proof, and tenant isolation tests.
+
+### Produced
+
+1. Added `services/retrieval/retrieve.py` with keyword retrieval over `search_vector`, dense retrieval over `embedding <=> query_embedding`, and RRF fusion by rank.
+2. Returned `RetrievedResult` objects carrying fused score plus full provenance (`chunk_id`, `tenant_scope`, `source`, `section`, `chunk_offset`, and `content`).
+3. Added `services/retrieval/tests/test_retrieve.py` covering rank-based RRF scoring, provenance on returned results, keyword tenant scoping, and fused retrieval tenant scoping.
+4. Verified `uv run python -m pytest services/retrieval/tests/test_chunker.py services/retrieval/tests/test_retrieve.py -q` passes (7/7).
+5. Ran the exact identifier query `TPX-RP-001-B` for `tenant-alpha-advisory`; the target chunk `TPX-RP-001-B-001` landed in the fused top five and was ranked first by the keyword leg.
+6. Ran the colloquial paraphrase query `what reserve cap applies when one person itemizes planning deductions`; the target chunk `TPX-RP-001-B-001` landed in the fused top five even with no keyword hits, proving dense retrieval contribution.
+7. Recorded verification in `evidence/week-9-day-3-hybrid-retrieval-task-3.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+Hybrid retrieval now runs both tenant-scoped legs against the same Postgres chunk table, fuses by RRF ranks rather than raw scores, returns provenance with every result, and passes exact-ID, paraphrase, and tenant-isolation verification.
