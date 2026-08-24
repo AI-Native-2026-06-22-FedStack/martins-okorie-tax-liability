@@ -68,3 +68,50 @@ Accepted
 ### Why
 
 Environment ownership is now explicit by service, real env files are ignored, committed examples contain placeholders only, and focused API env tests passed.
+
+## Entry 4
+
+### Asked
+
+Verify the Week 9 Day 3 retrieval prep instructions: pgvector Postgres image and extension, version-controlled `data/corpus`, new `services/retrieval` package structure, chunk-table migration expectation, `.cache/` gitignore requirement, bootstrap smoke test, and starter-file readiness.
+
+### Produced
+
+1. Verified `docker-compose.yml` uses `pgvector/pgvector:pg17` and local Postgres is healthy.
+2. Verified the local database has `vector` extension version `0.8.6`.
+3. Verified `apps/api/db/migrations/0001_tenant.sql` creates the `vector` extension.
+4. Added `.cache/` to `.gitignore` for embedding and rerank caches.
+5. Created the bootstrap directories `data/corpus`, `services/retrieval`, `services/retrieval/eval`, and `services/retrieval/tests`.
+6. Verified `data/exports/` remains ignored and `data/corpus/` is not ignored.
+7. Verified the exact OpenAI smoke test fails because `OPENAI_API_KEY` is not exported in this shell, and `DATABASE_URL` is also not exported.
+8. Recorded passed and not-yet-complete items in `evidence/week-9-day-3-retrieval-prep.md`.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The retrieval prep state is now explicitly verified, cache hygiene is fixed, bootstrap directories exist, and remaining blockers are documented before starter implementation begins.
+
+## Entry 5
+
+### Asked
+
+Resolve the retrieval prep smoke-test blockers by making `OPENAI_API_KEY` and `DATABASE_URL` available to the shell used for verification.
+
+### Produced
+
+1. Verified ignored root `.env.local` contains a non-empty `OPENAI_API_KEY` without printing the value.
+2. Verified ignored root `.env` contains a non-empty `DATABASE_URL`.
+3. Ran the bootstrap smoke test in a shell that exports `.env` and `.env.local`.
+4. Confirmed `CREATE EXTENSION IF NOT EXISTS vector;` succeeds, `pg_extension.vector` reports `0.8.6`, and the OpenAI Python client sees `OPENAI_API_KEY`.
+5. Updated `evidence/week-9-day-3-retrieval-prep.md` to replace the old env blocker notes with passing smoke-test evidence.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The exact retrieval bootstrap prerequisites now pass when ignored local env files are loaded into the verification shell, without exposing or committing the OpenAI key.
