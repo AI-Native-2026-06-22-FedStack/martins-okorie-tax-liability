@@ -42,3 +42,25 @@ Accepted
 ### Why
 
 All Deliverable 4 prerequisites and bootstrap smoke tests were successfully verified, required starter files and directories were provisioned, and all test suites in compute and web passed.
+
+## Entry 3
+
+### Asked
+
+Complete and apply the HNSW index migration (`apps/api/db/migrations/0005_chunk_vector_index.sql`), verify via Postgres query plan (`EXPLAIN ANALYZE`) that the HNSW index is actively used for dense retrieval rather than sequential scans, verify that retrieval on a known question returns its expected chunk, and record the embedding tier comparison (`text-embedding-3-small` vs. `text-embedding-3-large` and the pgvector 2,000-dim index constraint) in `docs/adr/0029-ai-assist-scope-and-gates.md`.
+
+### Produced
+
+1. Created and executed migration `apps/api/db/migrations/0005_chunk_vector_index.sql`, adding an HNSW index on `retrieval.corpus_chunk (embedding vector_cosine_ops)` with `m = 16` and `ef_construction = 64`.
+2. Verified via `EXPLAIN (ANALYZE, BUFFERS)` that the query planner performs an `Index Scan using corpus_chunk_embedding_hnsw_idx` on cosine distance (`<=>`) ordering with 0.937ms execution time.
+3. Verified that running a known query (`For TPX-RP-001-B, what maximum reserve applies to the single filer threshold table?`) against `retrieve()` returns the expected chunk (`TPX-RP-001-B-001`) as the top result.
+4. Authored `docs/adr/0029-ai-assist-scope-and-gates.md` documenting the tier comparison between small (1536-dim, native `vector_cosine_ops`) and large (3072-dim, requires `halfvec(3072)` due to pgvector's hard 2,000-dim limit for standard vector indexes), along with the 100x scaling strategy.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The HNSW vector index was successfully created, confirmed active in query execution plans, verified on known test queries, and documented in ADR-0029 with the embedding tier trade-offs.
+
