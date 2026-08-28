@@ -1,0 +1,19 @@
+# path: services/retrieval/eval/thresholds.toml
+# The program's quality bar. These are asserted individually — never averaged
+# into one number, or a collapsed retriever hides behind a strong generator.
+faithfulness      = 0.85
+answer_relevancy  = 0.85
+context_precision = 0.80
+
+# The judge that produced those numbers. RAGAS scores are JUDGE-DEPENDENT: the
+# same answers scored by a stronger model do not land on the same scale, so a
+# threshold carried over from one judge to another is not a threshold, it is a
+# guess. Change this and you re-baseline the three values above.
+judge_model = "gpt-4o-mini"              # the model FAMILY / cost tier. Record the RESOLVED
+                                         # model id the API returns beside every score
+
+# Two sets, both versioned. Keep them distinct:
+#   eval_smoke.jsonl (5)  proves the gate is WIRED  — red on a degraded prompt, green on revert
+#   eval_set.jsonl  (~20) produces the RECORDED score committed to evidence/
+smoke_set = "eval_smoke.jsonl"
+full_set  = "eval_set.jsonl"

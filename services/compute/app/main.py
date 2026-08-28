@@ -16,6 +16,8 @@ from app.schema_validator import validate_payload_against_shared_schema
 from fastapi import Depends, FastAPI, status
 from pydantic import BaseModel
 
+from services.compute.assist import AssistRequest, AssistResponse, execute_assist_pipeline
+
 # Configure structured JSON logging
 configure_logging()
 logger = structlog.get_logger()
@@ -139,4 +141,31 @@ async def compare_scenarios(
         conn=conn,
         baseline=request.baseline,
         scenarios=request.scenarios,
+    )
+
+
+@app.post(
+    "/assist",
+    response_model=AssistResponse,
+    status_code=status.HTTP_200_OK,
+    summary="AI Assist tax planning question answering with citations",
+)
+@app.post(
+    "/v1/assist",
+    response_model=AssistResponse,
+    status_code=status.HTTP_200_OK,
+    summary="AI Assist tax planning question answering with citations (v1)",
+)
+async def assist_endpoint(
+    request: AssistRequest,
+) -> AssistResponse:
+    """
+    AI Assist endpoint executing:
+    redact -> retrieve -> rerank -> generate -> validate -> return -> audit.
+    """
+    tenant_id = request.tenant_id or "tenant-alpha-advisory"
+    return execute_assist_pipeline(
+        raw_question=request.question,
+        tenant_id=tenant_id,
+        requester="advisor@taxpulse.local",
     )

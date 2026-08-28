@@ -64,6 +64,37 @@ def test_keyword_leg_is_tenant_scoped() -> None:
     assert all(result.section != "TPX-RP-002-B" for result in results)
 
 
+@pytest.mark.skipif(not os.getenv("DATABASE_URL"), reason="DATABASE_URL is required")
+def test_hnsw_index_scan_query_plan() -> None:
+    import psycopg
+
+    database_url = os.environ["DATABASE_URL"]
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT embedding FROM retrieval.corpus_chunk LIMIT 1;")
+            row = cur.fetchone()
+            assert row is not None, "retrieval.corpus_chunk must contain seeded rows"
+            sample_embedding = row[0]
+
+            # In small tables (e.g. 31 rows), Postgres optimizer prefers Seq Scan unless seqscan is disabled
+            cur.execute("SET enable_seqscan = off;")
+            cur.execute(
+                """
+                EXPLAIN (ANALYZE, BUFFERS)
+                SELECT chunk_id, content
+                FROM retrieval.corpus_chunk
+                ORDER BY embedding <=> %s::vector
+                LIMIT 10;
+                """,
+                (sample_embedding,),
+            )
+            plan_lines = [r[0] for r in cur.fetchall()]
+            plan_text = "\n".join(plan_lines)
+
+            assert "corpus_chunk_embedding_hnsw_idx" in plan_text
+            assert "Index Scan" in plan_text
+
+
 @pytest.mark.skipif(
     not os.getenv("DATABASE_URL") or not os.getenv("OPENAI_API_KEY"),
     reason="DATABASE_URL and OPENAI_API_KEY are required",
@@ -78,3 +109,5 @@ def test_retrieve_is_tenant_scoped() -> None:
     assert results
     assert all(result.tenant_scope in {"tenant-alpha-advisory", "tenant-all"} for result in results)
     assert all(result.section != "TPX-RP-002-B" for result in results)
+
+
