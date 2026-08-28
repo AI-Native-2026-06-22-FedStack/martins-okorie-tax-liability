@@ -3,14 +3,14 @@ dist/
 node_modules/
 .env
 .env.*
-!.env.local
 !.env.example
-!apps/api/.env.example
+!**/.env.example
 __pycache__/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
 .venv/
+.cache/
 *.log
 local-deliverables/
 
@@ -26,4 +26,3 @@ data/exports/
 data/warehouse/
 *.parquet
 .ipynb_checkpoints/
-

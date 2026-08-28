@@ -4,7 +4,7 @@
 
 services:
   postgres:
-    image: postgres:17.6-alpine
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: taxpulse_l
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -73,8 +73,6 @@ services:
   api:
     image: taxpulse-api:w7d1
     pull_policy: never
-    env_file:
-      - .env.local
     environment:
       AWS_ACCESS_KEY_ID: test
       AWS_ENDPOINT: http://floci:4566
