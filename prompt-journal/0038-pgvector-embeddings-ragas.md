@@ -123,5 +123,23 @@ Accepted
 
 The end-to-end AI Assist pipeline was shipped with verified pre-flight redaction, fail-closed validation, audit trail persistence, frontend integration, and full ADR-0029 documentation.
 
+## Entry 7
 
+### Asked
 
+Run the HNSW index similarity query plan check for real against a live Postgres instance with the index applied, capture and commit the raw `EXPLAIN (ANALYZE, BUFFERS)` execution plan output, add an automated test in the repository that runs this check against the live database, and update the PR description and evidence files with the actual output.
+
+### Produced
+
+1. Executed `EXPLAIN (ANALYZE, BUFFERS, VERBOSE)` on the dense cosine distance (`<=>`) similarity query against the live PostgreSQL 17.11 instance (`pgvector 0.8.6`) on `localhost:55433`, confirming execution as an `Index Scan using corpus_chunk_embedding_hnsw_idx` in 0.715ms with 96 shared buffer hits (0 disk reads).
+2. Added live automated test `test_hnsw_index_scan_query_plan` to `services/retrieval/tests/test_retrieve.py`, asserting that PostgreSQL's query optimizer utilizes `corpus_chunk_embedding_hnsw_idx` for dense vector retrieval.
+3. Created dedicated evidence file `evidence/hnsw-query-plan.md` and updated `evidence/week-9-day-4-ragas-eval.md` with raw execution plan output and verification logs.
+4. Updated `review/m9d4-pr-description.md` with the live test suite instructions and verbatim query plan output.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The HNSW vector query plan was verified against live PostgreSQL, covered with an automated regression test in `test_retrieve.py`, and recorded with verbatim raw plan evidence in `evidence/hnsw-query-plan.md` and `review/m9d4-pr-description.md`.

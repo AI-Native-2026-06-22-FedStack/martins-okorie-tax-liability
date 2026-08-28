@@ -1,12 +1,32 @@
 # Week 9 Day 4: RAGAS Quality Gate & Retrieval Evidence
 
-## 1. HNSW Index Verification
+## 1. HNSW Index Verification & Live Query Plan
 
 - **Migration**: `apps/api/db/migrations/0005_chunk_vector_index.sql`
 - **Index**: `retrieval.corpus_chunk_embedding_hnsw_idx`
 - **Method / Operator**: HNSW with `vector_cosine_ops` (`m=16`, `ef_construction=64`)
-- **Query Plan**: `EXPLAIN (ANALYZE, BUFFERS)` confirms `Index Scan using corpus_chunk_embedding_hnsw_idx` on cosine distance ordering (`<=>`).
+- **Query Plan Verification**: Executed `EXPLAIN (ANALYZE, BUFFERS, VERBOSE)` against live PostgreSQL 17.11 (`pgvector 0.8.6`).
+- **Dedicated Evidence File**: [evidence/hnsw-query-plan.md](evidence/hnsw-query-plan.md)
+- **Live Automated Test**: `test_hnsw_index_scan_query_plan` in `services/retrieval/tests/test_retrieve.py`.
+
+### Raw Execution Plan Output
+
+```text
+Limit  (cost=128.23..132.23 rows=10 width=172) (actual time=0.462..0.580 rows=10 loops=1)
+  Output: chunk_id, tenant_scope, source, section, chunk_offset, content, ((embedding <=> '[-0.022064209, ...]'::vector))
+  Buffers: shared hit=96
+  ->  Index Scan using corpus_chunk_embedding_hnsw_idx on retrieval.corpus_chunk  (cost=128.23..140.62 rows=31 width=172) (actual time=0.461..0.577 rows=10 loops=1)
+        Output: chunk_id, tenant_scope, source, section, chunk_offset, content, (embedding <=> '[-0.022064209, ...]'::vector)
+        Order By: (corpus_chunk.embedding <=> '[-0.022064209, ...]'::vector)
+        Buffers: shared hit=96
+Planning:
+  Buffers: shared hit=28
+Planning Time: 0.155 ms
+Execution Time: 0.715 ms
+```
+
 - **Retrieval Test**: Verified question `"For TPX-RP-001-B, what maximum reserve applies to the single filer threshold table?"` returns expected chunk `TPX-RP-001-B-001`.
+
 
 ---
 
