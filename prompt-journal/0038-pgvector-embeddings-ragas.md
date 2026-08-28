@@ -56,11 +56,26 @@ Complete and apply the HNSW index migration (`apps/api/db/migrations/0005_chunk_
 3. Verified that running a known query (`For TPX-RP-001-B, what maximum reserve applies to the single filer threshold table?`) against `retrieve()` returns the expected chunk (`TPX-RP-001-B-001`) as the top result.
 4. Authored `docs/adr/0029-ai-assist-scope-and-gates.md` documenting the tier comparison between small (1536-dim, native `vector_cosine_ops`) and large (3072-dim, requires `halfvec(3072)` due to pgvector's hard 2,000-dim limit for standard vector indexes), along with the 100x scaling strategy.
 
+## Entry 4
+
+### Asked
+
+Grow the evaluation set to 20 reviewed examples in `eval_set.jsonl`, create the 5-item `eval_smoke.jsonl` for wiring proofs, implement `test_ragas_gate.py` asserting each of the three metrics (`faithfulness >= 0.85`, `answer_relevancy >= 0.85`, `context_precision >= 0.80`) separately against `thresholds.toml`, prove the gate turns red on a degraded prompt and green on revert, author `.github/workflows/ai-quality.yml` as a required status check, and record evidence in `evidence/week-9-day-4-ragas-eval.md`.
+
+### Produced
+
+1. Created `services/retrieval/eval/eval_set.jsonl` with 20 human-reviewed test pairs and `services/retrieval/eval/eval_smoke.jsonl` with 5 fixed pairs.
+2. Implemented `services/retrieval/eval/test_ragas_gate.py` and `services/retrieval/eval/run_eval_set.py` connecting hybrid retrieval, LLM reranking, structured assist answers, and RAGAS evaluation with individual metric assertions.
+3. Executed the red/green wiring proof on the smoke set: normal prompt passed (`faithfulness: 1.0000`, `answer_relevancy: 0.8840`, `context_precision: 1.0000`), degraded prompt turned red on faithfulness (`0.7167 < 0.85`), and reverting returned to green.
+4. Evaluated the full 20-sample dataset: `faithfulness: 0.8608` (PASS), `answer_relevancy: 0.8520` (PASS), `context_precision: 0.9250` (PASS) against resolved judge `gpt-4o-mini-2024-07-18` at ~$0.0058 per run.
+5. Authored `.github/workflows/ai-quality.yml` with Postgres 17 pgvector service container as a required PR check.
+6. Documented all findings, thresholds, and operational costs in `evidence/week-9-day-4-ragas-eval.md`.
+
 ### Accepted or rejected
 
 Accepted
 
 ### Why
 
-The HNSW vector index was successfully created, confirmed active in query execution plans, verified on known test queries, and documented in ADR-0029 with the embedding tier trade-offs.
+The RAGAS evaluation suite and CI quality gate were implemented, individually asserted against all three thresholds, proved reactive to regressions on the smoke suite, and documented with committed evidence.
 
