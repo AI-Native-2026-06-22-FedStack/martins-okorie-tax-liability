@@ -101,4 +101,27 @@ Accepted
 
 All prompt injection safety categories and fail-closed validator checks were implemented in a dedicated safety module and verified with 100% passing automated test coverage.
 
+## Entry 6
+
+### Asked
+
+Ship the POST `/assist` endpoint in FastAPI with fail-safe pre-flight redaction, hybrid retrieval, LLM reranking, structured generation, fail-closed validation, immutable append-only auditing, real latency/cost measurement, wire up the `AssistPanel` component in the React SPA plan-cycle detail view, and record ADR-0029.
+
+### Produced
+
+1. Created `apps/api/db/migrations/0006_ai_assist_audit.sql` and applied migration adding `audit.ai_assist_call` to Postgres.
+2. Implemented `services/compute/assist.py` and mounted `/assist` and `/v1/assist` endpoints in `services/compute/app/main.py`, enforcing the strict execution sequence: redact -> retrieve -> rerank -> generate -> validate -> return -> audit.
+3. Added comprehensive automated tests in `services/compute/tests/test_assist.py` verifying that client financial figures are redacted before model dispatch and in audit records, latency and cost are dynamically calculated, and valid provision citations are returned.
+4. Created `apps/web/src/components/AssistPanel.tsx`, integrated it into `apps/web/src/screens/PlanCycleDetailScreen.tsx`, and added unit tests in `apps/web/src/components/AssistPanel.test.tsx` (all 78 web tests passing).
+5. Authored comprehensive ADR in `docs/adr/0029-ai-assist-scope-and-gates.md` documenting scope boundaries, embedding tier analysis, evaluation gate thresholds, safety policies, and real per-call cost ($0.000153) and latency (1,480 ms) budgets.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+The end-to-end AI Assist pipeline was shipped with verified pre-flight redaction, fail-closed validation, audit trail persistence, frontend integration, and full ADR-0029 documentation.
+
+
 

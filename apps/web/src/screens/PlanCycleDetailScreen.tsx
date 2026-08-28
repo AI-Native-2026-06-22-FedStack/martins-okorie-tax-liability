@@ -3,6 +3,7 @@ import { Badge, BadgeVariant } from "../atoms/Badge";
 import { QueueEmpty, QueueError, QueueSkeleton } from "../atoms/QueueStates";
 import { PlanCycleDetailRecord, usePlanCycleDetailQuery } from "../api/usePlanCycles";
 import { AppShell } from "../components/AppShell";
+import { AssistPanel } from "../components/AssistPanel";
 import { AuthSessionReturn } from "../hooks/useAuthSession";
 import { usePlanCycleDetail, UsePlanCycleDetailReturn } from "../hooks/usePlanCycleDetail";
 import styles from "./PlanCycleDetailScreen.module.css";
@@ -172,6 +173,7 @@ export function PlanCycleDetailContent({
               <span className={styles.propValue}>{displayPriority}</span>
             </div>
           </div>
+          <AssistPanel />
         </div>
       )}
 
