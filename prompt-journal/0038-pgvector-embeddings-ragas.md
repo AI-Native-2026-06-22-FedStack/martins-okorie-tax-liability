@@ -79,3 +79,26 @@ Accepted
 
 The RAGAS evaluation suite and CI quality gate were implemented, individually asserted against all three thresholds, proved reactive to regressions on the smoke suite, and documented with committed evidence.
 
+## Entry 5
+
+### Asked
+
+Build the prompt injection regression test suite in `services/retrieval/safety/test_injection.py` with at least 12 attacks across at least 4 categories plus an indirect corpus prompt injection, document the taxonomy in `services/retrieval/safety/injection_categories.md`, and implement the fail-closed output validator in `services/retrieval/safety/validator.py` with unit test proofs in `services/retrieval/safety/test_validator.py`.
+
+### Produced
+
+1. Implemented `services/retrieval/safety/validator.py` enforcing strict JSON schema parsing (`AssistAnswer`) and fail-closed citation grounding verification.
+2. Created unit tests in `services/retrieval/safety/test_validator.py` verifying that valid responses pass, while malformed JSON, schema violations, and fabricated citations raise `ValidationError` and return no payload.
+3. Authored `services/retrieval/safety/injection_categories.md` documenting threat models and attack vectors across 5 distinct categories (Instruction Override, System Prompt Extraction, Cross-Tenant Access, Out-of-Scope Advice, and Indirect Corpus Injection).
+4. Implemented `services/retrieval/safety/test_injection.py` containing 14 security tests across all 5 categories, proving all attacks are safely refused and indirect injections are ignored.
+5. Ran both safety test suites with all 22 tests passing cleanly in pytest.
+
+### Accepted or rejected
+
+Accepted
+
+### Why
+
+All prompt injection safety categories and fail-closed validator checks were implemented in a dedicated safety module and verified with 100% passing automated test coverage.
+
+
